@@ -1,0 +1,554 @@
+import {
+  StaffRole,
+  StaffSession,
+  Product,
+  FollowUpLead,
+  FollowUpStatus,
+} from '@/lib/types/database';
+
+export interface StaffMember {
+  id: string;
+  name: string;
+  pin: string;
+  role: StaffRole;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ProductHold {
+  productId: string;
+  productName: string;
+  quoteId: string;
+  lockedAt: number; // timestamp
+  expiresAt: number; // timestamp (lockedAt + 24 hours)
+}
+
+// In-memory persistent server cache (persists across requests during server runtime)
+declare global {
+  var __ALISHAN_STAFF_STORE__: StaffMember[] | undefined;
+  var __ALISHAN_PRODUCT_HOLDS__: ProductHold[] | undefined;
+  var __ALISHAN_PRODUCTS_STORE__: Product[] | undefined;
+  var __ALISHAN_FOLLOWUPS_STORE__: FollowUpLead[] | undefined;
+}
+
+const DEFAULT_STAFF: StaffMember[] = [
+  {
+    id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    name: 'Vikram Mehta (Owner)',
+    pin: '1234',
+    role: 'admin',
+    is_active: true,
+    created_at: '2026-11-01T10:00:00.000Z',
+  },
+  {
+    id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+    name: 'Arjun Verma',
+    pin: '1111',
+    role: 'sales',
+    is_active: true,
+    created_at: '2026-11-05T10:00:00.000Z',
+  },
+  {
+    id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
+    name: 'Sneha Kapoor',
+    pin: '2222',
+    role: 'sales',
+    is_active: true,
+    created_at: '2026-11-08T10:00:00.000Z',
+  },
+];
+
+export const DEFAULT_PRODUCTS: Product[] = [
+  {
+    id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+    name: 'The Florence Bouclé Sectional',
+    price: 385000.0,
+    material: 'Italian Bouclé & Smoked Oak Plinth',
+    dimensions: '340cm x 180cm x 78cm',
+    category: 'Living Room',
+    image_url:
+      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
+    is_active: true,
+  },
+  {
+    id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
+    name: 'Verona Carrara Marble Dining Table',
+    price: 245000.0,
+    material: 'Honed Carrara Marble & Brushed Brass Trestle',
+    dimensions: '240cm x 110cm x 76cm',
+    category: 'Dining Room',
+    image_url:
+      'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80',
+    is_active: true,
+  },
+  {
+    id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
+    name: 'Aurelia Cognac Leather Lounge Chair',
+    price: 115000.0,
+    material: 'Full-Grain Tuscan Leather & American Walnut',
+    dimensions: '88cm x 92cm x 82cm',
+    category: 'Living Room',
+    image_url:
+      'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1200&q=80',
+    is_active: true,
+  },
+  {
+    id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a77',
+    name: 'Kyoto Low-Profile King Bedstead',
+    price: 290000.0,
+    material: 'Solid White American Ash & Belgian Linen',
+    dimensions: '215cm x 205cm x 95cm',
+    category: 'Bedroom',
+    image_url:
+      'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+    is_active: true,
+  },
+  {
+    id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a88',
+    name: 'Tivoli Roman Travertine Coffee Table',
+    price: 98000.0,
+    material: 'Honed Natural Travertine Slab',
+    dimensions: '130cm x 80cm x 36cm',
+    category: 'Coffee Tables & Storage',
+    image_url:
+      'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=1200&q=80',
+    is_active: true,
+  },
+  {
+    id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a99',
+    name: 'Monolith Fluted Oak Credenza',
+    price: 175000.0,
+    material: 'Fumed Oak Veneer & Ribbed Cast Glass',
+    dimensions: '200cm x 50cm x 75cm',
+    category: 'Coffee Tables & Storage',
+    image_url:
+      'https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&w=1200&q=80',
+    is_active: true,
+  },
+];
+
+export const DEFAULT_FOLLOWUPS: FollowUpLead[] = [
+  {
+    id: 'lead-1',
+    customerName: 'Rajesh Khanna',
+    customerWhatsapp: '9876543210',
+    assignedStaffId: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', // Arjun Verma
+    assignedStaffName: 'Arjun Verma',
+    quoteId: 'quote-101',
+    itemsSummary: 'The Florence Bouclé Sectional',
+    quotedAmount: 385000,
+    status: 'pending',
+    priority: 'high',
+    managerNote:
+      'Customer loved the white bouclé fabric. Call at 10:30 AM to confirm delivery date and offer free cushion pairing.',
+    scheduledFor: 'Morning 10:30 AM',
+    lastUpdated: new Date().toISOString(),
+  },
+  {
+    id: 'lead-2',
+    customerName: 'Priya Sharma',
+    customerWhatsapp: '9123456789',
+    assignedStaffId: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', // Arjun Verma
+    assignedStaffName: 'Arjun Verma',
+    quoteId: 'quote-102',
+    itemsSummary: 'Verona Carrara Marble Dining Table',
+    quotedAmount: 245000,
+    status: 'pending',
+    priority: 'high',
+    managerNote:
+      'Wife wanted to check with interior designer. Call this morning with special 5% package discount.',
+    scheduledFor: 'Morning 11:15 AM',
+    lastUpdated: new Date().toISOString(),
+  },
+  {
+    id: 'lead-3',
+    customerName: 'Amit Patel',
+    customerWhatsapp: '9845012345',
+    assignedStaffId: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', // Sneha Kapoor
+    assignedStaffName: 'Sneha Kapoor',
+    quoteId: 'quote-103',
+    itemsSummary: 'Kyoto Low-Profile King Bedstead',
+    quotedAmount: 290000,
+    status: 'pending',
+    priority: 'medium',
+    managerNote:
+      'Urgent bedroom makeover for new flat. Call to confirm room measurement visit.',
+    scheduledFor: 'Morning 10:45 AM',
+    lastUpdated: new Date().toISOString(),
+  },
+  {
+    id: 'lead-4',
+    customerName: 'Kavita Singhania',
+    customerWhatsapp: '9988776655',
+    assignedStaffId: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', // Sneha Kapoor
+    assignedStaffName: 'Sneha Kapoor',
+    quoteId: 'quote-104',
+    itemsSummary: 'Aurelia Cognac Lounge Chair + Tivoli Table',
+    quotedAmount: 213000,
+    status: 'called_interested',
+    priority: 'high',
+    managerNote:
+      'Spoke yesterday. Re-confirm payment token today morning before 12 PM.',
+    scheduledFor: 'Morning 11:45 AM',
+    lastUpdated: new Date().toISOString(),
+  },
+];
+
+// Initialize global stores if not already present
+if (!global.__ALISHAN_STAFF_STORE__) {
+  global.__ALISHAN_STAFF_STORE__ = [...DEFAULT_STAFF];
+}
+
+if (!global.__ALISHAN_PRODUCTS_STORE__) {
+  global.__ALISHAN_PRODUCTS_STORE__ = [...DEFAULT_PRODUCTS];
+}
+
+if (!global.__ALISHAN_FOLLOWUPS_STORE__) {
+  global.__ALISHAN_FOLLOWUPS_STORE__ = [...DEFAULT_FOLLOWUPS];
+}
+
+// Pre-seed an active 24-hr hold for demonstration (e.g. Tivoli Roman Travertine Coffee Table quoted 4 hours ago)
+if (!global.__ALISHAN_PRODUCT_HOLDS__) {
+  const fourHoursAgo = Date.now() - 4 * 60 * 60 * 1000;
+  global.__ALISHAN_PRODUCT_HOLDS__ = [
+    {
+      productId: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a88',
+      productName: 'Tivoli Roman Travertine Coffee Table',
+      quoteId: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      lockedAt: fourHoursAgo,
+      expiresAt: fourHoursAgo + 24 * 60 * 60 * 1000,
+    },
+  ];
+}
+
+/* =====================================================================
+ * 1. STAFF CREDENTIALS CONTROLS
+ * ===================================================================== */
+
+export function getAllStaffMembers(): StaffMember[] {
+  return global.__ALISHAN_STAFF_STORE__ || DEFAULT_STAFF;
+}
+
+export function addStaffMember(name: string, pin: string, role: StaffRole = 'sales'): StaffMember {
+  const cleanPin = pin.trim();
+  const newStaff: StaffMember = {
+    id: 'staff-' + Date.now(),
+    name: name.trim(),
+    pin: cleanPin,
+    role,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  };
+
+  global.__ALISHAN_STAFF_STORE__ = [...(global.__ALISHAN_STAFF_STORE__ || []), newStaff];
+  return newStaff;
+}
+
+export function updateStaffPin(id: string, newPin: string): boolean {
+  if (!global.__ALISHAN_STAFF_STORE__) return false;
+  const index = global.__ALISHAN_STAFF_STORE__.findIndex((s) => s.id === id);
+  if (index === -1) return false;
+
+  global.__ALISHAN_STAFF_STORE__[index].pin = newPin.trim();
+  return true;
+}
+
+export function toggleStaffActiveStatus(id: string, isActive: boolean): boolean {
+  if (!global.__ALISHAN_STAFF_STORE__) return false;
+  const index = global.__ALISHAN_STAFF_STORE__.findIndex((s) => s.id === id);
+  if (index === -1) return false;
+
+  global.__ALISHAN_STAFF_STORE__[index].is_active = isActive;
+  return true;
+}
+
+export function deleteStaffMember(id: string): boolean {
+  if (!global.__ALISHAN_STAFF_STORE__) return false;
+  const initialLength = global.__ALISHAN_STAFF_STORE__.length;
+  global.__ALISHAN_STAFF_STORE__ = global.__ALISHAN_STAFF_STORE__.filter((s) => s.id !== id);
+  return global.__ALISHAN_STAFF_STORE__.length < initialLength;
+}
+
+export function verifyStaffPin(pin: string): { success: boolean; staff?: StaffSession; error?: string } {
+  const staffList = getAllStaffMembers();
+  const found = staffList.find((s) => s.pin === pin && s.is_active);
+
+  if (found) {
+    return {
+      success: true,
+      staff: {
+        id: found.id,
+        name: found.name,
+        role: found.role,
+      },
+    };
+  }
+
+  return {
+    success: false,
+    error: 'Invalid PIN or account deactivated.',
+  };
+}
+
+/* =====================================================================
+ * 2. 24-HOUR PRODUCT QUOTE LOCK / HOLD LOGIC
+ * ===================================================================== */
+
+const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
+export function cleanupExpiredHolds(): void {
+  const now = Date.now();
+  if (global.__ALISHAN_PRODUCT_HOLDS__) {
+    global.__ALISHAN_PRODUCT_HOLDS__ = global.__ALISHAN_PRODUCT_HOLDS__.filter(
+      (hold) => hold.expiresAt > now
+    );
+  }
+}
+
+export function getProductHoldStatus(productId: string): {
+  isLocked: boolean;
+  expiresAt?: number;
+  remainingHours?: number;
+  remainingMinutes?: number;
+  lockedUntilFormatted?: string;
+  productName?: string;
+} {
+  cleanupExpiredHolds();
+  const holds = global.__ALISHAN_PRODUCT_HOLDS__ || [];
+  const hold = holds.find((h) => h.productId === productId && h.expiresAt > Date.now());
+
+  if (!hold) {
+    return { isLocked: false };
+  }
+
+  const remainingMs = Math.max(0, hold.expiresAt - Date.now());
+  const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
+  const remainingMinutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  const lockedDate = new Date(hold.expiresAt);
+  const formatted = lockedDate.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    day: 'numeric',
+    month: 'short',
+  });
+
+  return {
+    isLocked: true,
+    expiresAt: hold.expiresAt,
+    remainingHours,
+    remainingMinutes,
+    lockedUntilFormatted: formatted,
+    productName: hold.productName,
+  };
+}
+
+export function lockProductsFor24Hours(
+  items: { productId: string; name: string }[],
+  quoteId: string
+): void {
+  const now = Date.now();
+  const expiresAt = now + TWENTY_FOUR_HOURS_MS;
+
+  const newHolds: ProductHold[] = items.map((it) => ({
+    productId: it.productId,
+    productName: it.name,
+    quoteId,
+    lockedAt: now,
+    expiresAt,
+  }));
+
+  if (!global.__ALISHAN_PRODUCT_HOLDS__) {
+    global.__ALISHAN_PRODUCT_HOLDS__ = [];
+  }
+
+  // Remove existing hold for same products if any, then append
+  const incomingIds = new Set(items.map((it) => it.productId));
+  global.__ALISHAN_PRODUCT_HOLDS__ = [
+    ...global.__ALISHAN_PRODUCT_HOLDS__.filter((h) => !incomingIds.has(h.productId)),
+    ...newHolds,
+  ];
+}
+
+export function releaseProductHoldByQuoteId(quoteId: string): void {
+  if (global.__ALISHAN_PRODUCT_HOLDS__) {
+    global.__ALISHAN_PRODUCT_HOLDS__ = global.__ALISHAN_PRODUCT_HOLDS__.filter(
+      (h) => h.quoteId !== quoteId
+    );
+  }
+}
+
+/* =====================================================================
+ * 3. FURNITURE STOCK INVENTORY CONTROLS (ADD & DELETE STOCK)
+ * ===================================================================== */
+
+export function getAllProducts(): Product[] {
+  return global.__ALISHAN_PRODUCTS_STORE__ || DEFAULT_PRODUCTS;
+}
+
+export function addNewProduct(productData: {
+  name: string;
+  price: number;
+  material: string;
+  dimensions: string;
+  image_url?: string;
+  category?: string;
+  is_active?: boolean;
+}): Product {
+  const newProduct: Product = {
+    id: 'prod-' + Date.now(),
+    name: productData.name.trim(),
+    price: Number(productData.price),
+    material: productData.material.trim(),
+    dimensions: productData.dimensions.trim(),
+    category: productData.category?.trim() || 'Living Room',
+    image_url:
+      productData.image_url?.trim() ||
+      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
+    is_active: productData.is_active !== undefined ? productData.is_active : true,
+    created_at: new Date().toISOString(),
+  };
+
+  const current = global.__ALISHAN_PRODUCTS_STORE__ || DEFAULT_PRODUCTS;
+  global.__ALISHAN_PRODUCTS_STORE__ = [newProduct, ...current];
+  return newProduct;
+}
+
+export function deleteProduct(productId: string): boolean {
+  if (!global.__ALISHAN_PRODUCTS_STORE__) {
+    global.__ALISHAN_PRODUCTS_STORE__ = [...DEFAULT_PRODUCTS];
+  }
+  const initialLength = global.__ALISHAN_PRODUCTS_STORE__.length;
+  global.__ALISHAN_PRODUCTS_STORE__ = global.__ALISHAN_PRODUCTS_STORE__.filter(
+    (p) => p.id !== productId
+  );
+  return global.__ALISHAN_PRODUCTS_STORE__.length < initialLength;
+}
+
+export function toggleProductActive(productId: string, isActive: boolean): boolean {
+  if (!global.__ALISHAN_PRODUCTS_STORE__) {
+    global.__ALISHAN_PRODUCTS_STORE__ = [...DEFAULT_PRODUCTS];
+  }
+  const index = global.__ALISHAN_PRODUCTS_STORE__.findIndex((p) => p.id === productId);
+  if (index === -1) return false;
+
+  global.__ALISHAN_PRODUCTS_STORE__[index].is_active = isActive;
+  return true;
+}
+
+/* =====================================================================
+ * 4. PENDING FOLLOW-UPS STORE (LEADS ASSIGNED TO SALESMEN)
+ * ===================================================================== */
+
+export function getAllFollowUps(): FollowUpLead[] {
+  return global.__ALISHAN_FOLLOWUPS_STORE__ || DEFAULT_FOLLOWUPS;
+}
+
+export function getFollowUpsForStaff(staffId: string): FollowUpLead[] {
+  const all = getAllFollowUps();
+  // If admin/owner, show all follow ups, otherwise show staff's assigned leads
+  const isOwner = staffId === 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+  if (isOwner) return all;
+
+  return all.filter((lead) => lead.assignedStaffId === staffId);
+}
+
+export function updateFollowUpStatus(
+  leadId: string,
+  newStatus: FollowUpStatus,
+  notes?: string
+): boolean {
+  if (!global.__ALISHAN_FOLLOWUPS_STORE__) {
+    global.__ALISHAN_FOLLOWUPS_STORE__ = [...DEFAULT_FOLLOWUPS];
+  }
+  const index = global.__ALISHAN_FOLLOWUPS_STORE__.findIndex((l) => l.id === leadId);
+  if (index === -1) return false;
+
+  global.__ALISHAN_FOLLOWUPS_STORE__[index].status = newStatus;
+  global.__ALISHAN_FOLLOWUPS_STORE__[index].lastUpdated = new Date().toISOString();
+  if (notes) {
+    global.__ALISHAN_FOLLOWUPS_STORE__[index].managerNote += ` | Note: ${notes}`;
+  }
+  return true;
+}
+
+export function assignFollowUpLead(leadData: Partial<FollowUpLead>): FollowUpLead {
+  const newLead: FollowUpLead = {
+    id: 'lead-' + Date.now(),
+    customerName: leadData.customerName || 'Customer',
+    customerWhatsapp: leadData.customerWhatsapp || '9876543210',
+    assignedStaffId: leadData.assignedStaffId || 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+    assignedStaffName: leadData.assignedStaffName || 'Arjun Verma',
+    quoteId: leadData.quoteId || 'quote-' + Date.now(),
+    itemsSummary: leadData.itemsSummary || 'Furniture Package',
+    quotedAmount: leadData.quotedAmount || 150000,
+    status: 'pending',
+    priority: leadData.priority || 'high',
+    managerNote: leadData.managerNote || 'Morning follow-up call assigned by manager.',
+    scheduledFor: leadData.scheduledFor || 'Morning 10:30 AM',
+    lastUpdated: new Date().toISOString(),
+  };
+
+  const current = global.__ALISHAN_FOLLOWUPS_STORE__ || DEFAULT_FOLLOWUPS;
+  global.__ALISHAN_FOLLOWUPS_STORE__ = [newLead, ...current];
+  return newLead;
+}
+
+export function assignQuoteToStaff(
+  quoteId: string,
+  staffId: string,
+  staffName: string,
+  customerWhatsapp: string,
+  itemsSummary: string,
+  quotedAmount: number,
+  customerName?: string
+): boolean {
+  if (!global.__ALISHAN_FOLLOWUPS_STORE__) {
+    global.__ALISHAN_FOLLOWUPS_STORE__ = [...DEFAULT_FOLLOWUPS];
+  }
+
+  const existingIndex = global.__ALISHAN_FOLLOWUPS_STORE__.findIndex(
+    (l) => l.quoteId === quoteId || l.customerWhatsapp === customerWhatsapp
+  );
+
+  if (existingIndex !== -1) {
+    global.__ALISHAN_FOLLOWUPS_STORE__[existingIndex].assignedStaffId = staffId;
+    global.__ALISHAN_FOLLOWUPS_STORE__[existingIndex].assignedStaffName = staffName;
+    if (customerName) {
+      global.__ALISHAN_FOLLOWUPS_STORE__[existingIndex].customerName = customerName;
+    }
+    global.__ALISHAN_FOLLOWUPS_STORE__[existingIndex].lastUpdated = new Date().toISOString();
+  } else {
+    const newLead: FollowUpLead = {
+      id: 'lead-' + Date.now(),
+      customerName: customerName || 'Customer',
+      customerWhatsapp,
+      assignedStaffId: staffId,
+      assignedStaffName: staffName,
+      quoteId,
+      itemsSummary: itemsSummary || 'Furniture Piece',
+      quotedAmount: quotedAmount || 0,
+      status: 'pending',
+      priority: 'high',
+      managerNote: 'Follow-up assigned by showroom owner.',
+      scheduledFor: 'Morning 10:30 AM',
+      lastUpdated: new Date().toISOString(),
+    };
+    global.__ALISHAN_FOLLOWUPS_STORE__ = [newLead, ...global.__ALISHAN_FOLLOWUPS_STORE__];
+  }
+
+  return true;
+}
+
+export function markFollowUpContacted(leadId: string): boolean {
+  if (!global.__ALISHAN_FOLLOWUPS_STORE__) {
+    global.__ALISHAN_FOLLOWUPS_STORE__ = [...DEFAULT_FOLLOWUPS];
+  }
+  const index = global.__ALISHAN_FOLLOWUPS_STORE__.findIndex((l) => l.id === leadId);
+  if (index === -1) return false;
+
+  const current = global.__ALISHAN_FOLLOWUPS_STORE__[index];
+  current.status = current.status === 'called_interested' ? 'pending' : 'called_interested';
+  current.lastUpdated = new Date().toISOString();
+  return true;
+}
