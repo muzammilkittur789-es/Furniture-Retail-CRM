@@ -43,8 +43,9 @@ function drawRupeePrice(
   isNegative: boolean = false
 ): number {
   const amountStr = Math.round(amount).toLocaleString('en-IN');
-  const scale = fontSize / 22;
-  const strokeW = Math.max(1.1, fontSize * 0.08);
+  // Optically tuned scale: matches digit cap height (0.71*size) without dominating numbers
+  const scale = fontSize / 28;
+  const strokeW = Math.max(1.0, fontSize * 0.088);
   const symW = 12 * scale;
   const gap = 3.5 * scale;
   const minusW = isNegative ? font.widthOfTextAtSize('-', fontSize) + 1 : 0;
@@ -69,7 +70,7 @@ function drawRupeePrice(
   // Draw clean official Indian Rupee symbol (₹) vector
   page.drawSvgPath(RUPEE_SVG_PATH, {
     x: currentX - 6 * scale,
-    y: y + 21 * scale,
+    y: y + 21 * scale + strokeW * 0.3,
     scale,
     borderColor: color,
     borderWidth: strokeW,
