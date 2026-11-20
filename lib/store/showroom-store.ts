@@ -501,7 +501,8 @@ export function assignQuoteToStaff(
   customerWhatsapp: string,
   itemsSummary: string,
   quotedAmount: number,
-  customerName?: string
+  customerName?: string,
+  orderNotes?: string
 ): boolean {
   if (!global.__ALISHAN_FOLLOWUPS_STORE__) {
     global.__ALISHAN_FOLLOWUPS_STORE__ = [...DEFAULT_FOLLOWUPS];
@@ -517,6 +518,9 @@ export function assignQuoteToStaff(
     if (customerName) {
       global.__ALISHAN_FOLLOWUPS_STORE__[existingIndex].customerName = customerName;
     }
+    if (orderNotes) {
+      global.__ALISHAN_FOLLOWUPS_STORE__[existingIndex].orderNotes = orderNotes;
+    }
     global.__ALISHAN_FOLLOWUPS_STORE__[existingIndex].lastUpdated = new Date().toISOString();
   } else {
     const newLead: FollowUpLead = {
@@ -530,7 +534,8 @@ export function assignQuoteToStaff(
       quotedAmount: quotedAmount || 0,
       status: 'pending',
       priority: 'high',
-      managerNote: 'Follow-up assigned by showroom owner.',
+      managerNote: orderNotes ? `Notes: ${orderNotes}` : 'Follow-up assigned by showroom owner.',
+      orderNotes,
       scheduledFor: 'Morning 10:30 AM',
       lastUpdated: new Date().toISOString(),
     };

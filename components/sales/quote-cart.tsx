@@ -23,6 +23,8 @@ import { generateQuotePdfBlob } from '@/lib/pdf/quote-pdf';
 
 interface QuoteCartProps {
   selectedProducts: Product[];
+  quantities?: Record<string, number>;
+  onUpdateQuantity?: (productId: string, delta: number) => void;
   staff: StaffSession;
   onRemoveProduct: (productId: string) => void;
   onClearCart: () => void;
@@ -31,6 +33,8 @@ interface QuoteCartProps {
 
 export function QuoteCart({
   selectedProducts,
+  quantities,
+  onUpdateQuantity,
   staff,
   onRemoveProduct,
   onClearCart,
@@ -40,6 +44,7 @@ export function QuoteCart({
   const [discountValueInput, setDiscountValueInput] = useState<string>('0');
   const [customerName, setCustomerName] = useState<string>('');
   const [whatsappNumber, setWhatsappNumber] = useState<string>('');
+  const [orderNotes, setOrderNotes] = useState<string>('');
   const [formError, setFormError] = useState<string | null>(null);
   const [generatedQuote, setGeneratedQuote] = useState<{
     id: string;
@@ -53,10 +58,24 @@ export function QuoteCart({
   const [copied, setCopied] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // 1. Live Subtotal
+  const getItemQty = (id: string) => {
+    return (quantities && quantities[id]) || 1;
+  };
+
+  // 1. Live Subtotal with Quantities
   const subtotal = useMemo(() => {
-    return selectedProducts.reduce((sum, item) => sum + Number(item.price), 0);
-  }, [selectedProducts]);
+    return selectedProducts.reduce((sum, item) => {
+      const q = (quantities && quantities[item.id]) || 1;
+      return sum + Number(item.price) * q;
+    }, 0);
+  }, [selectedProducts, quantities]);
+
+  const totalItemsCount = useMemo(() => {
+    return selectedProducts.reduce((sum, item) => {
+      const q = (quantities && quantities[item.id]) || 1;
+      return sum + q;
+    }, 0);
+  }, [selectedProducts, quantities]);
 
   // 2. Dynamic Discount Math
   const numericalDiscount = parseFloat(discountValueInput) || 0;
@@ -75,7 +94,7 @@ export function QuoteCart({
 
   // String formatting rule: 1 item -> Special Discount, >1 items -> Package Discount
   const discountLabel =
-    selectedProducts.length === 1 ? 'Special Discount' : 'Package Discount';
+    totalItemsCount === 1 ? 'Special Discount' : 'Package Discount';
 
   // 4. WhatsApp Number Validation
   const cleanWhatsappNumber = whatsappNumber.replace(/\D/g, '');
@@ -102,10 +121,13 @@ export function QuoteCart({
     }
 
     startTransition(async () => {
+      const trimmedNotes = orderNotes.trim();
+
       const payload = {
         staffId: staff.id,
         customerName: trimmedCustomerName,
         customerWhatsapp: cleanWhatsappNumber,
+        orderNotes: trimmedNotes || undefined,
         subtotal,
         discountType,
         discountValue: numericalDiscount,
@@ -114,6 +136,7 @@ export function QuoteCart({
           productId: p.id,
           name: p.name,
           priceAtTime: Number(p.price),
+          quantity: getItemQty(p.id),
         })),
       };
 
@@ -129,9 +152,10 @@ export function QuoteCart({
       const formattedPrice = formatINR(finalPrice);
 
       const greeting = trimmedCustomerName ? `Hello ${trimmedCustomerName}!` : 'Hello!';
+      const notesLine = trimmedNotes ? `\n\nCustomization / Notes: ${trimmedNotes}` : '';
       const message = `${greeting} Thank you for visiting Alishan Furnitures today.
 
-Please find attached your official furniture quotation (Quote #${shortRef}) for ${formattedPrice}.
+Please find attached your official furniture quotation (Quote #${shortRef}) for ${formattedPrice}.${notesLine}
 
 Note: This quote is valid for 24 hours only.
 
@@ -157,11 +181,13 @@ Alishan Furnitures`;
         staffName: staff.name,
         customerName: trimmedCustomerName,
         customerWhatsapp: cleanWhatsappNumber,
+        orderNotes: trimmedNotes || undefined,
         items: selectedProducts.map((p) => ({
           name: p.name,
           material: p.material,
           dimensions: p.dimensions,
           price: Number(p.price),
+          quantity: getItemQty(p.id),
           image_url: p.image_url,
         })),
         subtotal,
@@ -250,6 +276,7 @@ Alishan Furnitures`;
     setGeneratedQuote(null);
     setCustomerName('');
     setWhatsappNumber('');
+    setOrderNotes('');
     setDiscountValueInput('0');
     setDiscountType('percentage');
     onClearCart();
@@ -269,7 +296,7 @@ Alishan Furnitures`;
               Selected Items
             </h3>
             <span className="text-[11px] text-slate-500 font-medium">
-              {selectedProducts.length} {selectedProducts.length === 1 ? 'item' : 'items'}
+              {totalItemsCount} {totalItemsCount === 1 ? 'item' : 'items'}
             </span>
           </div>
         </div>
@@ -373,37 +400,75 @@ Alishan Furnitures`;
                   </p>
                 </div>
               ) : (
-                selectedProducts.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between gap-3 p-2.5 rounded-2xl bg-slate-50 border border-slate-100"
-                  >
-                    <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white overflow-hidden shrink-0 border border-slate-200/80">
-                      <Image
-                        src={item.image_url}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-xs font-display font-bold text-slate-900 truncate">
-                        {item.name}
-                      </h4>
-                      <p className="text-xs font-bold text-indigo-600 mt-0.5">
-                        {formatINR(Number(item.price))}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => onRemoveProduct(item.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition"
-                      title="Remove item"
+                selectedProducts.map((item) => {
+                  const qty = getItemQty(item.id);
+                  const lineTotal = Number(item.price) * qty;
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between gap-2.5 p-2.5 rounded-2xl bg-slate-50 border border-slate-100"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))
+                      <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white overflow-hidden shrink-0 border border-slate-200/80">
+                        <Image
+                          src={item.image_url}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-display font-bold text-slate-900 truncate">
+                          {item.name}
+                        </h4>
+                        <div className="flex items-baseline gap-1.5 mt-0.5">
+                          <span className="text-xs font-bold text-indigo-600">
+                            {formatINR(lineTotal)}
+                          </span>
+                          {qty > 1 && (
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              ({formatINR(Number(item.price))} ea)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Quantity Stepper [ - 1 + ] */}
+                      {onUpdateQuantity && (
+                        <div className="flex items-center bg-white border border-slate-200 rounded-xl p-0.5 shrink-0 shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => onUpdateQuantity(item.id, -1)}
+                            disabled={qty <= 1}
+                            className="w-5 h-5 rounded-lg flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent text-xs font-bold transition"
+                            title="Decrease quantity"
+                          >
+                            -
+                          </button>
+                          <span className="w-5 text-center text-xs font-mono font-bold text-slate-900 select-none">
+                            {qty}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => onUpdateQuantity(item.id, 1)}
+                            className="w-5 h-5 rounded-lg flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-xs font-bold transition"
+                            title="Increase quantity"
+                          >
+                            +
+                          </button>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => onRemoveProduct(item.id)}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition shrink-0"
+                        title="Remove item"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  );
+                })
               )}
             </div>
 
@@ -551,6 +616,21 @@ Alishan Furnitures`;
                   className="w-full px-3 py-2 bg-transparent text-sm font-semibold tracking-wider text-slate-900 placeholder:text-slate-400 focus:outline-none"
                 />
               </div>
+            </div>
+
+            {/* Customization / Order Notes (Optional) */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-800 flex items-center justify-between">
+                <span>Order Notes / Customizations</span>
+                <span className="text-[10px] text-slate-400 font-medium">Optional</span>
+              </label>
+              <input
+                type="text"
+                value={orderNotes}
+                onChange={(e) => setOrderNotes(e.target.value)}
+                placeholder="e.g. Sage Green Velvet, deliver by Dec 15th"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-500 focus:bg-white transition-all"
+              />
             </div>
 
             {/* Error Message */}

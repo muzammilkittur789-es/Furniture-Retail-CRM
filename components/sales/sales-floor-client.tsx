@@ -23,6 +23,7 @@ export function SalesFloorClient({
 
   const [activeTab, setActiveTab] = useState<'catalog' | 'followups'>('catalog');
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
   const staffFollowUps = useMemo(() => {
@@ -37,20 +38,43 @@ export function SalesFloorClient({
     (l) => l.status === 'pending' || l.status === 'called_no_answer'
   ).length;
 
+  const handleUpdateQuantity = (productId: string, delta: number) => {
+    setQuantities((prev) => {
+      const current = prev[productId] || 1;
+      const next = Math.max(1, Math.min(50, current + delta));
+      return { ...prev, [productId]: next };
+    });
+  };
+
   const handleToggleProduct = (product: Product) => {
-    setSelectedProductIds((prev) =>
-      prev.includes(product.id)
-        ? prev.filter((id) => id !== product.id)
-        : [...prev, product.id]
-    );
+    setSelectedProductIds((prev) => {
+      const isAlreadySelected = prev.includes(product.id);
+      if (isAlreadySelected) {
+        setQuantities((q) => {
+          const next = { ...q };
+          delete next[product.id];
+          return next;
+        });
+        return prev.filter((id) => id !== product.id);
+      } else {
+        setQuantities((q) => ({ ...q, [product.id]: 1 }));
+        return [...prev, product.id];
+      }
+    });
   };
 
   const handleRemoveProduct = (productId: string) => {
     setSelectedProductIds((prev) => prev.filter((id) => id !== productId));
+    setQuantities((q) => {
+      const next = { ...q };
+      delete next[productId];
+      return next;
+    });
   };
 
   const handleClearCart = () => {
     setSelectedProductIds([]);
+    setQuantities({});
     setIsMobileCartOpen(false);
   };
 
@@ -58,7 +82,16 @@ export function SalesFloorClient({
     selectedProductIds.includes(p.id)
   );
 
-  const subtotal = selectedProducts.reduce((sum, item) => sum + Number(item.price), 0);
+  const totalItemsCount = useMemo(() => {
+    return selectedProducts.reduce((sum, item) => sum + (quantities[item.id] || 1), 0);
+  }, [selectedProducts, quantities]);
+
+  const subtotal = useMemo(() => {
+    return selectedProducts.reduce(
+      (sum, item) => sum + Number(item.price) * (quantities[item.id] || 1),
+      0
+    );
+  }, [selectedProducts, quantities]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans pb-24 lg:pb-12 text-slate-900">
@@ -187,6 +220,8 @@ export function SalesFloorClient({
               {activeStaff && (
                 <QuoteCart
                   selectedProducts={selectedProducts}
+                  quantities={quantities}
+                  onUpdateQuantity={handleUpdateQuantity}
                   staff={activeStaff}
                   onRemoveProduct={handleRemoveProduct}
                   onClearCart={handleClearCart}
@@ -208,12 +243,12 @@ export function SalesFloorClient({
               <div className="relative w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold shadow-md">
                 <ShoppingBag className="w-5 h-5 stroke-[2]" />
                 <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-slate-900">
-                  {selectedProducts.length}
+                  {totalItemsCount}
                 </span>
               </div>
               <div>
                 <span className="text-[10px] uppercase tracking-wider text-slate-300 font-semibold block">
-                  Current Quote ({selectedProducts.length} {selectedProducts.length === 1 ? 'item' : 'items'})
+                  Current Quote ({totalItemsCount} {totalItemsCount === 1 ? 'item' : 'items'})
                 </span>
                 <span className="font-display text-lg font-extrabold text-white leading-tight">
                   {formatINR(subtotal)}
@@ -240,6 +275,8 @@ export function SalesFloorClient({
             <div className="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-4" />
             <QuoteCart
               selectedProducts={selectedProducts}
+              quantities={quantities}
+              onUpdateQuantity={handleUpdateQuantity}
               staff={activeStaff}
               onRemoveProduct={handleRemoveProduct}
               onClearCart={handleClearCart}

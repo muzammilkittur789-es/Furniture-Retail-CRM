@@ -128,6 +128,12 @@ export function SalesmanFollowupsView({
                     {lead.itemsSummary}
                   </p>
 
+                  {lead.orderNotes && (
+                    <p className="text-[11px] text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/60 font-medium italic inline-block mt-0.5">
+                      Notes: &ldquo;{lead.orderNotes}&rdquo;
+                    </p>
+                  )}
+
                   <p className="font-display font-extrabold text-sm sm:text-base text-slate-900">
                     {formatINR(lead.quotedAmount)}
                   </p>

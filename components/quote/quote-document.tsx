@@ -7,6 +7,7 @@ import { Sparkles, UserCheck, Clock, MessageCircle, Phone, Truck, ShieldCheck, C
 export interface PopulatedQuoteItem {
   id: string;
   price_at_time: number;
+  quantity?: number;
   product: {
     id: string;
     name: string;
@@ -20,6 +21,7 @@ export interface PopulatedQuote {
   id: string;
   customer_name?: string;
   customer_whatsapp: string;
+  order_notes?: string;
   subtotal: number;
   discount_type: 'percentage' | 'flat';
   discount_value: number;
@@ -157,46 +159,72 @@ export function QuoteDocument({ quote }: QuoteDocumentProps) {
         </h2>
 
         <div className="divide-y divide-slate-100">
-          {quote.items.map((item) => (
-            <div
-              key={item.id}
-              className="py-4 sm:py-6 first:pt-0 last:pb-0 flex items-center justify-between gap-3 sm:gap-5 break-inside-avoid"
-            >
-              <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                {/* Thumbnail */}
-                <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200 shadow-xs">
-                  <Image
-                    src={item.product.image_url}
-                    alt={item.product.name}
-                    fill
-                    sizes="80px"
-                    className="object-cover"
-                  />
+          {quote.items.map((item) => {
+            const qty = item.quantity && item.quantity > 1 ? item.quantity : 1;
+            const lineTotal = Number(item.price_at_time) * qty;
+            return (
+              <div
+                key={item.id}
+                className="py-4 sm:py-6 first:pt-0 last:pb-0 flex items-center justify-between gap-3 sm:gap-5 break-inside-avoid"
+              >
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  {/* Thumbnail */}
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200 shadow-xs">
+                    <Image
+                      src={item.product.image_url}
+                      alt={item.product.name}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                    />
+                  </div>
+
+                  {/* Details */}
+                  <div className="space-y-0.5 sm:space-y-1 min-w-0 flex-1">
+                    <h3 className="font-display text-sm sm:text-lg md:text-xl font-bold text-slate-900 leading-snug truncate">
+                      {item.product.name}{' '}
+                      {qty > 1 && (
+                        <span className="text-xs sm:text-sm font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200 ml-1 inline-block">
+                          × {qty}
+                        </span>
+                      )}
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium truncate">
+                      Material: {item.product.material}
+                    </p>
+                    <p className="text-[11px] text-indigo-600 font-mono font-semibold truncate">
+                      Size: {item.product.dimensions}
+                    </p>
+                  </div>
                 </div>
 
-                {/* Details */}
-                <div className="space-y-0.5 sm:space-y-1 min-w-0 flex-1">
-                  <h3 className="font-display text-sm sm:text-lg md:text-xl font-bold text-slate-900 leading-snug truncate">
-                    {item.product.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 font-medium truncate">
-                    Material: {item.product.material}
-                  </p>
-                  <p className="text-[11px] text-indigo-600 font-mono font-semibold truncate">
-                    Size: {item.product.dimensions}
-                  </p>
+                {/* Price - Line Total */}
+                <div className="text-right shrink-0">
+                  <span className="font-display text-base sm:text-xl font-extrabold text-slate-900">
+                    {formatINR(lineTotal)}
+                  </span>
+                  {qty > 1 && (
+                    <p className="text-[10px] sm:text-xs text-slate-400 font-medium">
+                      {formatINR(Number(item.price_at_time))} each
+                    </p>
+                  )}
                 </div>
               </div>
-
-              {/* Price - Same side-by-side position on mobile and desktop */}
-              <div className="text-right shrink-0">
-                <span className="font-display text-base sm:text-xl font-extrabold text-slate-900">
-                  {formatINR(Number(item.price_at_time))}
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
+
+        {/* Customization / Order Notes */}
+        {quote.order_notes && (
+          <div className="mt-6 p-4 rounded-2xl bg-slate-50 border border-slate-200/90 text-left">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block mb-1">
+              Customization & Special Instructions
+            </span>
+            <p className="text-xs sm:text-sm text-slate-800 font-medium italic">
+              &ldquo;{quote.order_notes}&rdquo;
+            </p>
+          </div>
+        )}
 
         {/* Financial Summary */}
         <div className="mt-8 sm:mt-10 pt-5 sm:pt-6 border-t border-slate-100 space-y-3.5">

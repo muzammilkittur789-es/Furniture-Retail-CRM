@@ -21,6 +21,8 @@ export interface FollowUpLead {
   status: FollowUpStatus;
   priority: 'high' | 'medium' | 'normal';
   managerNote: string;
+  orderNotes?: string;
+  advanceDeposit?: number;
   scheduledFor: string;
   lastUpdated: string;
 }
@@ -61,6 +63,8 @@ export interface Quote {
   staff_id: string;
   customer_name?: string;
   customer_whatsapp: string;
+  order_notes?: string;
+  advance_deposit?: number;
   subtotal: number;
   discount_type: DiscountType;
   discount_value: number;
@@ -75,6 +79,7 @@ export interface QuoteItem {
   quote_id: string;
   product_id: string;
   price_at_time: number;
+  quantity?: number;
   created_at?: string;
 }
 
@@ -87,6 +92,7 @@ export interface CreateQuotePayload {
   staffId: string;
   customerName?: string;
   customerWhatsapp: string;
+  orderNotes?: string;
   subtotal: number;
   discountType: DiscountType;
   discountValue: number;
@@ -95,5 +101,6 @@ export interface CreateQuotePayload {
     productId: string;
     priceAtTime: number;
     name: string;
+    quantity?: number;
   }[];
 }

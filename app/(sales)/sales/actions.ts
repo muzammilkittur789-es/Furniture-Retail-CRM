@@ -117,7 +117,9 @@ export async function createQuote(
       }
     }
 
-    const itemsSummary = items.map((it) => it.name).join(' + ');
+    const itemsSummary = items
+      .map((it) => (it.quantity && it.quantity > 1 ? `${it.name} (x${it.quantity})` : it.name))
+      .join(' + ');
 
     // Dynamic attribution: resolve the logged-in salesman
     const allStaff = getAllStaffMembers();
@@ -142,7 +144,8 @@ export async function createQuote(
         cleanWhatsapp,
         itemsSummary,
         finalPrice,
-        customerName?.trim() || 'Customer'
+        customerName?.trim() || 'Customer',
+        payload.orderNotes?.trim()
       );
 
       revalidatePath('/sales');
@@ -200,7 +203,8 @@ export async function createQuote(
       cleanWhatsapp,
       itemsSummary,
       finalPrice,
-      customerName?.trim() || 'Customer'
+      customerName?.trim() || 'Customer',
+      payload.orderNotes?.trim()
     );
 
     revalidatePath('/sales');

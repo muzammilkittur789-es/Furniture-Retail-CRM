@@ -5,6 +5,7 @@ export interface QuotePdfItem {
   material: string;
   dimensions?: string;
   price: number;
+  quantity?: number;
   image_url?: string;
 }
 
@@ -16,6 +17,7 @@ export interface QuotePdfPayload {
   staffName: string;
   customerName?: string;
   customerWhatsapp: string;
+  orderNotes?: string;
   items: QuotePdfItem[];
   subtotal: number;
   discountType: 'percentage' | 'flat';
@@ -323,7 +325,8 @@ export async function generateQuotePdfBlob(data: QuotePdfPayload): Promise<Blob>
   currentY -= ribbonH + 28;
 
   // 3. SELECTED ITEMS HEADER
-  const itemsHeader = `SELECTED ITEMS (${data.items.length})`;
+  const totalItemsCount = data.items.reduce((acc, it) => acc + (it.quantity || 1), 0);
+  const itemsHeader = `SELECTED ITEMS (${totalItemsCount})`;
   page.drawText(itemsHeader, {
     x: margin,
     y: currentY,
@@ -337,6 +340,8 @@ export async function generateQuotePdfBlob(data: QuotePdfPayload): Promise<Blob>
   // 4. ITEMS LIST (with Thumbnail Images)
   for (let i = 0; i < data.items.length; i++) {
     const item = data.items[i];
+    const qty = item.quantity && item.quantity > 1 ? item.quantity : 1;
+    const itemTotal = item.price * qty;
     const itemRowH = 68;
 
     // A. Embed Thumbnail Image
@@ -384,19 +389,21 @@ export async function generateQuotePdfBlob(data: QuotePdfPayload): Promise<Blob>
     // B. Item Details (Middle)
     const textStartX = margin + thumbSize + 14;
 
-    // Name
-    page.drawText(item.name, {
+    // Name (with (xN) if quantity > 1)
+    const displayName = qty > 1 ? `${item.name} (x${qty})` : item.name;
+    page.drawText(displayName, {
       x: textStartX,
       y: currentY - 12,
-      size: 13.5,
+      size: 13,
       font: fontBold,
       color: colorNavy,
     });
 
-    // Material
-    const materialText = `Material: ${item.material}`;
+    // Material & Unit Price Note if qty > 1
+    const unitPriceNote = qty > 1 ? `  •  ₹${Math.round(item.price).toLocaleString('en-IN')} each` : '';
+    const materialText = `Material: ${item.material}${unitPriceNote}`;
     const truncatedMat =
-      materialText.length > 50 ? materialText.substring(0, 48) + '...' : materialText;
+      materialText.length > 55 ? materialText.substring(0, 53) + '...' : materialText;
     page.drawText(truncatedMat, {
       x: textStartX,
       y: currentY - 26,
@@ -416,12 +423,12 @@ export async function generateQuotePdfBlob(data: QuotePdfPayload): Promise<Blob>
       });
     }
 
-    // C. Item Price (Right aligned)
+    // C. Item Price (Right aligned - Line Total)
     drawRupeePrice(
       page,
       width - margin,
       currentY - 26,
-      item.price,
+      itemTotal,
       16,
       fontBold,
       colorNavy,
@@ -557,7 +564,46 @@ export async function generateQuotePdfBlob(data: QuotePdfPayload): Promise<Blob>
     true
   );
 
-  currentY -= 48;
+  currentY -= 44;
+
+  // 5B. ORDER NOTES / CUSTOMIZATIONS BOX (if provided)
+  if (data.orderNotes && data.orderNotes.trim()) {
+    const notesH = 34;
+    page.drawRectangle({
+      x: margin,
+      y: currentY - notesH + 4,
+      width: contentWidth,
+      height: notesH,
+      color: colorLightBg,
+      borderColor: rgb(226 / 255, 232 / 255, 240 / 255),
+      borderWidth: 1,
+    });
+
+    page.drawText('Special Customizations / Notes:', {
+      x: margin + 14,
+      y: currentY - 8,
+      size: 7.5,
+      font: fontBold,
+      color: colorIndigo,
+    });
+
+    const noteBody =
+      data.orderNotes.trim().length > 95
+        ? data.orderNotes.trim().slice(0, 92) + '...'
+        : data.orderNotes.trim();
+
+    page.drawText(`"${noteBody}"`, {
+      x: margin + 14,
+      y: currentY - 20,
+      size: 8,
+      font: fontRegular,
+      color: colorNavy,
+    });
+
+    currentY -= notesH + 12;
+  } else {
+    currentY -= 4;
+  }
 
   // 6. 24-HOUR NOTICE BOX (Amber card matching the image)
   const noticeH = 54;

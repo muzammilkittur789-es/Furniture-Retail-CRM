@@ -27,6 +27,8 @@ export interface PendingQuoteRow {
   staffName: string;
   itemsSummary: string;
   itemsCount: number;
+  orderNotes?: string;
+  advanceDeposit?: number;
 }
 
 interface PendingQuotesTableProps {
@@ -243,18 +245,25 @@ export function PendingQuotesTable({
               </div>
 
               {/* Items summary with link */}
-              <div className="bg-slate-50/80 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between gap-2">
-                <span className="text-xs text-slate-700 font-medium truncate">
-                  {q.itemsSummary}
-                </span>
-                <Link
-                  href={`/quote/${q.id}`}
-                  target="_blank"
-                  className="text-indigo-600 hover:text-indigo-800 p-1 hover:bg-indigo-50 rounded-lg shrink-0 transition"
-                  title="View Quote"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </Link>
+              <div className="bg-slate-50/80 p-2.5 rounded-xl border border-slate-100 flex flex-col gap-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-slate-700 font-medium truncate">
+                    {q.itemsSummary}
+                  </span>
+                  <Link
+                    href={`/quote/${q.id}`}
+                    target="_blank"
+                    className="text-indigo-600 hover:text-indigo-800 p-1 hover:bg-indigo-50 rounded-lg shrink-0 transition"
+                    title="View Quote"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+                {q.orderNotes && (
+                  <span className="text-[10px] text-indigo-700 font-medium italic bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/50">
+                    Customization: &ldquo;{q.orderNotes}&rdquo;
+                  </span>
+                )}
               </div>
 
               {/* Assign Follow-Up Salesperson Dropdown on Mobile */}
@@ -372,18 +381,25 @@ export function PendingQuotesTable({
                     </td>
 
                     <td className="py-4 px-6">
-                      <div className="flex items-center gap-2 max-w-xs">
-                        <span className="truncate text-xs text-slate-700 font-medium">
-                          {q.itemsSummary}
-                        </span>
-                        <Link
-                          href={`/quote/${q.id}`}
-                          target="_blank"
-                          className="text-indigo-600 hover:text-indigo-800 transition p-1 hover:bg-indigo-50 rounded-lg shrink-0"
-                          title="View digital customer quote"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </Link>
+                      <div className="flex flex-col gap-1 max-w-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate text-xs text-slate-700 font-medium">
+                            {q.itemsSummary}
+                          </span>
+                          <Link
+                            href={`/quote/${q.id}`}
+                            target="_blank"
+                            className="text-indigo-600 hover:text-indigo-800 transition p-1 hover:bg-indigo-50 rounded-lg shrink-0"
+                            title="View digital customer quote"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
+                        {q.orderNotes && (
+                          <span className="text-[10px] text-indigo-700 font-medium italic bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/50 truncate block">
+                            Customization: &ldquo;{q.orderNotes}&rdquo;
+                          </span>
+                        )}
                       </div>
                     </td>
 
