@@ -145,7 +145,8 @@ export async function createQuote(
         itemsSummary,
         finalPrice,
         customerName?.trim() || 'Customer',
-        payload.orderNotes?.trim()
+        payload.orderNotes?.trim(),
+        payload.advanceDeposit
       );
 
       revalidatePath('/sales');
@@ -169,6 +170,8 @@ export async function createQuote(
         discount_type: discountType,
         discount_value: Number(discountValue.toFixed(2)),
         final_price: Number(finalPrice.toFixed(2)),
+        advance_deposit: payload.advanceDeposit ? Number(payload.advanceDeposit.toFixed(2)) : 0,
+        order_notes: payload.orderNotes?.trim() || null,
         status: 'pending',
       })
       .select('id')
@@ -204,7 +207,8 @@ export async function createQuote(
       itemsSummary,
       finalPrice,
       customerName?.trim() || 'Customer',
-      payload.orderNotes?.trim()
+      payload.orderNotes?.trim(),
+      payload.advanceDeposit
     );
 
     revalidatePath('/sales');
@@ -237,4 +241,18 @@ export async function markFollowUpContactedAction(
     console.error('Error in markFollowUpContactedAction:', err);
     return { success: false, error: 'Failed to update follow-up.' };
   }
+}
+
+export async function addProductStockAction(productData: {
+  name: string;
+  price: number;
+  material: string;
+  dimensions: string;
+  more_info?: string;
+  image_url?: string;
+  category?: string;
+  is_active?: boolean;
+}) {
+  const { addProductStockAction: adminAdd } = await import('@/app/(admin)/admin/actions');
+  return adminAdd(productData);
 }

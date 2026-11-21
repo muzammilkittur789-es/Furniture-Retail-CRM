@@ -33,7 +33,8 @@ export function ProductGrid({
         !searchQuery.trim() ||
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.material.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.dimensions.toLowerCase().includes(searchQuery.toLowerCase());
+        p.dimensions.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        Boolean(p.more_info && p.more_info.toLowerCase().includes(searchQuery.toLowerCase()));
 
       if (!matchesSearch) return false;
 

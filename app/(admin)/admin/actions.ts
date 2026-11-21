@@ -11,6 +11,7 @@ import {
   deleteStaffMember,
   StaffMember,
   addNewProduct,
+  updateProduct,
   deleteProduct,
   toggleProductActive,
   getFollowUpsForStaff,
@@ -94,6 +95,32 @@ export async function updateQuoteStatus(
           updated_at: new Date().toISOString(),
         })
         .eq('id', quoteId);
+
+      if (newStatus === 'closed') {
+        try {
+          const { data: qItems } = await supabase
+            .from('quote_items')
+            .select('product_id')
+            .eq('quote_id', quoteId);
+          if (qItems && qItems.length > 0) {
+            const pIds = qItems.map((qi: any) => qi.product_id);
+            await supabase.from('products').update({ is_active: false }).in('id', pIds);
+          }
+        } catch (e) {
+          console.warn('Could not mark quote products as sold in Supabase:', e);
+        }
+      }
+    }
+
+    // Auto-mark products as sold & release hold when deal is closed
+    if (newStatus === 'closed') {
+      if ((global as any).__ALISHAN_PRODUCT_HOLDS__) {
+        const held = (global as any).__ALISHAN_PRODUCT_HOLDS__.filter((h: any) => h.quoteId === quoteId);
+        held.forEach((h: any) => {
+          toggleProductActive(h.productId, false);
+        });
+      }
+      releaseProductHoldByQuoteId(quoteId);
     }
 
     // Auto-release 24h product reservation hold if deal did not go through
@@ -188,6 +215,61 @@ export async function addProductStockAction(productData: {
   } catch (err) {
     console.error('Error adding product:', err);
     return { success: false, error: 'Failed to add new furniture product.' };
+  }
+}
+
+export async function updateProductStockAction(
+  productId: string,
+  productData: {
+    name?: string;
+    price?: number;
+    material?: string;
+    dimensions?: string;
+    more_info?: string;
+    image_url?: string;
+    category?: string;
+    is_active?: boolean;
+  }
+): Promise<{ success: boolean; product?: Product; error?: string }> {
+  try {
+    if (!productId) {
+      return { success: false, error: 'Missing product ID.' };
+    }
+
+    const updated = updateProduct(productId, productData);
+    if (!updated) {
+      return { success: false, error: 'Product not found in stock.' };
+    }
+
+    if (isSupabaseConfigured()) {
+      try {
+        const supabase = createServerClient();
+        await supabase
+          .from('products')
+          .update({
+            ...(productData.name && { name: productData.name }),
+            ...(productData.price && { price: Number(productData.price) }),
+            ...(productData.material && { material: productData.material }),
+            ...(productData.dimensions && { dimensions: productData.dimensions }),
+            ...(productData.more_info !== undefined && { more_info: productData.more_info || null }),
+            ...(productData.image_url && { image_url: productData.image_url }),
+            ...(productData.category && { category: productData.category }),
+            ...(productData.is_active !== undefined && { is_active: productData.is_active }),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', productId);
+      } catch (e) {
+        console.warn('Failed to update product in Supabase:', e);
+      }
+    }
+
+    revalidatePath('/admin/products');
+    revalidatePath('/sales');
+
+    return { success: true, product: updated };
+  } catch (err) {
+    console.error('Error updating product:', err);
+    return { success: false, error: 'Failed to update furniture piece.' };
   }
 }
 

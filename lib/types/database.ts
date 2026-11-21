@@ -94,6 +94,7 @@ export interface CreateQuotePayload {
   customerName?: string;
   customerWhatsapp: string;
   orderNotes?: string;
+  advanceDeposit?: number;
   subtotal: number;
   discountType: DiscountType;
   discountValue: number;

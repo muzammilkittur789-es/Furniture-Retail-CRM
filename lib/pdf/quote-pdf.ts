@@ -19,6 +19,7 @@ export interface QuotePdfPayload {
   customerName?: string;
   customerWhatsapp: string;
   orderNotes?: string;
+  advanceDeposit?: number;
   items: QuotePdfItem[];
   subtotal: number;
   discountType: 'percentage' | 'flat';
@@ -621,7 +622,57 @@ export async function generateQuotePdfBlob(data: QuotePdfPayload): Promise<Blob>
     true
   );
 
-  currentY -= 44;
+  currentY -= 36;
+
+  // Row E: Advance Token Paid & Balance Due on Delivery (if advance is recorded)
+  const advance = data.advanceDeposit || 0;
+  if (advance > 0) {
+    const balance = Math.max(0, data.finalPrice - advance);
+
+    page.drawText('Advance Token Paid', {
+      x: margin,
+      y: currentY,
+      size: 9.5,
+      font: fontBold,
+      color: colorEmeraldText,
+    });
+
+    drawRupeePrice(
+      page,
+      width - margin,
+      currentY,
+      advance,
+      13,
+      fontBold,
+      colorEmeraldText,
+      true
+    );
+
+    currentY -= 20;
+
+    page.drawText('BALANCE DUE ON DELIVERY', {
+      x: margin,
+      y: currentY,
+      size: 9.5,
+      font: fontBold,
+      color: rgb(180 / 255, 83 / 255, 9 / 255),
+    });
+
+    drawRupeePrice(
+      page,
+      width - margin,
+      currentY,
+      balance,
+      15,
+      fontBold,
+      rgb(180 / 255, 83 / 255, 9 / 255),
+      true
+    );
+
+    currentY -= 26;
+  } else {
+    currentY -= 8;
+  }
 
   // 5B. ORDER NOTES / CUSTOMIZATIONS BOX (if provided)
   if (data.orderNotes && data.orderNotes.trim()) {

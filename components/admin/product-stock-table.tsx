@@ -6,12 +6,14 @@ import { formatINR } from '@/lib/utils';
 import {
   toggleProductStockStatus,
   addProductStockAction,
+  updateProductStockAction,
   deleteProductStockAction,
 } from '@/app/(admin)/admin/actions';
 import { Product } from '@/lib/types/database';
 import {
   Plus,
   Trash2,
+  Pencil,
   AlertTriangle,
   X,
   Search,
@@ -28,11 +30,21 @@ interface ProductStockTableProps {
   initialProducts: Product[];
 }
 
+const CATEGORIES = [
+  { id: 'all', label: 'All Catalog' },
+  { id: 'Living Room', label: 'Living Room' },
+  { id: 'Dining Room', label: 'Dining Room' },
+  { id: 'Bedroom', label: 'Bedroom' },
+  { id: 'Coffee Tables & Storage', label: 'Coffee & Storage' },
+];
+
 export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteConfirmProduct, setDeleteConfirmProduct] = useState<Product | null>(null);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null
@@ -48,7 +60,78 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
   const [newCategory, setNewCategory] = useState('Living Room');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Edit product form states
+  const [editName, setEditName] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editMaterial, setEditMaterial] = useState('');
+  const [editDimensions, setEditDimensions] = useState('');
+  const [editMoreInfo, setEditMoreInfo] = useState('');
+  const [editImageUrl, setEditImageUrl] = useState('');
+  const [editCategory, setEditCategory] = useState('Living Room');
+  const editFileInputRef = useRef<HTMLInputElement>(null);
+
   const [isPending, startTransition] = useTransition();
+
+  const handleOpenEdit = (p: Product) => {
+    setEditingProduct(p);
+    setEditName(p.name);
+    setEditPrice(p.price.toString());
+    setEditMaterial(p.material);
+    setEditDimensions(p.dimensions);
+    setEditMoreInfo(p.more_info || '');
+    setEditImageUrl(p.image_url);
+    setEditCategory(p.category || 'Living Room');
+  };
+
+  const handleEditImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 12 * 1024 * 1024) {
+      showFeedback('Photo is too large. Please select an image under 12MB.', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (typeof event.target?.result === 'string') {
+        setEditImageUrl(event.target.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleEditProductSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+
+    if (!editName.trim() || !editPrice || !editMaterial.trim() || !editDimensions.trim()) {
+      showFeedback('Please fill out all required fields.', 'error');
+      return;
+    }
+
+    startTransition(async () => {
+      const res = await updateProductStockAction(editingProduct.id, {
+        name: editName,
+        price: Number(editPrice),
+        material: editMaterial,
+        dimensions: editDimensions,
+        more_info: editMoreInfo.trim() || undefined,
+        image_url: editImageUrl || editingProduct.image_url,
+        category: editCategory,
+      });
+
+      if (res.success && res.product) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === editingProduct.id ? res.product! : p))
+        );
+        setEditingProduct(null);
+        showFeedback(`"${res.product.name}" updated successfully!`);
+      } else {
+        showFeedback(res.error || 'Failed to update product.', 'error');
+      }
+    });
+  };
 
   const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -68,12 +151,19 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
     reader.readAsDataURL(file);
   };
 
-  const filteredProducts = products.filter(
-    (p) =>
+  const filteredProducts = products.filter((p) => {
+    const matchesSearch =
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.material.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.dimensions.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      p.dimensions.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      Boolean(p.more_info && p.more_info.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesCategory =
+      selectedCategory === 'all' ||
+      (p.category && p.category.toLowerCase() === selectedCategory.toLowerCase());
+
+    return matchesSearch && matchesCategory;
+  });
 
   const showFeedback = (text: string, type: 'success' | 'error' = 'success') => {
     setFeedbackMsg({ text, type });
@@ -208,6 +298,27 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
         </button>
       </div>
 
+      {/* Category Filter Pills */}
+      <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 no-scrollbar">
+        {CATEGORIES.map((cat) => {
+          const isActive = selectedCategory === cat.id;
+          return (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap border ${
+                isActive
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                  : 'bg-white text-slate-600 border-slate-200/90 hover:border-slate-300 hover:text-slate-900'
+              }`}
+            >
+              {cat.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Mobile Card Layout (Visible on screens < 768px) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 md:hidden">
         {filteredProducts.map((p) => {
@@ -266,15 +377,26 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                   )}
                 </button>
 
-                {/* Delete Button */}
-                <button
-                  type="button"
-                  onClick={() => setDeleteConfirmProduct(p)}
-                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
-                  title="Delete furniture stock"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {/* Edit & Delete Action Buttons */}
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenEdit(p)}
+                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition"
+                    title="Edit furniture details"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDeleteConfirmProduct(p)}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
+                    title="Delete furniture stock"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -356,15 +478,26 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                       </button>
                     </td>
                     <td className="py-4 px-6 text-right whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => setDeleteConfirmProduct(p)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition"
-                        title="Delete product"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Delete</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(p)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 transition"
+                          title="Edit product details"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirmProduct(p)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition"
+                          title="Delete product"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -565,6 +698,187 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                 >
                   <Plus className="w-4 h-4" />
                   <span>Save to Stock</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT FURNITURE STOCK */}
+      {editingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => setEditingProduct(null)}
+              className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center">
+                <Pencil className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-display font-extrabold text-lg sm:text-xl text-slate-900">
+                  Edit Furniture Stock
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Update piece specifications, pricing, or photograph.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleEditProductSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Furniture Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="e.g. Nordic Oak 6-Seater Dining Table"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Price (₹ INR)
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                  placeholder="e.g. 185000"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Dimensions (Size)
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editDimensions}
+                  onChange={(e) => setEditDimensions(e.target.value)}
+                  placeholder="e.g. 200cm x 95cm x 76cm"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Furniture Category
+                </label>
+                <select
+                  value={editCategory}
+                  onChange={(e) => setEditCategory(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white font-medium"
+                >
+                  <option value="Living Room">Living Room (Sofas, Recliners, Accent Chairs)</option>
+                  <option value="Dining Room">Dining Room (Dining Tables &amp; Chair Sets)</option>
+                  <option value="Bedroom">Bedroom (Beds, Wardrobes &amp; Dressers)</option>
+                  <option value="Coffee Tables & Storage">Coffee Tables &amp; Storage (Tables, Consoles)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Material &amp; Finish
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editMaterial}
+                  onChange={(e) => setEditMaterial(e.target.value)}
+                  placeholder="e.g. Solid European White Oak &amp; Natural Oil Finish"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  More Info
+                </label>
+                <input
+                  type="text"
+                  value={editMoreInfo}
+                  onChange={(e) => setEditMoreInfo(e.target.value)}
+                  placeholder="e.g. King Size / 3-Seater / Reversible Chaise / 6-Seater"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+                />
+              </div>
+
+              {/* Photo Chooser */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                  <span>Furniture Photo</span>
+                  <span className="text-[10px] text-indigo-600 font-bold">Update Photo</span>
+                </label>
+
+                <input
+                  ref={editFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleEditImageFileSelect}
+                  className="hidden"
+                />
+
+                {editImageUrl ? (
+                  <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden border-2 border-indigo-300 bg-slate-100 shadow-sm group">
+                    <Image
+                      src={editImageUrl}
+                      alt="Selected furniture"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                    <button
+                      type="button"
+                      onClick={() => editFileInputRef.current?.click()}
+                      className="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-slate-900/80 backdrop-blur-sm text-white font-bold text-xs shadow-md active:scale-95 transition flex items-center gap-1.5"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>Change Photo</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => editFileInputRef.current?.click()}
+                    className="w-full aspect-[16/9] rounded-2xl border-2 border-dashed border-indigo-300 hover:border-indigo-500 bg-indigo-50/40 hover:bg-indigo-50/70 p-6 flex flex-col items-center justify-center cursor-pointer transition text-center group"
+                  >
+                    <Camera className="w-6 h-6 stroke-[2] text-indigo-600 mb-2" />
+                    <span className="font-bold text-xs sm:text-sm text-indigo-950">
+                      Choose Photo from Mobile Gallery
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-3 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingProduct(null)}
+                  className="flex-1 py-3 px-4 rounded-2xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className="flex-1 py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center justify-center gap-1.5"
+                >
+                  <Pencil className="w-4 h-4" />
+                  <span>Update Furniture</span>
                 </button>
               </div>
             </form>

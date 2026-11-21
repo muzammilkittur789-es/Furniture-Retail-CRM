@@ -45,6 +45,7 @@ export function QuoteCart({
   const [customerName, setCustomerName] = useState<string>('');
   const [whatsappNumber, setWhatsappNumber] = useState<string>('');
   const [orderNotes, setOrderNotes] = useState<string>('');
+  const [advanceDepositInput, setAdvanceDepositInput] = useState<string>('');
   const [formError, setFormError] = useState<string | null>(null);
   const [generatedQuote, setGeneratedQuote] = useState<{
     id: string;
@@ -89,8 +90,11 @@ export function QuoteCart({
     }
   }, [subtotal, discountType, numericalDiscount]);
 
-  // 3. Final Price
+  // 3. Final Price & Advance Math
   const finalPrice = Math.max(0, subtotal - calculatedDiscountAmount);
+  const numericalAdvance = parseFloat(advanceDepositInput) || 0;
+  const advanceDeposit = Math.min(finalPrice, Math.max(0, numericalAdvance));
+  const balanceDue = Math.max(0, finalPrice - advanceDeposit);
 
   // Discount label: clean standard "Discount"
   const discountLabel = 'Discount';
@@ -127,6 +131,7 @@ export function QuoteCart({
         customerName: trimmedCustomerName,
         customerWhatsapp: cleanWhatsappNumber,
         orderNotes: trimmedNotes || undefined,
+        advanceDeposit: advanceDeposit > 0 ? advanceDeposit : undefined,
         subtotal,
         discountType,
         discountValue: numericalDiscount,
@@ -152,9 +157,12 @@ export function QuoteCart({
 
       const greeting = trimmedCustomerName ? `Hello ${trimmedCustomerName}!` : 'Hello!';
       const notesLine = trimmedNotes ? `\n\nCustomization / Notes: ${trimmedNotes}` : '';
+      const advanceLine = advanceDeposit > 0
+        ? `\nAdvance Token Paid: ${formatINR(advanceDeposit)}\nBalance Due on Delivery: ${formatINR(balanceDue)}`
+        : '';
       const message = `${greeting} Thank you for visiting Alishan Furnitures today.
 
-Please find attached your official furniture quotation (Quote #${shortRef}) for ${formattedPrice}.${notesLine}
+Please find attached your official furniture quotation (Quote #${shortRef}) for ${formattedPrice}.${advanceLine}${notesLine}
 
 Note: This quote is valid for 24 hours only.
 
@@ -181,6 +189,7 @@ Alishan Furnitures`;
         customerName: trimmedCustomerName,
         customerWhatsapp: cleanWhatsappNumber,
         orderNotes: trimmedNotes || undefined,
+        advanceDeposit: advanceDeposit > 0 ? advanceDeposit : undefined,
         items: selectedProducts.map((p) => ({
           name: p.name,
           material: p.material,
@@ -277,6 +286,7 @@ Alishan Furnitures`;
     setCustomerName('');
     setWhatsappNumber('');
     setOrderNotes('');
+    setAdvanceDepositInput('');
     setDiscountValueInput('0');
     setDiscountType('percentage');
     onClearCart();
@@ -638,6 +648,34 @@ Alishan Furnitures`;
               />
             </div>
 
+            {/* Advance Deposit / Booking Token (Optional) */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-800 flex items-center justify-between">
+                <span>Advance Token Received (₹)</span>
+                <span className="text-[10px] text-slate-400 font-medium">Optional</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  max={finalPrice}
+                  value={advanceDepositInput}
+                  onChange={(e) => setAdvanceDepositInput(e.target.value)}
+                  placeholder="e.g. 50000 (if booking advance received)"
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-500 focus:bg-white transition-all"
+                />
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                  ₹ INR
+                </span>
+              </div>
+              {advanceDeposit > 0 && (
+                <div className="flex items-center justify-between text-xs text-amber-900 bg-amber-50 p-2 rounded-xl border border-amber-200 font-semibold mt-1">
+                  <span>Balance Due on Delivery:</span>
+                  <span className="font-bold">{formatINR(balanceDue)}</span>
+                </div>
+              )}
+            </div>
+
             {/* Error Message */}
             {formError && (
               <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2">
@@ -661,6 +699,13 @@ Alishan Furnitures`;
                 {formatINR(finalPrice)}
               </span>
             </div>
+
+            {advanceDeposit > 0 && (
+              <div className="flex items-center justify-between text-xs font-bold text-amber-900 bg-amber-50 p-2 rounded-xl border border-amber-200">
+                <span>Balance Due on Delivery:</span>
+                <span className="font-mono text-sm">{formatINR(balanceDue)}</span>
+              </div>
+            )}
 
             {/* Submit Button */}
             <button

@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useTransition } from 'react';
+import Image from 'next/image';
 import { Product, StaffSession, FollowUpLead } from '@/lib/types/database';
 import { PinPadModal } from '@/components/sales/pin-pad-modal';
 import { ProductGrid } from '@/components/sales/product-grid';
 import { QuoteCart } from '@/components/sales/quote-cart';
 import { SalesmanFollowupsView } from '@/components/sales/salesman-followups-view';
+import { addProductStockAction } from '@/app/(sales)/sales/actions';
 import { formatINR } from '@/lib/utils';
-import { Lock, ShoppingBag, ChevronUp, Armchair, PhoneCall } from 'lucide-react';
+import { Lock, ShoppingBag, ChevronUp, Armchair, PhoneCall, Plus, Camera, X } from 'lucide-react';
 
 interface SalesFloorClientProps {
   initialProducts: Product[];
@@ -18,6 +20,7 @@ export function SalesFloorClient({
   initialProducts,
   initialFollowUps = [],
 }: SalesFloorClientProps) {
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [activeStaff, setActiveStaff] = useState<StaffSession | null>(null);
   const isLocked = activeStaff === null;
 
@@ -25,6 +28,77 @@ export function SalesFloorClient({
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
+
+  // Salesperson Add Furniture Stock Modal State
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newPrice, setNewPrice] = useState('');
+  const [newMaterial, setNewMaterial] = useState('');
+  const [newDimensions, setNewDimensions] = useState('');
+  const [newMoreInfo, setNewMoreInfo] = useState('');
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [newCategory, setNewCategory] = useState('Living Room');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isAddingPending, startAddTransition] = useTransition();
+
+  const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 12 * 1024 * 1024) {
+      alert('Photo is too large. Please select an image under 12MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (typeof event.target?.result === 'string') {
+        setNewImageUrl(event.target.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAddProductSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!newName.trim() || !newPrice || !newMaterial.trim() || !newDimensions.trim()) {
+      alert('Please fill out all required fields.');
+      return;
+    }
+
+    if (!newImageUrl) {
+      alert('Please choose a photo from your mobile gallery or take a picture.');
+      return;
+    }
+
+    startAddTransition(async () => {
+      const res = await addProductStockAction({
+        name: newName,
+        price: Number(newPrice),
+        material: newMaterial,
+        dimensions: newDimensions,
+        more_info: newMoreInfo.trim() || undefined,
+        image_url: newImageUrl,
+        category: newCategory,
+        is_active: true,
+      });
+
+      if (res.success && res.product) {
+        setProducts((prev) => [res.product!, ...prev]);
+        setIsAddModalOpen(false);
+        setNewName('');
+        setNewPrice('');
+        setNewMaterial('');
+        setNewDimensions('');
+        setNewMoreInfo('');
+        setNewImageUrl('');
+        setNewCategory('Living Room');
+      } else {
+        alert(res.error || 'Failed to add product to stock.');
+      }
+    });
+  };
 
   const staffFollowUps = useMemo(() => {
     if (!activeStaff) return initialFollowUps;
@@ -78,7 +152,7 @@ export function SalesFloorClient({
     setIsMobileCartOpen(false);
   };
 
-  const selectedProducts = initialProducts.filter((p) =>
+  const selectedProducts = products.filter((p) =>
     selectedProductIds.includes(p.id)
   );
 
@@ -196,20 +270,31 @@ export function SalesFloorClient({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
             {/* Left Column: Product Catalog Grid */}
             <div className="lg:col-span-7 xl:col-span-8">
-              <div className="mb-5 sm:mb-6">
-                <span className="text-[10px] uppercase tracking-[0.25em] text-indigo-600 font-bold block mb-1">
-                  Showroom Floor
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 tracking-tight">
-                  Furniture Items
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-500 font-normal mt-0.5">
-                  Select items to create a quick customer quote.
-                </p>
+              <div className="mb-5 sm:mb-6 flex items-start justify-between gap-3 flex-wrap">
+                <div>
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-indigo-600 font-bold block mb-1">
+                    Showroom Floor
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 tracking-tight">
+                    Furniture Items
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 font-normal mt-0.5">
+                    Select items to create a quick customer quote.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/20 active:scale-95 transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Add New Stock</span>
+                </button>
               </div>
 
               <ProductGrid
-                products={initialProducts}
+                products={products}
                 selectedProductIds={selectedProductIds}
                 onToggleProduct={handleToggleProduct}
               />
@@ -282,6 +367,192 @@ export function SalesFloorClient({
               onClearCart={handleClearCart}
               onCloseMobile={() => setIsMobileCartOpen(false)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* 6. Salesperson Add New Furniture Stock Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(false)}
+              className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center">
+                <Plus className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-display font-extrabold text-lg sm:text-xl text-slate-900">
+                  Add New Furniture Stock
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Add floor piece directly to showroom inventory.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleAddProductSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Furniture Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="e.g. Nordic Oak 6-Seater Dining Table"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Price (₹ INR)
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  value={newPrice}
+                  onChange={(e) => setNewPrice(e.target.value)}
+                  placeholder="e.g. 185000"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Dimensions (Size)
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newDimensions}
+                  onChange={(e) => setNewDimensions(e.target.value)}
+                  placeholder="e.g. 200cm x 95cm x 76cm"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Furniture Category
+                </label>
+                <select
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white font-medium"
+                >
+                  <option value="Living Room">Living Room (Sofas, Recliners, Accent Chairs)</option>
+                  <option value="Dining Room">Dining Room (Dining Tables &amp; Chair Sets)</option>
+                  <option value="Bedroom">Bedroom (Beds, Wardrobes &amp; Dressers)</option>
+                  <option value="Coffee Tables & Storage">Coffee Tables &amp; Storage (Tables, Consoles)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Material &amp; Finish
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newMaterial}
+                  onChange={(e) => setNewMaterial(e.target.value)}
+                  placeholder="e.g. Solid European White Oak &amp; Natural Oil Finish"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  More Info
+                </label>
+                <input
+                  type="text"
+                  value={newMoreInfo}
+                  onChange={(e) => setNewMoreInfo(e.target.value)}
+                  placeholder="e.g. King Size / 3-Seater / Reversible Chaise / 6-Seater"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+                />
+              </div>
+
+              {/* Photo Chooser from Mobile Gallery / Camera */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                  <span>Furniture Photo</span>
+                  <span className="text-[10px] text-indigo-600 font-bold">From Phone Gallery</span>
+                </label>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageFileSelect}
+                  className="hidden"
+                />
+
+                {newImageUrl ? (
+                  <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden border-2 border-indigo-300 bg-slate-100 shadow-sm group">
+                    <Image
+                      src={newImageUrl}
+                      alt="Selected furniture"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-slate-900/80 backdrop-blur-sm text-white font-bold text-xs shadow-md active:scale-95 transition flex items-center gap-1.5"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>Change</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full aspect-[16/9] rounded-2xl border-2 border-dashed border-indigo-300 hover:border-indigo-500 bg-indigo-50/40 hover:bg-indigo-50/70 p-6 flex flex-col items-center justify-center cursor-pointer transition text-center group"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-white text-indigo-600 shadow-sm border border-indigo-100 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <Camera className="w-6 h-6 stroke-[2]" />
+                    </div>
+                    <span className="font-bold text-xs sm:text-sm text-indigo-950">
+                      Choose Photo from Gallery or Camera
+                    </span>
+                    <span className="text-[11px] text-slate-500 mt-0.5">
+                      Tap to select photo from phone gallery or take camera picture
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-3 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="flex-1 py-3 px-4 rounded-2xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isAddingPending}
+                  className="flex-1 py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center justify-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add to Floor Stock</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

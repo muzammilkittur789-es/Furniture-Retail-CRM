@@ -422,6 +422,43 @@ export function addNewProduct(productData: {
   return newProduct;
 }
 
+export function updateProduct(
+  productId: string,
+  updates: {
+    name?: string;
+    price?: number;
+    material?: string;
+    dimensions?: string;
+    more_info?: string;
+    image_url?: string;
+    category?: string;
+    is_active?: boolean;
+  }
+): Product | null {
+  if (!global.__ALISHAN_PRODUCTS_STORE__) {
+    global.__ALISHAN_PRODUCTS_STORE__ = [...DEFAULT_PRODUCTS];
+  }
+  const index = global.__ALISHAN_PRODUCTS_STORE__.findIndex((p) => p.id === productId);
+  if (index === -1) return null;
+
+  const existing = global.__ALISHAN_PRODUCTS_STORE__[index];
+  const updated: Product = {
+    ...existing,
+    name: updates.name !== undefined ? updates.name.trim() : existing.name,
+    price: updates.price !== undefined ? Number(updates.price) : existing.price,
+    material: updates.material !== undefined ? updates.material.trim() : existing.material,
+    dimensions: updates.dimensions !== undefined ? updates.dimensions.trim() : existing.dimensions,
+    more_info: updates.more_info !== undefined ? (updates.more_info.trim() || undefined) : existing.more_info,
+    category: updates.category !== undefined ? updates.category.trim() : existing.category,
+    image_url: updates.image_url !== undefined ? updates.image_url.trim() : existing.image_url,
+    is_active: updates.is_active !== undefined ? updates.is_active : existing.is_active,
+    updated_at: new Date().toISOString(),
+  };
+
+  global.__ALISHAN_PRODUCTS_STORE__[index] = updated;
+  return updated;
+}
+
 export function deleteProduct(productId: string): boolean {
   if (!global.__ALISHAN_PRODUCTS_STORE__) {
     global.__ALISHAN_PRODUCTS_STORE__ = [...DEFAULT_PRODUCTS];
@@ -510,7 +547,8 @@ export function assignQuoteToStaff(
   itemsSummary: string,
   quotedAmount: number,
   customerName?: string,
-  orderNotes?: string
+  orderNotes?: string,
+  advanceDeposit?: number
 ): boolean {
   if (!global.__ALISHAN_FOLLOWUPS_STORE__) {
     global.__ALISHAN_FOLLOWUPS_STORE__ = [...DEFAULT_FOLLOWUPS];
@@ -529,6 +567,9 @@ export function assignQuoteToStaff(
     if (orderNotes) {
       global.__ALISHAN_FOLLOWUPS_STORE__[existingIndex].orderNotes = orderNotes;
     }
+    if (advanceDeposit !== undefined) {
+      global.__ALISHAN_FOLLOWUPS_STORE__[existingIndex].advanceDeposit = advanceDeposit;
+    }
     global.__ALISHAN_FOLLOWUPS_STORE__[existingIndex].lastUpdated = new Date().toISOString();
   } else {
     const newLead: FollowUpLead = {
@@ -544,6 +585,7 @@ export function assignQuoteToStaff(
       priority: 'high',
       managerNote: orderNotes ? `Notes: ${orderNotes}` : 'Follow-up assigned by showroom owner.',
       orderNotes,
+      advanceDeposit,
       scheduledFor: 'Morning 10:30 AM',
       lastUpdated: new Date().toISOString(),
     };

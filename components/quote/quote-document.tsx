@@ -23,6 +23,7 @@ export interface PopulatedQuote {
   customer_name?: string;
   customer_whatsapp: string;
   order_notes?: string;
+  advance_deposit?: number;
   subtotal: number;
   discount_type: 'percentage' | 'flat';
   discount_value: number;
@@ -264,6 +265,22 @@ export function QuoteDocument({ quote }: QuoteDocumentProps) {
               {formatINR(quote.final_price)}
             </span>
           </div>
+
+          {/* Optional Advance Deposit & Balance Due on Delivery */}
+          {Boolean(quote.advance_deposit && quote.advance_deposit > 0) && (
+            <div className="pt-3 border-t border-slate-100 space-y-2">
+              <div className="flex items-center justify-between text-xs sm:text-sm font-semibold text-emerald-800">
+                <span>Advance Token Paid</span>
+                <span>{formatINR(quote.advance_deposit!)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm sm:text-base font-extrabold text-amber-900 bg-amber-50 p-3.5 rounded-2xl border border-amber-200">
+                <span className="uppercase text-xs tracking-wider font-bold">Balance Due on Delivery</span>
+                <span className="font-display font-extrabold text-amber-900">
+                  {formatINR(Math.max(0, quote.final_price - quote.advance_deposit!))}
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Status-Aware Notice Banner */}
           {isClosed ? (
