@@ -15,7 +15,7 @@ export function Daily10pmReportModal({
   totalPendingAmount,
   totalPendingCount,
   todayClosedAmount = 450000,
-  ownerWhatsapp = '9876543210',
+  ownerWhatsapp = '7676482481',
 }: Daily10pmReportModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);

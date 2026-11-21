@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { StaffSession } from '@/lib/types/database';
 import { AdminPinModal } from './admin-pin-modal';
+import { LiveClock } from '@/components/common/live-clock';
 import {
   LayoutDashboard,
   BarChart3,
@@ -94,18 +95,21 @@ export function AdminShell({ children }: AdminShellProps) {
             <span className="font-display font-bold text-white text-sm block leading-none">
               Alishan Furnitures
             </span>
-            <span className="text-[10px] text-indigo-400 font-semibold">
+            <span className="text-[10px] text-indigo-400 font-semibold block">
               Owner Dashboard
             </span>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 transition"
-        >
-          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <LiveClock variant="dark" showSeconds={false} className="py-1 px-2 text-[10px] bg-slate-800/70 border-slate-700/60" />
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 transition"
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* 3. Modern Slate-900 Desktop Sidebar */}
@@ -116,7 +120,7 @@ export function AdminShell({ children }: AdminShellProps) {
       >
         <div className="p-6">
           {/* Logo */}
-          <div className="flex items-center gap-3.5 pb-6 border-b border-slate-800">
+          <div className="flex items-center gap-3.5 pb-5 border-b border-slate-800">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-display text-base font-bold shadow-md shadow-indigo-600/30">
               AF
             </div>
@@ -128,6 +132,11 @@ export function AdminShell({ children }: AdminShellProps) {
                 Furnitures • Owner
               </span>
             </div>
+          </div>
+
+          {/* Current Date & Time Clock in Sidebar */}
+          <div className="mt-4">
+            <LiveClock variant="dark" showSeconds={true} className="w-full justify-center text-[11px]" />
           </div>
 
           {/* Navigation */}

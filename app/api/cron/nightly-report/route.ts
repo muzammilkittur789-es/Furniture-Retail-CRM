@@ -10,7 +10,7 @@ export async function GET(request: Request) {
       year: 'numeric',
     });
 
-    const ownerWhatsapp = process.env.OWNER_WHATSAPP_NUMBER || '9876543210';
+    const ownerWhatsapp = process.env.OWNER_WHATSAPP_NUMBER || '7676482481';
 
     // Compile 10:00 PM Daily Summary
     const message = `*Alishan Furnitures - Daily Closing Report*

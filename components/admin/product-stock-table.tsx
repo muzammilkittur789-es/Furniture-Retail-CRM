@@ -189,7 +189,7 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
         showFeedback(res.error || 'Failed to update stock status', 'error');
       } else {
         showFeedback(
-          nextStatus ? 'Status updated to In Stock' : 'Status updated to Sold (Orange badge)'
+          nextStatus ? 'Status updated to In Stock' : 'Status updated to Sold'
         );
       }
       setUpdatingId(null);
@@ -683,21 +683,21 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                 )}
               </div>
 
-              <div className="pt-3 flex gap-3">
+              <div className="pt-3 flex gap-2.5 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="flex-1 py-3 px-4 rounded-2xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition"
+                  className="flex-1 py-2.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition whitespace-nowrap text-center"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center justify-center gap-1.5 whitespace-nowrap"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>Save to Stock</span>
+                  <Plus className="w-3.5 h-3.5 shrink-0" />
+                  <span className="whitespace-nowrap">Save to Stock</span>
                 </button>
               </div>
             </form>
@@ -864,21 +864,21 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                 )}
               </div>
 
-              <div className="pt-3 flex gap-3">
+              <div className="pt-3 flex gap-2.5 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setEditingProduct(null)}
-                  className="flex-1 py-3 px-4 rounded-2xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition"
+                  className="flex-1 py-2.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition whitespace-nowrap text-center"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center justify-center gap-1.5 whitespace-nowrap"
                 >
-                  <Pencil className="w-4 h-4" />
-                  <span>Update Furniture</span>
+                  <Pencil className="w-3.5 h-3.5 shrink-0" />
+                  <span className="whitespace-nowrap">Update Furniture</span>
                 </button>
               </div>
             </form>
@@ -906,12 +906,12 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
               from Alishan Furnitures catalog? This action cannot be undone.
             </p>
 
-            <div className="flex gap-3">
+            <div className="flex gap-2.5 sm:gap-3">
               <button
                 type="button"
                 disabled={isPending}
                 onClick={() => setDeleteConfirmProduct(null)}
-                className="flex-1 py-3 px-4 rounded-2xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-100 transition"
+                className="flex-1 py-2.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-100 transition whitespace-nowrap text-center"
               >
                 No, Keep Product
               </button>
@@ -919,10 +919,10 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                 type="button"
                 disabled={isPending}
                 onClick={handleConfirmDelete}
-                className="flex-1 py-3 px-4 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md shadow-rose-600/20 active:scale-95 transition flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md shadow-rose-600/20 active:scale-95 transition flex items-center justify-center gap-1.5 whitespace-nowrap"
               >
-                <Trash2 className="w-4 h-4" />
-                <span>Yes, Delete Product</span>
+                <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap">Yes, Delete</span>
               </button>
             </div>
           </div>

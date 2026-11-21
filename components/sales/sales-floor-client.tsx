@@ -9,6 +9,7 @@ import { QuoteCart } from '@/components/sales/quote-cart';
 import { SalesmanFollowupsView } from '@/components/sales/salesman-followups-view';
 import { addProductStockAction } from '@/app/(sales)/sales/actions';
 import { formatINR } from '@/lib/utils';
+import { LiveClock } from '@/components/common/live-clock';
 import { Lock, ShoppingBag, ChevronUp, Armchair, PhoneCall, Plus, Camera, X } from 'lucide-react';
 
 interface SalesFloorClientProps {
@@ -195,6 +196,11 @@ export function SalesFloorClient({
             </div>
           </div>
 
+          {/* Current Date & Time Clock (Tablet & Desktop) */}
+          <div className="hidden sm:flex items-center">
+            <LiveClock variant="light" showSeconds={true} />
+          </div>
+
           {/* Active Sales Staff Session & Lock Action */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {activeStaff ? (
@@ -220,6 +226,11 @@ export function SalesFloorClient({
               <span className="text-xs text-slate-400 italic">Secured</span>
             )}
           </div>
+        </div>
+
+        {/* Current Date & Time Banner (Mobile Screen) */}
+        <div className="sm:hidden flex items-center justify-center py-1 px-4 bg-slate-50 border-t border-slate-100">
+          <LiveClock variant="minimal" showSeconds={false} className="text-[11px]" />
         </div>
       </header>
 
@@ -535,21 +546,21 @@ export function SalesFloorClient({
                 )}
               </div>
 
-              <div className="pt-3 flex gap-3">
+              <div className="pt-3 flex gap-2.5 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="flex-1 py-3 px-4 rounded-2xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition"
+                  className="flex-1 py-2.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition whitespace-nowrap text-center"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isAddingPending}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center justify-center gap-1.5 whitespace-nowrap"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>Add to Floor Stock</span>
+                  <Plus className="w-3.5 h-3.5 shrink-0" />
+                  <span className="whitespace-nowrap">Add to Floor Stock</span>
                 </button>
               </div>
             </form>

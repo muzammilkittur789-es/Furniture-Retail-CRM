@@ -6,6 +6,7 @@ import { formatINR } from '@/lib/utils';
 import { PendingQuotesTable, PendingQuoteRow } from './pending-quotes-table';
 import { Daily10pmReportModal } from './daily-10pm-report-modal';
 import { StaffMember } from '@/lib/store/showroom-store';
+import { LiveClock } from '@/components/common/live-clock';
 import {
   IndianRupee,
   Users,
@@ -193,19 +194,30 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
       {/* Header & Time Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-[10px] uppercase tracking-[0.25em] text-indigo-600 font-bold block mb-1">
-            Alishan Furnitures
-          </span>
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-indigo-600 font-bold block">
+              Alishan Furnitures
+            </span>
+            <span className="text-slate-300 hidden sm:inline">•</span>
+            <LiveClock variant="minimal" showSeconds={false} className="hidden sm:inline-flex" />
+          </div>
           <h1 className="text-2xl sm:text-4xl font-display font-extrabold tracking-tight text-slate-900">
             Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-normal">
             Showroom sales revenue, customer visits, and pending quotations.
           </p>
+          <div className="sm:hidden mt-2">
+            <LiveClock variant="minimal" showSeconds={false} />
+          </div>
         </div>
 
-        {/* Time Filter Segmented Tabs - Mobile-First */}
-        <div className="w-full sm:w-auto grid grid-cols-4 sm:flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs max-w-full">
+        {/* Time Filter Segmented Tabs & Live Clock (Desktop) */}
+        <div className="flex flex-col sm:items-end gap-2.5">
+          <div className="hidden sm:block">
+            <LiveClock variant="light" showSeconds={true} />
+          </div>
+          <div className="w-full sm:w-auto grid grid-cols-4 sm:flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs max-w-full">
           {(['today', 'week', 'month', 'year'] as TimeFilter[]).map((tab) => {
             const isActive = timeFilter === tab;
             return (
@@ -230,6 +242,7 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
               </button>
             );
           })}
+          </div>
         </div>
       </div>
 
