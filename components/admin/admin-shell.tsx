@@ -100,17 +100,14 @@ export function AdminShell({ children }: AdminShellProps) {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <LiveClock variant="dark" showSeconds={false} className="py-1 px-2 text-[10px] bg-slate-800/70 border-slate-700/60" />
-          <button
-            type="button"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 transition active:scale-95"
-            title="Open Menu"
-          >
-            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 transition active:scale-95"
+          title="Open Menu"
+        >
+          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </div>
 
       {/* Mobile Drawer Backdrop */}
@@ -189,7 +186,7 @@ export function AdminShell({ children }: AdminShellProps) {
         {/* Footer / Floor Tablet Link & Admin Profile */}
         <div className="p-6 border-t border-slate-800 space-y-4">
           <Link
-            href="/sales"
+            href="/sales?from=admin"
             className="flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-700/80 bg-slate-800/40 hover:bg-slate-800 text-xs font-semibold text-slate-300 transition"
           >
             <div className="flex items-center gap-2.5">

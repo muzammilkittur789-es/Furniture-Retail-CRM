@@ -11,7 +11,7 @@ import { SalesmanFollowupsView } from '@/components/sales/salesman-followups-vie
 import { addProductStockAction } from '@/app/(sales)/sales/actions';
 import { formatINR } from '@/lib/utils';
 import { LiveClock } from '@/components/common/live-clock';
-import { Lock, ShoppingBag, ChevronUp, Armchair, PhoneCall, Plus, Camera, X, LayoutDashboard } from 'lucide-react';
+import { Lock, ShoppingBag, ChevronUp, Armchair, PhoneCall, Plus, Camera, X, ArrowLeft } from 'lucide-react';
 
 interface SalesFloorClientProps {
   initialProducts: Product[];
@@ -42,6 +42,20 @@ export function SalesFloorClient({
   const [newCategory, setNewCategory] = useState('Living Room');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAddingPending, startAddTransition] = useTransition();
+
+  // Show "Back to Admin" button ONLY if viewer is Showroom Owner/Admin
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const hasAdminParam = params.get('from') === 'admin';
+      const hasAdminSession = Boolean(sessionStorage.getItem('atelier_admin_session'));
+      if (hasAdminParam || hasAdminSession) {
+        setIsAdmin(true);
+      }
+    }
+  }, []);
 
   const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -204,16 +218,18 @@ export function SalesFloorClient({
 
           {/* Actions & Staff Session */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            {/* Go to Admin Panel Link */}
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition active:scale-95 shadow-2xs shrink-0"
-              title="Go to Admin Panel"
-            >
-              <LayoutDashboard className="w-3.5 h-3.5 text-indigo-600" />
-              <span className="hidden sm:inline">Admin Panel</span>
-              <span className="sm:hidden text-[11px]">Admin</span>
-            </Link>
+            {/* Back to Admin Dashboard Button (ONLY visible when Admin/Owner is browsing) */}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition active:scale-95 shadow-2xs shrink-0"
+                title="Back to Admin Dashboard"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-indigo-600" />
+                <span className="hidden sm:inline">Back to Admin</span>
+                <span className="sm:hidden text-[11px]">Admin</span>
+              </Link>
+            )}
 
             {/* Active Sales Staff Session & Lock Action */}
             {activeStaff ? (
