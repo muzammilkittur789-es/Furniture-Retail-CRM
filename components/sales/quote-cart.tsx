@@ -92,9 +92,8 @@ export function QuoteCart({
   // 3. Final Price
   const finalPrice = Math.max(0, subtotal - calculatedDiscountAmount);
 
-  // String formatting rule: 1 item -> Special Discount, >1 items -> Package Discount
-  const discountLabel =
-    totalItemsCount === 1 ? 'Special Discount' : 'Package Discount';
+  // Discount label: clean standard "Discount"
+  const discountLabel = 'Discount';
 
   // 4. WhatsApp Number Validation
   const cleanWhatsappNumber = whatsappNumber.replace(/\D/g, '');

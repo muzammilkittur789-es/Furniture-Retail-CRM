@@ -501,10 +501,7 @@ export async function generateQuotePdfBlob(data: QuotePdfPayload): Promise<Blob>
       color: colorEmeraldText,
     });
 
-    const discLabel =
-      data.discountType === 'percentage'
-        ? `Package Discount`
-        : 'Special Discount';
+    const discLabel = 'Discount';
 
     page.drawText(discLabel, {
       x: margin + 26,

@@ -50,8 +50,7 @@ export function QuoteDocument({ quote }: QuoteDocumentProps) {
 
   const discountSavings = Math.max(0, quote.subtotal - quote.final_price);
 
-  const discountLabel =
-    quote.items.length === 1 ? 'Special Discount' : 'Package Discount';
+  const discountLabel = 'Discount';
 
   const shortRef = quote.id.split('-')[0].toUpperCase();
 
