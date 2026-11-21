@@ -189,17 +189,17 @@ export function QuoteDocument({ quote }: QuoteDocumentProps) {
                         </span>
                       )}
                     </h3>
-                    <p className="text-xs text-slate-500 font-medium truncate">
+                    <p className="text-xs text-slate-500 font-medium line-clamp-1">
                       Material: {item.product.material}
                     </p>
-                    <p className="text-[11px] text-indigo-600 font-mono font-semibold truncate">
-                      Size: {item.product.dimensions}
+                    <p className="text-[11px] text-indigo-600 font-semibold flex flex-wrap items-center gap-x-1.5">
+                      <span className="font-mono">Size: {item.product.dimensions}</span>
+                      {item.product.more_info && (
+                        <span className="text-indigo-700 font-sans font-medium">
+                          • {item.product.more_info}
+                        </span>
+                      )}
                     </p>
-                    {item.product.more_info && (
-                      <p className="text-[11px] text-slate-600 font-medium truncate">
-                        Spec: {item.product.more_info}
-                      </p>
-                    )}
                   </div>
                 </div>
 

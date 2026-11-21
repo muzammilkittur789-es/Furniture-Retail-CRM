@@ -95,6 +95,34 @@ function drawRupeePrice(
 }
 
 /**
+ * Fits text within a given point width in the PDF, truncating only if it genuinely overflows.
+ */
+function fitTextToWidth(
+  font: PDFFont,
+  text: string,
+  fontSize: number,
+  maxWidth: number
+): string {
+  if (font.widthOfTextAtSize(text, fontSize) <= maxWidth) {
+    return text;
+  }
+  let low = 0;
+  let high = text.length;
+  let best = text;
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    const candidate = text.substring(0, mid).trimEnd() + '...';
+    if (font.widthOfTextAtSize(candidate, fontSize) <= maxWidth) {
+      best = candidate;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  return best;
+}
+
+/**
  * Fetches and embeds an image URL or base64 into the PDF document.
  */
 async function fetchAndEmbedImage(
@@ -343,12 +371,36 @@ export async function generateQuotePdfBlob(data: QuotePdfPayload): Promise<Blob>
     const item = data.items[i];
     const qty = item.quantity && item.quantity > 1 ? item.quantity : 1;
     const itemTotal = item.price * qty;
-    const itemRowH = 68;
+
+    const thumbSize = 52;
+    const textStartX = margin + thumbSize + 14;
+    const maxDetailWidth = width - margin - 110 - textStartX;
+
+    // Determine spec lines - never vanish More Info
+    const specParts: string[] = [];
+    if (item.dimensions) specParts.push(`Size: ${item.dimensions}`);
+    if (item.more_info) specParts.push(item.more_info);
+
+    let specLine1 = '';
+    let specLine2 = '';
+
+    if (item.dimensions && item.more_info) {
+      const combinedSpec = `Size: ${item.dimensions}  •  ${item.more_info}`;
+      if (fontBold.widthOfTextAtSize(combinedSpec, 8.5) <= maxDetailWidth) {
+        specLine1 = combinedSpec;
+      } else {
+        specLine1 = `Size: ${item.dimensions}`;
+        specLine2 = fitTextToWidth(fontBold, item.more_info, 8.0, maxDetailWidth);
+      }
+    } else if (specParts.length > 0) {
+      specLine1 = fitTextToWidth(fontBold, specParts[0], 8.5, maxDetailWidth);
+    }
+
+    const itemRowH = specLine2 ? 74 : 66;
 
     // A. Embed Thumbnail Image
     const thumbX = margin;
     const thumbY = currentY - itemRowH + 12;
-    const thumbSize = 52;
 
     const embeddedImg = await fetchAndEmbedImage(pdfDoc, item.image_url);
     if (embeddedImg) {
@@ -388,11 +440,10 @@ export async function generateQuotePdfBlob(data: QuotePdfPayload): Promise<Blob>
     }
 
     // B. Item Details (Middle)
-    const textStartX = margin + thumbSize + 14;
-
     // Name (with (xN) if quantity > 1)
     const displayName = qty > 1 ? `${item.name} (x${qty})` : item.name;
-    page.drawText(displayName, {
+    const fittedName = fitTextToWidth(fontBold, displayName, 13, maxDetailWidth);
+    page.drawText(fittedName, {
       x: textStartX,
       y: currentY - 12,
       size: 13,
@@ -403,9 +454,8 @@ export async function generateQuotePdfBlob(data: QuotePdfPayload): Promise<Blob>
     // Material & Unit Price Note if qty > 1
     const unitPriceNote = qty > 1 ? `  •  ₹${Math.round(item.price).toLocaleString('en-IN')} each` : '';
     const materialText = `Material: ${item.material}${unitPriceNote}`;
-    const truncatedMat =
-      materialText.length > 55 ? materialText.substring(0, 53) + '...' : materialText;
-    page.drawText(truncatedMat, {
+    const fittedMat = fitTextToWidth(fontRegular, materialText, 8.5, maxDetailWidth);
+    page.drawText(fittedMat, {
       x: textStartX,
       y: currentY - 26,
       size: 8.5,
@@ -413,17 +463,21 @@ export async function generateQuotePdfBlob(data: QuotePdfPayload): Promise<Blob>
       color: colorSlate,
     });
 
-    // Size / Dimensions & More Info
-    const specParts: string[] = [];
-    if (item.dimensions) specParts.push(`Size: ${item.dimensions}`);
-    if (item.more_info) specParts.push(item.more_info);
-    if (specParts.length > 0) {
-      const specLine = specParts.join('  •  ');
-      const truncatedSpec = specLine.length > 55 ? specLine.substring(0, 52) + '...' : specLine;
-      page.drawText(truncatedSpec, {
+    // Size / Dimensions & More Info - Drawn in full
+    if (specLine1) {
+      page.drawText(specLine1, {
         x: textStartX,
-        y: currentY - 40,
+        y: specLine2 ? currentY - 38 : currentY - 40,
         size: 8.5,
+        font: fontBold,
+        color: colorIndigo,
+      });
+    }
+    if (specLine2) {
+      page.drawText(specLine2, {
+        x: textStartX,
+        y: currentY - 49,
+        size: 8.0,
         font: fontBold,
         color: colorIndigo,
       });
