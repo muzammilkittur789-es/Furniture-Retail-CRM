@@ -153,7 +153,7 @@ export function AdminShell({ children }: AdminShellProps) {
 
           {/* Current Date & Time Clock in Sidebar */}
           <div className="mt-4">
-            <LiveClock variant="dark" showSeconds={true} className="w-full justify-center text-[11px]" />
+            <LiveClock variant="dark" showSeconds={false} className="w-full justify-center text-[11px]" />
           </div>
 
           {/* Navigation */}

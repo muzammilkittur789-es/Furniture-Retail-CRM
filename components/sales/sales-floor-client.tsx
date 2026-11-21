@@ -213,7 +213,7 @@ export function SalesFloorClient({
 
           {/* Current Date & Time Clock (Tablet & Desktop) */}
           <div className="hidden sm:flex items-center">
-            <LiveClock variant="light" showSeconds={true} />
+            <LiveClock variant="button" showSeconds={false} />
           </div>
 
           {/* Actions & Staff Session */}
@@ -258,8 +258,8 @@ export function SalesFloorClient({
         </div>
 
         {/* Current Date & Time Banner (Mobile Screen) */}
-        <div className="sm:hidden flex items-center justify-center py-1 px-4 bg-slate-50 border-t border-slate-100">
-          <LiveClock variant="minimal" showSeconds={false} className="text-[11px]" />
+        <div className="sm:hidden flex items-center justify-center py-2 px-4 bg-slate-50 border-t border-slate-100">
+          <LiveClock variant="button" showSeconds={false} className="py-1 px-3 text-[11px]" />
         </div>
       </header>
 

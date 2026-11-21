@@ -207,7 +207,7 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
 
         {/* Time Filter Segmented Tabs & Live Clock (Button-like Background) */}
         <div className="flex flex-col sm:items-end gap-2.5">
-          <LiveClock variant="button" showSeconds={true} className="self-start sm:self-auto" />
+          <LiveClock variant="button" showSeconds={false} className="self-start sm:self-auto" />
           <div className="w-full sm:w-auto grid grid-cols-4 sm:flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs max-w-full">
           {(['today', 'week', 'month', 'year'] as TimeFilter[]).map((tab) => {
             const isActive = timeFilter === tab;
