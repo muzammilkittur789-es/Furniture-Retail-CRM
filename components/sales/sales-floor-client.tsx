@@ -10,7 +10,6 @@ import { QuoteCart } from '@/components/sales/quote-cart';
 import { SalesmanFollowupsView } from '@/components/sales/salesman-followups-view';
 import { addProductStockAction } from '@/app/(sales)/sales/actions';
 import { formatINR } from '@/lib/utils';
-import { LiveClock } from '@/components/common/live-clock';
 import { Lock, ShoppingBag, ChevronUp, Armchair, PhoneCall, Plus, Camera, X, ArrowLeft } from 'lucide-react';
 
 interface SalesFloorClientProps {
@@ -211,11 +210,6 @@ export function SalesFloorClient({
             </div>
           </div>
 
-          {/* Current Date & Time Clock (Tablet & Desktop) */}
-          <div className="hidden sm:flex items-center">
-            <LiveClock variant="button" showSeconds={false} />
-          </div>
-
           {/* Actions & Staff Session */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {/* Back to Admin Dashboard Button (ONLY visible when Admin/Owner is browsing) */}
@@ -255,11 +249,6 @@ export function SalesFloorClient({
               <span className="text-xs text-slate-400 italic">Secured</span>
             )}
           </div>
-        </div>
-
-        {/* Current Date & Time Banner (Mobile Screen) */}
-        <div className="sm:hidden flex items-center justify-center py-2 px-4 bg-slate-50 border-t border-slate-100">
-          <LiveClock variant="button" showSeconds={false} className="py-1 px-3 text-[11px]" />
         </div>
       </header>
 
