@@ -65,6 +65,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     price: 385000.0,
     material: 'Italian Bouclé & Smoked Oak Plinth',
     dimensions: '340cm x 180cm x 78cm',
+    more_info: '3-Seater L-Shape with Left Chaise',
     category: 'Living Room',
     image_url:
       'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
@@ -76,6 +77,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     price: 245000.0,
     material: 'Honed Carrara Marble & Brushed Brass Trestle',
     dimensions: '240cm x 110cm x 76cm',
+    more_info: '6-Seater Solid Marble Top',
     category: 'Dining Room',
     image_url:
       'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80',
@@ -87,6 +89,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     price: 115000.0,
     material: 'Full-Grain Tuscan Leather & American Walnut',
     dimensions: '88cm x 92cm x 82cm',
+    more_info: 'Single Seater Accent Armchair',
     category: 'Living Room',
     image_url:
       'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1200&q=80',
@@ -98,6 +101,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     price: 290000.0,
     material: 'Solid White American Ash & Belgian Linen',
     dimensions: '215cm x 205cm x 95cm',
+    more_info: 'King Size (Fits 72" x 78" Mattress)',
     category: 'Bedroom',
     image_url:
       'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
@@ -109,6 +113,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     price: 98000.0,
     material: 'Honed Natural Travertine Slab',
     dimensions: '130cm x 80cm x 36cm',
+    more_info: 'Natural Stone Top',
     category: 'Coffee Tables & Storage',
     image_url:
       'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=1200&q=80',
@@ -120,6 +125,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     price: 175000.0,
     material: 'Fumed Oak Veneer & Ribbed Cast Glass',
     dimensions: '200cm x 50cm x 75cm',
+    more_info: '4-Door Storage Cabinet',
     category: 'Coffee Tables & Storage',
     image_url:
       'https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&w=1200&q=80',
@@ -391,6 +397,7 @@ export function addNewProduct(productData: {
   price: number;
   material: string;
   dimensions: string;
+  more_info?: string;
   image_url?: string;
   category?: string;
   is_active?: boolean;
@@ -401,6 +408,7 @@ export function addNewProduct(productData: {
     price: Number(productData.price),
     material: productData.material.trim(),
     dimensions: productData.dimensions.trim(),
+    more_info: productData.more_info?.trim() || undefined,
     category: productData.category?.trim() || 'Living Room',
     image_url:
       productData.image_url?.trim() ||

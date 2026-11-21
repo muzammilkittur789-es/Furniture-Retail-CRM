@@ -35,6 +35,7 @@ const DEMO_FALLBACK_QUOTE: PopulatedQuote = {
         name: 'The Florence Bouclé Sectional',
         material: 'Italian Bouclé & Smoked Oak Plinth',
         dimensions: '340cm x 180cm x 78cm',
+        more_info: '3-Seater L-Shape with Left Chaise',
         image_url:
           'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
       },
@@ -47,6 +48,7 @@ const DEMO_FALLBACK_QUOTE: PopulatedQuote = {
         name: 'Verona Carrara Marble Dining Table',
         material: 'Honed Carrara Marble & Brushed Brass Trestle',
         dimensions: '240cm x 110cm x 76cm',
+        more_info: '6-Seater Solid Marble Top',
         image_url:
           'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80',
       },
@@ -102,6 +104,7 @@ export default async function CustomerQuotePage({ params }: QuotePageProps) {
               name,
               material,
               dimensions,
+              more_info,
               image_url
             )
           )

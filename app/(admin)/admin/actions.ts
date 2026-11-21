@@ -149,6 +149,7 @@ export async function addProductStockAction(productData: {
   price: number;
   material: string;
   dimensions: string;
+  more_info?: string;
   image_url?: string;
   category?: string;
   is_active?: boolean;
@@ -169,6 +170,7 @@ export async function addProductStockAction(productData: {
             price: Number(productData.price),
             material: productData.material,
             dimensions: productData.dimensions,
+            more_info: productData.more_info || null,
             image_url: newProd.image_url,
             is_active: true,
             category: newProd.category,

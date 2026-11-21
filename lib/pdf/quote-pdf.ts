@@ -4,6 +4,7 @@ export interface QuotePdfItem {
   name: string;
   material: string;
   dimensions?: string;
+  more_info?: string;
   price: number;
   quantity?: number;
   image_url?: string;
@@ -412,9 +413,14 @@ export async function generateQuotePdfBlob(data: QuotePdfPayload): Promise<Blob>
       color: colorSlate,
     });
 
-    // Size / Dimensions
-    if (item.dimensions) {
-      page.drawText(`Size: ${item.dimensions}`, {
+    // Size / Dimensions & More Info
+    const specParts: string[] = [];
+    if (item.dimensions) specParts.push(`Size: ${item.dimensions}`);
+    if (item.more_info) specParts.push(item.more_info);
+    if (specParts.length > 0) {
+      const specLine = specParts.join('  •  ');
+      const truncatedSpec = specLine.length > 55 ? specLine.substring(0, 52) + '...' : specLine;
+      page.drawText(truncatedSpec, {
         x: textStartX,
         y: currentY - 40,
         size: 8.5,

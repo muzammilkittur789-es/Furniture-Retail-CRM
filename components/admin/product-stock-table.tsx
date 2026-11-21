@@ -43,6 +43,7 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
   const [newPrice, setNewPrice] = useState('');
   const [newMaterial, setNewMaterial] = useState('');
   const [newDimensions, setNewDimensions] = useState('');
+  const [newMoreInfo, setNewMoreInfo] = useState('');
   const [newImageUrl, setNewImageUrl] = useState('');
   const [newCategory, setNewCategory] = useState('Living Room');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -125,6 +126,7 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
         price: Number(newPrice),
         material: newMaterial,
         dimensions: newDimensions,
+        more_info: newMoreInfo.trim() || undefined,
         image_url: newImageUrl,
         category: newCategory,
         is_active: true,
@@ -137,6 +139,7 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
         setNewPrice('');
         setNewMaterial('');
         setNewDimensions('');
+        setNewMoreInfo('');
         setNewImageUrl('');
         setNewCategory('Living Room');
         showFeedback(`"${res.product.name}" added to stock successfully!`);
@@ -228,6 +231,11 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                     {p.name}
                   </h3>
                   <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{p.material}</p>
+                  {p.more_info && (
+                    <span className="inline-block px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-semibold border border-slate-200 mt-1 line-clamp-1">
+                      {p.more_info}
+                    </span>
+                  )}
                   <p className="text-sm font-display font-extrabold text-slate-900 mt-1">
                     {formatINR(Number(p.price))}
                   </p>
@@ -313,8 +321,13 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                     <td className="py-4 px-6 text-xs text-slate-600 max-w-xs font-medium">
                       {p.material}
                     </td>
-                    <td className="py-4 px-6 text-xs font-mono text-slate-500">
-                      {p.dimensions}
+                    <td className="py-4 px-6 text-xs text-slate-500">
+                      <div className="font-mono">{p.dimensions}</div>
+                      {p.more_info && (
+                        <span className="inline-block mt-1 text-[11px] font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                          {p.more_info}
+                        </span>
+                      )}
                     </td>
                     <td className="py-4 px-6 text-right font-display text-base font-extrabold text-slate-900 whitespace-nowrap">
                       {formatINR(Number(p.price))}
@@ -458,6 +471,19 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                   value={newMaterial}
                   onChange={(e) => setNewMaterial(e.target.value)}
                   placeholder="e.g. Solid European White Oak &amp; Natural Oil Finish"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  More Info
+                </label>
+                <input
+                  type="text"
+                  value={newMoreInfo}
+                  onChange={(e) => setNewMoreInfo(e.target.value)}
+                  placeholder="e.g. King Size / 3-Seater / Reversible Chaise / 6-Seater"
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
                 />
               </div>

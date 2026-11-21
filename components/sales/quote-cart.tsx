@@ -186,6 +186,7 @@ Alishan Furnitures`;
           name: p.name,
           material: p.material,
           dimensions: p.dimensions,
+          more_info: p.more_info,
           price: Number(p.price),
           quantity: getItemQty(p.id),
           image_url: p.image_url,
@@ -420,6 +421,11 @@ Alishan Furnitures`;
                         <h4 className="text-xs font-display font-bold text-slate-900 truncate">
                           {item.name}
                         </h4>
+                        {item.more_info && (
+                          <span className="text-[10px] text-slate-500 font-medium truncate block">
+                            {item.more_info}
+                          </span>
+                        )}
                         <div className="flex items-baseline gap-1.5 mt-0.5">
                           <span className="text-xs font-bold text-indigo-600">
                             {formatINR(lineTotal)}

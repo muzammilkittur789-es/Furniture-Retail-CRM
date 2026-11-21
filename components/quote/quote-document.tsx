@@ -13,6 +13,7 @@ export interface PopulatedQuoteItem {
     name: string;
     material: string;
     dimensions: string;
+    more_info?: string;
     image_url: string;
   };
 }
@@ -195,6 +196,11 @@ export function QuoteDocument({ quote }: QuoteDocumentProps) {
                     <p className="text-[11px] text-indigo-600 font-mono font-semibold truncate">
                       Size: {item.product.dimensions}
                     </p>
+                    {item.product.more_info && (
+                      <p className="text-[11px] text-slate-600 font-medium truncate">
+                        Spec: {item.product.more_info}
+                      </p>
+                    )}
                   </div>
                 </div>
 

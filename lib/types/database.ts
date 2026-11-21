@@ -49,6 +49,7 @@ export interface Product {
   price: number;
   material: string;
   dimensions: string;
+  more_info?: string;
   image_url: string;
   is_active: boolean;
   category?: string;

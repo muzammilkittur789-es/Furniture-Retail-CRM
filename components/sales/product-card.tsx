@@ -186,6 +186,16 @@ export function ProductCard({ product, isSelected, onToggle }: ProductCardProps)
                 {product.dimensions}
               </span>
             </div>
+            {product.more_info && (
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-700 uppercase tracking-wider text-[10px]">
+                  Spec:
+                </span>
+                <span className="line-clamp-1 text-slate-700 font-semibold bg-slate-100 px-2 py-0.5 rounded text-[11px] border border-slate-200">
+                  {product.more_info}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
