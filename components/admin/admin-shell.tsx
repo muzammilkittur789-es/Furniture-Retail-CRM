@@ -105,33 +105,53 @@ export function AdminShell({ children }: AdminShellProps) {
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 transition"
+            className="p-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 transition active:scale-95"
+            title="Open Menu"
           >
             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {/* 3. Modern Slate-900 Desktop Sidebar */}
+      {/* Mobile Drawer Backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="md:hidden fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200"
+        />
+      )}
+
+      {/* 3. Modern Slate-900 Sidebar (Desktop Sticky Left, Mobile Slide from Right) */}
       <aside
-        className={`fixed md:sticky top-0 z-40 h-screen w-72 bg-slate-900 text-slate-200 border-r border-slate-800/80 flex flex-col justify-between transition-transform duration-300 ${
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        className={`fixed top-0 right-0 z-50 h-screen w-72 bg-slate-900 text-slate-200 border-l md:border-l-0 md:border-r border-slate-800/80 flex flex-col justify-between transition-transform duration-300 shadow-2xl md:shadow-none md:static md:sticky md:top-0 md:left-0 ${
+          isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'
         }`}
       >
         <div className="p-6">
-          {/* Logo */}
-          <div className="flex items-center gap-3.5 pb-5 border-b border-slate-800">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-display text-base font-bold shadow-md shadow-indigo-600/30">
-              AF
+          {/* Logo & Mobile Close Button */}
+          <div className="flex items-center justify-between pb-5 border-b border-slate-800">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-display text-base font-bold shadow-md shadow-indigo-600/30">
+                AF
+              </div>
+              <div>
+                <h1 className="font-display text-lg font-bold tracking-wide text-white leading-none">
+                  ALISHAN
+                </h1>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-bold block mt-1">
+                  Furnitures • Owner
+                </span>
+              </div>
             </div>
-            <div>
-              <h1 className="font-display text-lg font-bold tracking-wide text-white leading-none">
-                ALISHAN
-              </h1>
-              <span className="text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-bold block mt-1">
-                Furnitures • Owner
-              </span>
-            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="md:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              title="Close Menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Current Date & Time Clock in Sidebar */}

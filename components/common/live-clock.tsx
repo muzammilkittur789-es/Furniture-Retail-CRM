@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock } from 'lucide-react';
 
 interface LiveClockProps {
-  variant?: 'light' | 'dark' | 'minimal';
+  variant?: 'light' | 'dark' | 'minimal' | 'button';
   showSeconds?: boolean;
   className?: string;
 }
@@ -100,22 +100,22 @@ export function LiveClock({
     );
   }
 
-  // Light variant (default)
+  // Button / Light variant (clean tactile button-like card)
   return (
     <div
-      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs text-xs text-slate-700 ${className}`}
+      className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs hover:border-slate-300 transition-all text-xs text-slate-700 select-none ${className}`}
     >
-      <div className="flex items-center gap-1.5 text-indigo-600 font-medium">
-        <Calendar className="w-3.5 h-3.5" />
-        <span className="text-[11px] text-slate-800 font-semibold">
+      <div className="flex items-center gap-1.5 text-indigo-600 font-medium shrink-0">
+        <Calendar className="w-3.5 h-3.5 shrink-0" />
+        <span className="text-[11px] text-slate-800 font-semibold whitespace-nowrap">
           <span className="hidden sm:inline">{dayName}, </span>
           {dayDate}
         </span>
       </div>
       <span className="text-slate-300 font-bold">•</span>
-      <div className="flex items-center gap-1.5 text-emerald-600 font-semibold font-mono tracking-tight">
-        <Clock className="w-3.5 h-3.5" />
-        <span className="text-[11px] text-slate-900">{timeStr}</span>
+      <div className="flex items-center gap-1.5 text-emerald-600 font-semibold font-mono tracking-tight shrink-0">
+        <Clock className="w-3.5 h-3.5 shrink-0" />
+        <span className="text-[11px] text-slate-900 whitespace-nowrap">{timeStr}</span>
       </div>
     </div>
   );

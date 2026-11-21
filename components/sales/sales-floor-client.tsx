@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useRef, useTransition } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Product, StaffSession, FollowUpLead } from '@/lib/types/database';
 import { PinPadModal } from '@/components/sales/pin-pad-modal';
 import { ProductGrid } from '@/components/sales/product-grid';
@@ -10,7 +11,7 @@ import { SalesmanFollowupsView } from '@/components/sales/salesman-followups-vie
 import { addProductStockAction } from '@/app/(sales)/sales/actions';
 import { formatINR } from '@/lib/utils';
 import { LiveClock } from '@/components/common/live-clock';
-import { Lock, ShoppingBag, ChevronUp, Armchair, PhoneCall, Plus, Camera, X } from 'lucide-react';
+import { Lock, ShoppingBag, ChevronUp, Armchair, PhoneCall, Plus, Camera, X, LayoutDashboard } from 'lucide-react';
 
 interface SalesFloorClientProps {
   initialProducts: Product[];
@@ -201,8 +202,20 @@ export function SalesFloorClient({
             <LiveClock variant="light" showSeconds={true} />
           </div>
 
-          {/* Active Sales Staff Session & Lock Action */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {/* Actions & Staff Session */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Go to Admin Panel Link */}
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition active:scale-95 shadow-2xs shrink-0"
+              title="Go to Admin Panel"
+            >
+              <LayoutDashboard className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden sm:inline">Admin Panel</span>
+              <span className="sm:hidden text-[11px]">Admin</span>
+            </Link>
+
+            {/* Active Sales Staff Session & Lock Action */}
             {activeStaff ? (
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-800">
@@ -300,7 +313,7 @@ export function SalesFloorClient({
                   className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/20 active:scale-95 transition"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>+ Add New Stock</span>
+                  <span>Add New Stock</span>
                 </button>
               </div>
 

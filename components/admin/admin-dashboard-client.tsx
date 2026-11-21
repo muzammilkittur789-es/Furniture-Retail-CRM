@@ -194,29 +194,20 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
       {/* Header & Time Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-indigo-600 font-bold block">
-              Alishan Furnitures
-            </span>
-            <span className="text-slate-300 hidden sm:inline">•</span>
-            <LiveClock variant="minimal" showSeconds={false} className="hidden sm:inline-flex" />
-          </div>
+          <span className="text-[10px] uppercase tracking-[0.25em] text-indigo-600 font-bold block mb-1">
+            Alishan Furnitures
+          </span>
           <h1 className="text-2xl sm:text-4xl font-display font-extrabold tracking-tight text-slate-900">
             Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-normal">
             Showroom sales revenue, customer visits, and pending quotations.
           </p>
-          <div className="sm:hidden mt-2">
-            <LiveClock variant="minimal" showSeconds={false} />
-          </div>
         </div>
 
-        {/* Time Filter Segmented Tabs & Live Clock (Desktop) */}
+        {/* Time Filter Segmented Tabs & Live Clock (Button-like Background) */}
         <div className="flex flex-col sm:items-end gap-2.5">
-          <div className="hidden sm:block">
-            <LiveClock variant="light" showSeconds={true} />
-          </div>
+          <LiveClock variant="button" showSeconds={true} className="self-start sm:self-auto" />
           <div className="w-full sm:w-auto grid grid-cols-4 sm:flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs max-w-full">
           {(['today', 'week', 'month', 'year'] as TimeFilter[]).map((tab) => {
             const isActive = timeFilter === tab;
@@ -246,117 +237,117 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
         </div>
       </div>
 
-      {/* 4 Interactive KPI Cards - Mobile-First Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
+      {/* 4 Interactive KPI Cards - Mobile-First 2 Cards Per Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-5">
         {/* Card 1: Revenue (Interactive: Tapping opens which products got sold) */}
         <div
           onClick={() => setIsSoldModalOpen(true)}
-          className="group relative bg-white border border-slate-100 hover:border-emerald-300 rounded-3xl p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between"
+          className="group relative bg-white border border-slate-100 hover:border-emerald-300 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between"
           title="Tap to see which products got sold"
         >
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-11 h-11 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-                <IndianRupee className="w-5 h-5 stroke-[2.5]" />
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform shrink-0">
+                <IndianRupee className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
               </div>
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-0.5">
-                <PackageCheck className="w-3.5 h-3.5" />
-                Sold Deals
+              <span className="text-[9px] sm:text-[11px] font-bold text-emerald-700 bg-emerald-50 px-1.5 sm:px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-0.5 shrink-0">
+                <PackageCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span>Sold</span>
               </span>
             </div>
 
-            <span className="text-xs font-semibold text-slate-500 block mb-1">
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-500 block mb-0.5 sm:mb-1 truncate">
               {timeFilterLabels[timeFilter]}&apos;s Revenue
             </span>
-            <p className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 tracking-tight">
+            <p className="text-lg sm:text-2xl lg:text-3xl font-display font-extrabold text-slate-900 tracking-tight truncate">
               {formatINR(revenue)}
             </p>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-emerald-700 font-bold group-hover:text-emerald-800">
-            <span>Tap to see products sold</span>
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-xs text-emerald-700 font-bold group-hover:text-emerald-800">
+            <span className="truncate">View Sold</span>
+            <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform shrink-0" />
           </div>
         </div>
 
         {/* Card 2: Customers Visited */}
-        <div className="bg-white border border-slate-100 rounded-3xl p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] flex flex-col justify-between">
+        <div className="bg-white border border-slate-100 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-11 h-11 rounded-2xl bg-sky-500 text-white flex items-center justify-center font-bold shadow-md shadow-sky-500/20">
-                <Users className="w-5 h-5 stroke-[2.5]" />
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-sky-500 text-white flex items-center justify-center font-bold shadow-md shadow-sky-500/20 shrink-0">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
               </div>
-              <span className="text-[11px] font-bold text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200">
+              <span className="text-[9px] sm:text-[11px] font-bold text-sky-700 bg-sky-50 px-1.5 sm:px-2.5 py-0.5 rounded-full border border-sky-200 shrink-0">
                 Walk-ins
               </span>
             </div>
 
-            <span className="text-xs font-semibold text-slate-500 block mb-1">
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-500 block mb-0.5 sm:mb-1 truncate">
               Customers Visited
             </span>
-            <p className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 tracking-tight">
+            <p className="text-lg sm:text-2xl lg:text-3xl font-display font-extrabold text-slate-900 tracking-tight">
               {customersVisited}
             </p>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-400 font-medium">
-            Distinct showroom visits & inquiries
+          <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-xs text-slate-400 font-medium truncate">
+            Showroom inquiries
           </div>
         </div>
 
         {/* Card 3: Quotes Generated (Interactive: Tapping directs to Quotes Table) */}
         <div
           onClick={handleScrollToQuotesTable}
-          className="group relative bg-white border border-slate-100 hover:border-indigo-300 rounded-3xl p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between"
+          className="group relative bg-white border border-slate-100 hover:border-indigo-300 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between"
           title="Tap to jump to quotes table"
         >
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-11 h-11 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-transform">
-                <FileText className="w-5 h-5 stroke-[2.5]" />
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-transform shrink-0">
+                <FileText className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
               </div>
-              <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200 flex items-center gap-0.5">
-                <ArrowUpRight className="w-3.5 h-3.5" />
+              <span className="text-[9px] sm:text-[11px] font-bold text-indigo-700 bg-indigo-50 px-1.5 sm:px-2.5 py-0.5 rounded-full border border-indigo-200 flex items-center gap-0.5 shrink-0">
+                <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 Active
               </span>
             </div>
 
-            <span className="text-xs font-semibold text-slate-500 block mb-1">
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-500 block mb-0.5 sm:mb-1 truncate">
               Quotes Generated
             </span>
-            <p className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 tracking-tight">
+            <p className="text-lg sm:text-2xl lg:text-3xl font-display font-extrabold text-slate-900 tracking-tight">
               {quotesGenerated}
             </p>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-indigo-600 font-bold group-hover:text-indigo-800">
-            <span>Tap to view quotes table</span>
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-xs text-indigo-600 font-bold group-hover:text-indigo-800">
+            <span className="truncate">View Quotes</span>
+            <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform shrink-0" />
           </div>
         </div>
 
         {/* Card 4: Pending Amount */}
-        <div className="bg-white border border-slate-100 rounded-3xl p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] flex flex-col justify-between">
+        <div className="bg-white border border-slate-100 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-11 h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/20">
-                <Clock className="w-5 h-5 stroke-[2.5]" />
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/20 shrink-0">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
               </div>
-              <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+              <span className="text-[9px] sm:text-[11px] font-bold text-amber-700 bg-amber-50 px-1.5 sm:px-2.5 py-0.5 rounded-full border border-amber-200 shrink-0">
                 Waiting
               </span>
             </div>
 
-            <span className="text-xs font-semibold text-slate-500 block mb-1">
-              Pending Quotes Amount
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-500 block mb-0.5 sm:mb-1 truncate">
+              Pending Amount
             </span>
-            <p className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 tracking-tight">
+            <p className="text-lg sm:text-2xl lg:text-3xl font-display font-extrabold text-slate-900 tracking-tight truncate">
               {formatINR(pendingAmount)}
             </p>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-400 font-medium">
-            Awaiting client confirmation
+          <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-xs text-slate-400 font-medium truncate">
+            Awaiting confirmation
           </div>
         </div>
       </div>
