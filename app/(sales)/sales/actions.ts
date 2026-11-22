@@ -10,6 +10,7 @@ import {
   assignQuoteToStaff,
   markFollowUpContacted,
   getAllStaffMembers,
+  saveNewQuote,
 } from '@/lib/store/showroom-store';
 import { revalidatePath } from 'next/cache';
 
@@ -129,7 +130,7 @@ export async function createQuote(
     if (!isSupabaseConfigured()) {
       // Instant mock quote ID for rapid offline / demo testing
       const mockQuoteId = 'e0eebc99-9c0b-4ef8-bb6d-' + Date.now().toString().slice(-12);
-      
+
       // Lock all products in this quote for 24 hours
       lockProductsFor24Hours(
         items.map((it) => ({ productId: it.productId, name: it.name })),
@@ -148,6 +149,52 @@ export async function createQuote(
         payload.orderNotes?.trim(),
         payload.advanceDeposit
       );
+
+      // Save into in-memory quotes store
+      saveNewQuote({
+        id: mockQuoteId,
+        created_at: new Date().toISOString(),
+        customer_name: customerName?.trim() || undefined,
+        customer_whatsapp: cleanWhatsapp,
+        subtotal,
+        discount_type: discountType,
+        discount_value: discountValue,
+        final_price: finalPrice,
+        advance_deposit: payload.advanceDeposit,
+        order_notes: payload.orderNotes?.trim() || undefined,
+        status: 'pending',
+        staffName: dynamicStaffName,
+        itemsSummary,
+        itemsCount: items.length,
+        staff: currentStaff ? { id: currentStaff.id, name: currentStaff.name, role: currentStaff.role } : undefined,
+        items: items.map((it, idx) => {
+          const fullProd = allProducts.find((p) => p.id === it.productId);
+          return {
+            id: `item-${Date.now()}-${idx}`,
+            price_at_time: it.priceAtTime,
+            quantity: it.quantity,
+            product: {
+              id: it.productId,
+              name: it.name,
+              material: fullProd?.material || 'Handcrafted Premium Finish',
+              dimensions: fullProd?.dimensions || 'Standard Dimensions',
+              more_info: fullProd?.more_info,
+              image_url: fullProd?.image_url,
+            },
+          };
+        }),
+        quote_items: items.map((it, idx) => {
+          const fullProd = allProducts.find((p) => p.id === it.productId);
+          return {
+            id: `item-${Date.now()}-${idx}`,
+            price_at_time: it.priceAtTime,
+            product: {
+              name: it.name,
+              image_url: fullProd?.image_url,
+            },
+          };
+        }),
+      });
 
       revalidatePath('/sales');
       revalidatePath('/admin');

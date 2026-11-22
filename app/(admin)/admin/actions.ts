@@ -20,6 +20,8 @@ import {
   assignFollowUpLead,
   assignQuoteToStaff,
   releaseProductHoldByQuoteId,
+  updateQuoteStatusInStore,
+  getQuoteById,
 } from '@/lib/store/showroom-store';
 
 const ADMIN_SEED_PIN = '1234';
@@ -112,8 +114,19 @@ export async function updateQuoteStatus(
       }
     }
 
+    // Sync status in in-memory store
+    updateQuoteStatusInStore(quoteId, newStatus);
+
     // Auto-mark products as sold & release hold when deal is closed
     if (newStatus === 'closed') {
+      const q = getQuoteById(quoteId);
+      if (q && q.items) {
+        q.items.forEach((item) => {
+          if (item.product?.id) {
+            toggleProductActive(item.product.id, false);
+          }
+        });
+      }
       if ((global as any).__ALISHAN_PRODUCT_HOLDS__) {
         const held = (global as any).__ALISHAN_PRODUCT_HOLDS__.filter((h: any) => h.quoteId === quoteId);
         held.forEach((h: any) => {

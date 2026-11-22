@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { createServerClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import { QuoteDocument, PopulatedQuote } from '@/components/quote/quote-document';
 import { Metadata } from 'next';
+import { getQuoteById } from '@/lib/store/showroom-store';
 
 interface QuotePageProps {
   params: {
@@ -140,11 +141,43 @@ export default async function CustomerQuotePage({ params }: QuotePageProps) {
   }
 
   if (!formattedQuote) {
-    // If quote is requested during local demo or ID matches demo
-    formattedQuote = {
-      ...DEMO_FALLBACK_QUOTE,
-      id: id || DEMO_FALLBACK_QUOTE.id,
-    };
+    const stored = getQuoteById(id);
+    if (stored) {
+      formattedQuote = {
+        id: stored.id,
+        customer_name: stored.customer_name,
+        customer_whatsapp: stored.customer_whatsapp,
+        order_notes: stored.order_notes,
+        advance_deposit: stored.advance_deposit,
+        subtotal: stored.subtotal,
+        discount_type: stored.discount_type || 'percentage',
+        discount_value: stored.discount_value || 0,
+        final_price: stored.final_price,
+        status: stored.status,
+        created_at: stored.created_at,
+        staff: stored.staff || null,
+        items: stored.items.map((item, idx) => ({
+          id: item.id || `item-${idx}`,
+          price_at_time: item.price_at_time,
+          quantity: item.quantity,
+          product: {
+            id: item.product?.id || `prod-${idx}`,
+            name: item.product?.name || 'Furniture Item',
+            material: item.product?.material || 'Premium Material',
+            dimensions: item.product?.dimensions || 'Standard Dimensions',
+            more_info: item.product?.more_info,
+            image_url:
+              item.product?.image_url ||
+              'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
+          },
+        })),
+      };
+    } else {
+      formattedQuote = {
+        ...DEMO_FALLBACK_QUOTE,
+        id: id || DEMO_FALLBACK_QUOTE.id,
+      };
+    }
   }
 
   return (

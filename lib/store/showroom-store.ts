@@ -4,6 +4,8 @@ import {
   Product,
   FollowUpLead,
   FollowUpStatus,
+  DiscountType,
+  QuoteStatus,
 } from '@/lib/types/database';
 
 export interface StaffMember {
@@ -23,12 +25,58 @@ export interface ProductHold {
   expiresAt: number; // timestamp (lockedAt + 24 hours)
 }
 
+export interface StoredQuoteItem {
+  id: string;
+  price_at_time: number;
+  quantity?: number;
+  product: {
+    id?: string;
+    name: string;
+    material?: string;
+    dimensions?: string;
+    more_info?: string;
+    image_url?: string;
+  };
+}
+
+export interface StoredQuote {
+  id: string;
+  created_at: string;
+  customer_name?: string;
+  customer_whatsapp: string;
+  subtotal: number;
+  discount_type?: DiscountType;
+  discount_value?: number;
+  final_price: number;
+  advance_deposit?: number;
+  order_notes?: string;
+  status: QuoteStatus;
+  staffName: string;
+  itemsSummary: string;
+  itemsCount: number;
+  staff?: {
+    id: string;
+    name: string;
+    role: string;
+  };
+  items: StoredQuoteItem[];
+  quote_items?: {
+    id: string;
+    price_at_time: number;
+    product: {
+      name: string;
+      image_url?: string;
+    };
+  }[];
+}
+
 // In-memory persistent server cache (persists across requests during server runtime)
 declare global {
   var __ALISHAN_STAFF_STORE__: StaffMember[] | undefined;
   var __ALISHAN_PRODUCT_HOLDS__: ProductHold[] | undefined;
   var __ALISHAN_PRODUCTS_STORE__: Product[] | undefined;
   var __ALISHAN_FOLLOWUPS_STORE__: FollowUpLead[] | undefined;
+  var __ALISHAN_QUOTES_STORE__: StoredQuote[] | undefined;
 }
 
 const DEFAULT_STAFF: StaffMember[] = [
@@ -200,6 +248,225 @@ export const DEFAULT_FOLLOWUPS: FollowUpLead[] = [
   },
 ];
 
+export const DEFAULT_QUOTES: StoredQuote[] = [
+  {
+    id: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+    customer_name: 'Rajesh Khanna',
+    customer_whatsapp: '9876543210',
+    subtotal: 630000,
+    final_price: 567000,
+    status: 'pending',
+    staffName: 'Arjun Verma',
+    itemsSummary: 'The Florence Bouclé Sectional + 1 more',
+    itemsCount: 2,
+    staff: {
+      id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+      name: 'Arjun Verma',
+      role: 'sales',
+    },
+    items: [
+      {
+        id: 'item-1',
+        price_at_time: 385000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+          name: 'The Florence Bouclé Sectional',
+          material: 'Italian Bouclé & Smoked Oak Plinth',
+          dimensions: '340cm x 180cm x 78cm',
+          more_info: '3-Seater L-Shape with Left Chaise',
+          image_url:
+            'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+      {
+        id: 'item-2',
+        price_at_time: 245000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
+          name: 'Verona Carrara Marble Dining Table',
+          material: 'Honed Carrara Marble & Brushed Brass Trestle',
+          dimensions: '240cm x 110cm x 76cm',
+          more_info: '6-Seater Solid Marble Top',
+          image_url:
+            'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-1',
+        price_at_time: 385000,
+        product: {
+          name: 'The Florence Bouclé Sectional',
+          image_url:
+            'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+      {
+        id: 'item-2',
+        price_at_time: 245000,
+        product: {
+          name: 'Verona Carrara Marble Dining Table',
+          image_url:
+            'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+    created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+    customer_name: 'Priya Sharma',
+    customer_whatsapp: '9123456789',
+    subtotal: 245000,
+    final_price: 220500,
+    status: 'pending',
+    staffName: 'Sneha Kapoor',
+    itemsSummary: 'Verona Carrara Marble Dining Table',
+    itemsCount: 1,
+    staff: {
+      id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
+      name: 'Sneha Kapoor',
+      role: 'sales',
+    },
+    items: [
+      {
+        id: 'item-3',
+        price_at_time: 245000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
+          name: 'Verona Carrara Marble Dining Table',
+          material: 'Honed Carrara Marble & Brushed Brass Trestle',
+          dimensions: '240cm x 110cm x 76cm',
+          more_info: '6-Seater Solid Marble Top',
+          image_url:
+            'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-3',
+        price_at_time: 245000,
+        product: {
+          name: 'Verona Carrara Marble Dining Table',
+          image_url:
+            'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
+    created_at: new Date(Date.now() - 1000 * 60 * 360).toISOString(),
+    customer_name: 'Amit Patel',
+    customer_whatsapp: '9845012345',
+    subtotal: 405000,
+    final_price: 364500,
+    status: 'pending',
+    staffName: 'Arjun Verma',
+    itemsSummary: 'Aurelia Cognac Leather Lounge Chair + 1 more',
+    itemsCount: 2,
+    staff: {
+      id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+      name: 'Arjun Verma',
+      role: 'sales',
+    },
+    items: [
+      {
+        id: 'item-4',
+        price_at_time: 115000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
+          name: 'Aurelia Cognac Leather Lounge Chair',
+          material: 'Full-Grain Tuscan Leather & American Walnut',
+          dimensions: '88cm x 92cm x 82cm',
+          more_info: 'Single Seater Accent Armchair',
+          image_url:
+            'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+      {
+        id: 'item-5',
+        price_at_time: 290000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a77',
+          name: 'Kyoto Low-Profile King Bedstead',
+          material: 'Solid White American Ash & Belgian Linen',
+          dimensions: '215cm x 205cm x 95cm',
+          more_info: 'King Size (Fits 72" x 78" Mattress)',
+          image_url:
+            'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-4',
+        price_at_time: 115000,
+        product: {
+          name: 'Aurelia Cognac Leather Lounge Chair',
+          image_url:
+            'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+      {
+        id: 'item-5',
+        price_at_time: 290000,
+        product: {
+          name: 'Kyoto Low-Profile King Bedstead',
+          image_url:
+            'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+    created_at: new Date(Date.now() - 1000 * 60 * 600).toISOString(),
+    customer_name: 'Kavita Singhania',
+    customer_whatsapp: '9988776655',
+    subtotal: 213000,
+    final_price: 205000,
+    status: 'closed',
+    staffName: 'Sneha Kapoor',
+    itemsSummary: 'Aurelia Cognac Leather Lounge Chair',
+    itemsCount: 1,
+    staff: {
+      id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
+      name: 'Sneha Kapoor',
+      role: 'sales',
+    },
+    items: [
+      {
+        id: 'item-7',
+        price_at_time: 205000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
+          name: 'Aurelia Cognac Leather Lounge Chair',
+          material: 'Full-Grain Tuscan Leather & American Walnut',
+          dimensions: '88cm x 92cm x 82cm',
+          more_info: 'Single Seater Accent Armchair',
+          image_url:
+            'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-7',
+        price_at_time: 205000,
+        product: {
+          name: 'Aurelia Cognac Leather Lounge Chair',
+          image_url:
+            'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+];
+
 // Initialize global stores if not already present
 if (!global.__ALISHAN_STAFF_STORE__) {
   global.__ALISHAN_STAFF_STORE__ = [...DEFAULT_STAFF];
@@ -211,6 +478,10 @@ if (!global.__ALISHAN_PRODUCTS_STORE__) {
 
 if (!global.__ALISHAN_FOLLOWUPS_STORE__) {
   global.__ALISHAN_FOLLOWUPS_STORE__ = [...DEFAULT_FOLLOWUPS];
+}
+
+if (!global.__ALISHAN_QUOTES_STORE__) {
+  global.__ALISHAN_QUOTES_STORE__ = [...DEFAULT_QUOTES];
 }
 
 // Pre-seed an active 24-hr hold for demonstration (e.g. Tivoli Roman Travertine Coffee Table quoted 4 hours ago)
@@ -559,6 +830,9 @@ export function assignQuoteToStaff(
   );
 
   if (existingIndex !== -1) {
+    global.__ALISHAN_FOLLOWUPS_STORE__[existingIndex].quoteId = quoteId;
+    global.__ALISHAN_FOLLOWUPS_STORE__[existingIndex].quotedAmount = quotedAmount;
+    global.__ALISHAN_FOLLOWUPS_STORE__[existingIndex].itemsSummary = itemsSummary;
     global.__ALISHAN_FOLLOWUPS_STORE__[existingIndex].assignedStaffId = staffId;
     global.__ALISHAN_FOLLOWUPS_STORE__[existingIndex].assignedStaffName = staffName;
     if (customerName) {
@@ -607,3 +881,38 @@ export function markFollowUpContacted(leadId: string): boolean {
   current.lastUpdated = new Date().toISOString();
   return true;
 }
+
+/* =====================================================================
+ * 5. SHOWROOM QUOTES STORE (OFFLINE / IN-MEMORY PERSISTENCE)
+ * ===================================================================== */
+
+export function getAllQuotes(): StoredQuote[] {
+  if (!global.__ALISHAN_QUOTES_STORE__) {
+    global.__ALISHAN_QUOTES_STORE__ = [...DEFAULT_QUOTES];
+  }
+  return global.__ALISHAN_QUOTES_STORE__;
+}
+
+export function getQuoteById(id: string): StoredQuote | null {
+  const quotes = getAllQuotes();
+  return quotes.find((q) => q.id === id) || null;
+}
+
+export function saveNewQuote(quote: StoredQuote): StoredQuote {
+  if (!global.__ALISHAN_QUOTES_STORE__) {
+    global.__ALISHAN_QUOTES_STORE__ = [...DEFAULT_QUOTES];
+  }
+  global.__ALISHAN_QUOTES_STORE__ = [quote, ...global.__ALISHAN_QUOTES_STORE__];
+  return quote;
+}
+
+export function updateQuoteStatusInStore(quoteId: string, newStatus: QuoteStatus): boolean {
+  if (!global.__ALISHAN_QUOTES_STORE__) {
+    global.__ALISHAN_QUOTES_STORE__ = [...DEFAULT_QUOTES];
+  }
+  const index = global.__ALISHAN_QUOTES_STORE__.findIndex((q) => q.id === quoteId);
+  if (index === -1) return false;
+  global.__ALISHAN_QUOTES_STORE__[index].status = newStatus;
+  return true;
+}
+

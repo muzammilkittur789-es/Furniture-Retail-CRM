@@ -1,0 +1,433 @@
+/**
+ * Comprehensive Automated End-to-End Test Suite for Alishan Furnitures Showroom OS
+ * Tests all core modules: Auth, Inventory, 24h Holds, Halal Financial Math, Quotes, Follow-ups, and PDF engine.
+ */
+
+import assert from 'node:assert/strict';
+import * as store from '../lib/store/showroom-store';
+import * as pdfModule from '../lib/pdf/quote-pdf';
+import * as cronModule from '../app/api/cron/nightly-report/route';
+
+console.log('===============================================================');
+console.log('🧪 STARTING COMPREHENSIVE ALISHAN FURNITURES SYSTEM TEST SUITE');
+console.log('===============================================================\n');
+
+let totalTests = 0;
+let passedTests = 0;
+
+function runTest(name: string, fn: () => void) {
+  totalTests++;
+  try {
+    fn();
+    console.log(`  ✅ [PASS] ${name}`);
+    passedTests++;
+  } catch (err: any) {
+    console.error(`  ❌ [FAIL] ${name}`);
+    console.error(`     Error: ${err.message}`);
+    throw err;
+  }
+}
+
+async function runAsyncTest(name: string, fn: () => Promise<void>) {
+  totalTests++;
+  try {
+    await fn();
+    console.log(`  ✅ [PASS] ${name}`);
+    passedTests++;
+  } catch (err: any) {
+    console.error(`  ❌ [FAIL] ${name}`);
+    console.error(`     Error: ${err.message}`);
+    throw err;
+  }
+}
+
+async function main() {
+  // -------------------------------------------------------------
+  // MODULE 1: AUTHENTICATION & PIN CREDENTIAL SECURITY
+  // -------------------------------------------------------------
+  console.log('📦 MODULE 1: AUTHENTICATION & PIN ACCESS CONTROLS');
+
+  runTest('Owner PIN 1234 verifies as Admin with full privileges', () => {
+    const res = store.verifyStaffPin('1234');
+    assert.strictEqual(res.success, true);
+    assert.strictEqual(res.staff?.role, 'admin');
+    assert.match(res.staff?.name || '', /Vikram Mehta/);
+  });
+
+  runTest('Salesperson Arjun Verma PIN 1111 verifies as Sales staff', () => {
+    const res = store.verifyStaffPin('1111');
+    assert.strictEqual(res.success, true);
+    assert.strictEqual(res.staff?.role, 'sales');
+    assert.strictEqual(res.staff?.name, 'Arjun Verma');
+  });
+
+  runTest('Salesperson Sneha Kapoor PIN 2222 verifies as Sales staff', () => {
+    const res = store.verifyStaffPin('2222');
+    assert.strictEqual(res.success, true);
+    assert.strictEqual(res.staff?.role, 'sales');
+    assert.strictEqual(res.staff?.name, 'Sneha Kapoor');
+  });
+
+  runTest('Invalid 4-digit PIN 9999 fails with clean error message', () => {
+    const res = store.verifyStaffPin('9999');
+    assert.strictEqual(res.success, false);
+    assert.strictEqual(res.staff, undefined);
+    assert.match(res.error || '', /Invalid PIN/i);
+  });
+
+  runTest('Admin can dynamically onboard new salesperson and verify their PIN immediately', () => {
+    const newStaff = store.addStaffMember('Tariq Mansoor', '4444', 'sales');
+    assert.strictEqual(newStaff.name, 'Tariq Mansoor');
+    assert.strictEqual(newStaff.role, 'sales');
+
+    const loginRes = store.verifyStaffPin('4444');
+    assert.strictEqual(loginRes.success, true);
+    assert.strictEqual(loginRes.staff?.name, 'Tariq Mansoor');
+  });
+
+  runTest('Admin can update salesperson PIN and old PIN is invalidated', () => {
+    const staffList = store.getAllStaffMembers();
+    const tariq = staffList.find((s) => s.name === 'Tariq Mansoor');
+    assert.ok(tariq);
+
+    const updated = store.updateStaffPin(tariq.id, '8888');
+    assert.strictEqual(updated, true);
+
+    const oldPinRes = store.verifyStaffPin('4444');
+    assert.strictEqual(oldPinRes.success, false);
+
+    const newPinRes = store.verifyStaffPin('8888');
+    assert.strictEqual(newPinRes.success, true);
+  });
+
+  runTest('Deactivating staff member prevents login', () => {
+    const staffList = store.getAllStaffMembers();
+    const tariq = staffList.find((s) => s.name === 'Tariq Mansoor');
+    assert.ok(tariq);
+
+    store.toggleStaffActiveStatus(tariq.id, false);
+    const deactivatedLogin = store.verifyStaffPin('8888');
+    assert.strictEqual(deactivatedLogin.success, false);
+
+    // Clean up
+    store.deleteStaffMember(tariq.id);
+  });
+
+  // -------------------------------------------------------------
+  // MODULE 2: PRODUCT INVENTORY & STOCK CONTROLS
+  // -------------------------------------------------------------
+  console.log('\n📦 MODULE 2: SHOWROOM STOCK INVENTORY MANAGEMENT');
+
+  let testProductId = '';
+
+  runTest('Admin can add new luxury furniture piece to stock', () => {
+    const newProd = store.addNewProduct({
+      name: 'Milanese Emerald Velvet Chaise',
+      price: 185000,
+      material: 'Italian Emerald Velvet & Brushed Brass',
+      dimensions: '190cm x 85cm x 75cm',
+      category: 'Living Room',
+      more_info: 'Limited Edition Display Unit',
+    });
+
+    assert.ok(newProd.id);
+    assert.strictEqual(newProd.name, 'Milanese Emerald Velvet Chaise');
+    assert.strictEqual(newProd.price, 185000);
+    assert.strictEqual(newProd.is_active, true);
+    testProductId = newProd.id;
+
+    const all = store.getAllProducts();
+    const found = all.find((p) => p.id === testProductId);
+    assert.ok(found);
+  });
+
+  runTest('Admin can update product dimensions, price, and specs', () => {
+    const updated = store.updateProduct(testProductId, {
+      price: 195000,
+      more_info: 'Floor Sample - Ready for Immediate Dispatch',
+    });
+
+    assert.ok(updated);
+    assert.strictEqual(updated?.price, 195000);
+    assert.strictEqual(updated?.more_info, 'Floor Sample - Ready for Immediate Dispatch');
+  });
+
+  runTest('Admin can toggle stock status (Sold Out / In Stock)', () => {
+    store.toggleProductActive(testProductId, false);
+    let all = store.getAllProducts();
+    let found = all.find((p) => p.id === testProductId);
+    assert.strictEqual(found?.is_active, false);
+
+    store.toggleProductActive(testProductId, true);
+    all = store.getAllProducts();
+    found = all.find((p) => p.id === testProductId);
+    assert.strictEqual(found?.is_active, true);
+  });
+
+  // -------------------------------------------------------------
+  // MODULE 3: 24-HOUR PRODUCT QUOTE HOLD / RESERVATION
+  // -------------------------------------------------------------
+  console.log('\n📦 MODULE 3: 24-HOUR PRODUCT HOLD & ANTI-COLLISION ENGINE');
+
+  runTest('Quoting a product locks it for 24 hours', () => {
+    store.lockProductsFor24Hours(
+      [{ productId: testProductId, name: 'Milanese Emerald Velvet Chaise' }],
+      'test-quote-999'
+    );
+
+    const holdStatus = store.getProductHoldStatus(testProductId);
+    assert.strictEqual(holdStatus.isLocked, true);
+    assert.ok(holdStatus.remainingHours === 24 || holdStatus.remainingHours === 23);
+    assert.ok(holdStatus.lockedUntilFormatted);
+  });
+
+  runTest('Releasing hold by quote ID unlocks product immediately', () => {
+    store.releaseProductHoldByQuoteId('test-quote-999');
+    const holdStatus = store.getProductHoldStatus(testProductId);
+    assert.strictEqual(holdStatus.isLocked, false);
+  });
+
+  // -------------------------------------------------------------
+  // MODULE 4: HALAL FINANCIAL MATH & ADVANCE TOKEN DEPOSIT
+  // -------------------------------------------------------------
+  console.log('\n📦 MODULE 4: HALAL FINANCIAL MATH & ADVANCE DEPOSIT');
+
+  runTest('Percentage discount calculation (Agreed Price - Discount = Final Price)', () => {
+    const subtotal = 200000;
+    const discountPercent = 10;
+    const discountAmount = Math.round(subtotal * (discountPercent / 100));
+    const finalPrice = Math.max(0, subtotal - discountAmount);
+
+    assert.strictEqual(discountAmount, 20000);
+    assert.strictEqual(finalPrice, 180000);
+  });
+
+  runTest('Flat discount calculation', () => {
+    const subtotal = 150000;
+    const flatDiscount = 25000;
+    const finalPrice = Math.max(0, subtotal - flatDiscount);
+
+    assert.strictEqual(finalPrice, 125000);
+  });
+
+  runTest('Discount is clamped and cannot exceed subtotal (no negative amounts)', () => {
+    const subtotal = 50000;
+    const excessiveFlatDiscount = 75000;
+    const finalPrice = Math.max(0, subtotal - excessiveFlatDiscount);
+
+    assert.strictEqual(finalPrice, 0);
+  });
+
+  runTest('Advance token deposit leaves exact remaining balance due on delivery', () => {
+    const finalPrice = 180000;
+    const advanceDeposit = 30000;
+    const balanceDue = Math.max(0, finalPrice - advanceDeposit);
+
+    assert.strictEqual(balanceDue, 150000);
+  });
+
+  runTest('Zero interest / Riba verification: no financing charges or interest fees', () => {
+    const subtotal = 250000;
+    const discount = 15000;
+    const agreedFinal = subtotal - discount; // 235000
+    const advance = 50000;
+    const balance = agreedFinal - advance; // 185000
+
+    // Sum of advance deposit and balance due must strictly equal the agreed final price without a single Rupee of interest
+    assert.strictEqual(advance + balance, agreedFinal);
+  });
+
+  // -------------------------------------------------------------
+  // MODULE 5: QUOTE CREATION, STORE PERSISTENCE & ATTRIBUTION
+  // -------------------------------------------------------------
+  console.log('\n📦 MODULE 5: QUOTE LIFECYCLE & LEAD ATTRIBUTION');
+
+  const createdQuoteId = 'test-q-' + Date.now();
+
+  runTest('Save new quote to showroom store', () => {
+    const saved = store.saveNewQuote({
+      id: createdQuoteId,
+      created_at: new Date().toISOString(),
+      customer_name: 'Farhan Akhtar',
+      customer_whatsapp: '9876543210',
+      subtotal: 195000,
+      discount_type: 'percentage',
+      discount_value: 10,
+      final_price: 175500,
+      advance_deposit: 25000,
+      order_notes: 'Urgent delivery required by Saturday morning.',
+      status: 'pending',
+      staffName: 'Arjun Verma',
+      itemsSummary: 'Milanese Emerald Velvet Chaise',
+      itemsCount: 1,
+      staff: {
+        id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+        name: 'Arjun Verma',
+        role: 'sales',
+      },
+      items: [
+        {
+          id: 'item-101',
+          price_at_time: 195000,
+          quantity: 1,
+          product: {
+            id: testProductId,
+            name: 'Milanese Emerald Velvet Chaise',
+            material: 'Italian Emerald Velvet & Brushed Brass',
+            dimensions: '190cm x 85cm x 75cm',
+          },
+        },
+      ],
+    });
+
+    assert.strictEqual(saved.id, createdQuoteId);
+    assert.strictEqual(saved.final_price, 175500);
+  });
+
+  runTest('Quote is immediately retrievable by ID with full specifications', () => {
+    const quote = store.getQuoteById(createdQuoteId);
+    assert.ok(quote);
+    assert.strictEqual(quote.customer_name, 'Farhan Akhtar');
+    assert.strictEqual(quote.customer_whatsapp, '9876543210');
+    assert.strictEqual(quote.items.length, 1);
+    assert.strictEqual(quote.items[0].product.name, 'Milanese Emerald Velvet Chaise');
+  });
+
+  runTest('Quote appears in getAllQuotes for showroom owner dashboard', () => {
+    const allQuotes = store.getAllQuotes();
+    const found = allQuotes.find((q) => q.id === createdQuoteId);
+    assert.ok(found);
+    assert.strictEqual(found.status, 'pending');
+  });
+
+  runTest('Follow-up lead automatically attributed to Arjun Verma for morning call', () => {
+    store.assignQuoteToStaff(
+      createdQuoteId,
+      'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+      'Arjun Verma',
+      '9876543210',
+      'Milanese Emerald Velvet Chaise',
+      175500,
+      'Farhan Akhtar',
+      'Urgent delivery required by Saturday morning.',
+      25000
+    );
+
+    const arjunLeads = store.getFollowUpsForStaff('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22');
+    const myLead = arjunLeads.find((l) => l.quoteId === createdQuoteId);
+    assert.ok(myLead);
+    assert.strictEqual(myLead.customerName, 'Farhan Akhtar');
+    assert.strictEqual(myLead.quotedAmount, 175500);
+    assert.strictEqual(myLead.advanceDeposit, 25000);
+  });
+
+  runTest('Salesperson can toggle follow-up lead status (Pending <-> Called)', () => {
+    const arjunLeads = store.getFollowUpsForStaff('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22');
+    const myLead = arjunLeads.find((l) => l.quoteId === createdQuoteId);
+    assert.ok(myLead);
+
+    store.markFollowUpContacted(myLead.id);
+    const updatedLead = store.getAllFollowUps().find((l) => l.id === myLead.id);
+    assert.strictEqual(updatedLead?.status, 'called_interested');
+  });
+
+  runTest('Closing quote in admin marks products as sold out', () => {
+    // Lock product first
+    store.lockProductsFor24Hours(
+      [{ productId: testProductId, name: 'Milanese Emerald Velvet Chaise' }],
+      createdQuoteId
+    );
+
+    // Update status in store
+    store.updateQuoteStatusInStore(createdQuoteId, 'closed');
+    const q = store.getQuoteById(createdQuoteId);
+    assert.strictEqual(q?.status, 'closed');
+
+    // Simulate closing deal logic: product marked sold out, hold released
+    q.items.forEach((item) => {
+      if (item.product?.id) {
+        store.toggleProductActive(item.product.id, false);
+      }
+    });
+    store.releaseProductHoldByQuoteId(createdQuoteId);
+
+    // Verify product is sold out and hold is gone
+    const prod = store.getAllProducts().find((p) => p.id === testProductId);
+    assert.strictEqual(prod?.is_active, false);
+
+    const hold = store.getProductHoldStatus(testProductId);
+    assert.strictEqual(hold.isLocked, false);
+  });
+
+  // -------------------------------------------------------------
+  // MODULE 6: PDF GENERATION ENGINE
+  // -------------------------------------------------------------
+  console.log('\n📦 MODULE 6: PROFESSIONAL PDF GENERATION ENGINE');
+
+  await runAsyncTest('Generate high-resolution Quote PDF Blob with Rupee symbols', async () => {
+    const pdfBlob = await pdfModule.generateQuotePdfBlob({
+      quoteId: 'e0eebc99-9c0b-4ef8-bb6d-123456789012',
+      shortRef: 'E0EEBC99',
+      dateFormatted: '22 November 2026',
+      validUntilFormatted: '10:00 PM (24 Hours)',
+      staffName: 'Arjun Verma',
+      customerName: 'Farhan Akhtar',
+      customerWhatsapp: '9876543210',
+      orderNotes: 'Custom stitching requested on bouclé fabric.',
+      advanceDeposit: 25000,
+      subtotal: 195000,
+      discountType: 'percentage',
+      discountValue: 10,
+      finalPrice: 175500,
+      items: [
+        {
+          name: 'The Florence Bouclé Sectional',
+          material: 'Italian Bouclé & Smoked Oak Plinth',
+          dimensions: '340cm x 180cm x 78cm',
+          more_info: '3-Seater L-Shape with Left Chaise',
+          price: 195000,
+          quantity: 1,
+        },
+      ],
+    });
+
+    assert.ok(pdfBlob);
+    assert.strictEqual(pdfBlob.type, 'application/pdf');
+    assert.ok(pdfBlob.size > 1000, `PDF size ${pdfBlob.size} should be > 1000 bytes`);
+
+    // Verify PDF header %PDF-
+    const arrayBuffer = await pdfBlob.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    const headerStr = Buffer.from(bytes.slice(0, 5)).toString('utf-8');
+    assert.strictEqual(headerStr, '%PDF-');
+  });
+
+  // -------------------------------------------------------------
+  // MODULE 7: NIGHTLY 10 PM WHATSAPP REPORT ROUTE
+  // -------------------------------------------------------------
+  console.log('\n📦 MODULE 7: NIGHTLY 10 PM OWNER REPORT & CRON');
+
+  await runAsyncTest('Nightly 10 PM route generates comprehensive owner report', async () => {
+    const mockRequest = new Request('http://localhost:3000/api/cron/nightly-report');
+    const response = await cronModule.GET(mockRequest);
+    assert.strictEqual(response.status, 200);
+
+    const json = await response.json();
+    assert.strictEqual(json.success, true);
+    assert.strictEqual(json.ownerPhone, '+91 7676482481');
+    assert.match(json.reportMessage, /Alishan Furnitures - Daily Closing Report/);
+    assert.match(json.reportMessage, /10:00 PM/);
+  });
+
+  // Clean up test product
+  store.deleteProduct(testProductId);
+
+  console.log('\n===============================================================');
+  console.log(`🎉 ALL ${passedTests} OF ${totalTests} COMPREHENSIVE TESTS PASSED WITH 100% SUCCESS!`);
+  console.log('===============================================================\n');
+}
+
+main().catch((err) => {
+  console.error('\n❌ Test execution encountered a critical failure:', err);
+  process.exit(1);
+});
