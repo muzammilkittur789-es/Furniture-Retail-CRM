@@ -47,6 +47,8 @@ export function QuoteCart({
   const [orderNotes, setOrderNotes] = useState<string>('');
   const [advanceDepositInput, setAdvanceDepositInput] = useState<string>('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState<string>('');
+  const [dpdpConsent, setDpdpConsent] = useState<boolean>(false);
   const [generatedQuote, setGeneratedQuote] = useState<{
     id: string;
     url: string;
@@ -99,32 +101,43 @@ export function QuoteCart({
   // Discount label: clean standard "Discount"
   const discountLabel = 'Discount';
 
-  // 4. WhatsApp Number Validation
+  // 4. WhatsApp Number Validation (Strict Indian Mobile Regex: starts with 6-9, exactly 10 digits)
   const cleanWhatsappNumber = whatsappNumber.replace(/\D/g, '');
-  const isValidWhatsapp = cleanWhatsappNumber.length === 10;
+  const isValidWhatsapp = /^[6-9]\d{9}$/.test(cleanWhatsappNumber);
 
-  // 5. Submit Handler
+  // 5. Submit Handler with Anti-Bot & DPDP Compliance
   const handleGenerateQuote = () => {
     setFormError(null);
+
+    // Bot trap detection
+    if (honeypot && honeypot.trim() !== '') {
+      console.warn('Bot submission blocked.');
+      return;
+    }
 
     if (selectedProducts.length === 0) {
       setFormError('Please select at least one furniture piece from the showroom floor.');
       return;
     }
 
-    const trimmedCustomerName = customerName.trim();
+    const trimmedCustomerName = customerName.trim().slice(0, 80);
     if (!trimmedCustomerName) {
       setFormError("Please enter the customer's full name.");
       return;
     }
 
     if (!isValidWhatsapp) {
-      setFormError('Please enter a valid 10-digit customer WhatsApp number.');
+      setFormError('Please enter a valid 10-digit Indian WhatsApp mobile number starting with 6, 7, 8, or 9.');
+      return;
+    }
+
+    if (!dpdpConsent) {
+      setFormError('Please check the DPDP Act 2023 statutory consent box to proceed with WhatsApp quote dispatch.');
       return;
     }
 
     startTransition(async () => {
-      const trimmedNotes = orderNotes.trim();
+      const trimmedNotes = orderNotes.trim().slice(0, 500);
 
       const payload = {
         staffId: staff.id,
@@ -676,6 +689,51 @@ Alishan Furnitures`;
               )}
             </div>
 
+            {/* Anti-Bot Invisible Honeypot */}
+            <input
+              type="text"
+              name="b_lead_source_honey"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="opacity-0 absolute -z-50 pointer-events-none w-0 h-0 p-0 m-0 overflow-hidden"
+            />
+
+            {/* DPDP Act 2023 Explicit Consent Checkbox (DPDP Sec 6) */}
+            <div className="pt-1">
+              <label className="flex items-start gap-2.5 cursor-pointer select-none text-[11px] leading-relaxed text-slate-600 bg-white p-3 rounded-2xl border border-slate-200/90 hover:border-slate-300 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={dpdpConsent}
+                  onChange={(e) => setDpdpConsent(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded-md text-emerald-600 focus:ring-emerald-500 border-slate-300 shrink-0 cursor-pointer accent-emerald-600"
+                />
+                <span>
+                  I confirm I am 18+ and consent to receive this official quotation, delivery updates, and balance invoices on WhatsApp per the{' '}
+                  <a
+                    href="/privacy-policy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-emerald-700 underline font-semibold hover:text-emerald-800"
+                  >
+                    DPDP Act 2023 Policy
+                  </a>{' '}
+                  &{' '}
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-emerald-700 underline font-semibold hover:text-emerald-800"
+                  >
+                    Terms
+                  </a>
+                  . Consent can be withdrawn anytime.
+                </span>
+              </label>
+            </div>
+
             {/* Error Message */}
             {formError && (
               <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2">
@@ -714,7 +772,8 @@ Alishan Furnitures`;
                 isPending ||
                 selectedProducts.length === 0 ||
                 !customerName.trim() ||
-                !isValidWhatsapp
+                !isValidWhatsapp ||
+                !dpdpConsent
               }
               onClick={handleGenerateQuote}
               className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm sm:text-base shadow-lg shadow-emerald-600/25 transition-all duration-200 flex items-center justify-center gap-2.5 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed border border-emerald-400/30"

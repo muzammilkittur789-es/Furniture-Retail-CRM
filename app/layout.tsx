@@ -10,8 +10,32 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: 'Alishan Furnitures | Showroom Management System',
-  description: 'Operating System for Alishan Furnitures Showroom',
+  title: 'Alishan Furnitures | Showroom Management Operating System',
+  description:
+    'Operating System for Alishan Furnitures Showroom: Luxury furniture catalog, instant WhatsApp quotations, 24-hour stock holds, and staff attribution.',
+  metadataBase: new URL('https://alishanfurnitures.com'),
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'Alishan Furnitures | Showroom Management Operating System',
+    description: 'Luxury furniture catalog and digital quotation system.',
+    url: 'https://alishanfurnitures.com',
+    siteName: 'Alishan Furnitures',
+    locale: 'en_IN',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({

@@ -23,6 +23,7 @@ import {
   updateQuoteStatusInStore,
   getQuoteById,
 } from '@/lib/store/showroom-store';
+import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '@/lib/security/rate-limit';
 
 const ADMIN_SEED_PIN = '1234';
 const ADMIN_SEED_STAFF: StaffSession = {
@@ -35,11 +36,20 @@ export async function verifyAdminPin(
   pin: string
 ): Promise<{ success: boolean; staff?: StaffSession; error?: string }> {
   try {
+    const rateCheck = checkRateLimit('admin_terminal');
+    if (!rateCheck.allowed) {
+      return {
+        success: false,
+        error: `Admin access locked due to repeated unauthorized attempts. Please retry in ${rateCheck.retryAfterSeconds} seconds.`,
+      };
+    }
+
     if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
       return { success: false, error: 'Admin PIN must be exactly 4 digits.' };
     }
 
     if (pin === ADMIN_SEED_PIN) {
+      resetRateLimit('admin_terminal');
       return {
         success: true,
         staff: ADMIN_SEED_STAFF,
@@ -57,6 +67,7 @@ export async function verifyAdminPin(
       if (adminStaff && adminStaff.length > 0) {
         const found = adminStaff.find((s: any) => s.pin === pin || s.pin_hash === pin);
         if (found) {
+          resetRateLimit('admin_terminal');
           return {
             success: true,
             staff: {
@@ -67,6 +78,14 @@ export async function verifyAdminPin(
           };
         }
       }
+    }
+
+    const failRecord = recordFailedAttempt('admin_terminal');
+    if (failRecord.isLocked) {
+      return {
+        success: false,
+        error: `Too many incorrect attempts. Admin portal locked for ${failRecord.retryAfterSeconds} seconds.`,
+      };
     }
 
     return {

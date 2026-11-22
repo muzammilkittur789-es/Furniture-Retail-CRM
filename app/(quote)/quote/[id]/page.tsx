@@ -186,8 +186,18 @@ export default async function CustomerQuotePage({ params }: QuotePageProps) {
         <QuoteDocument quote={formattedQuote} />
       </main>
 
-      <footer className="text-center py-4 sm:py-6 text-xs text-slate-400 no-print font-normal">
-        © {new Date().getFullYear()} Alishan Furnitures • Showroom Quotations
+      <footer className="text-center py-4 sm:py-6 text-xs text-slate-400 no-print font-normal flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+        <span>© {new Date().getFullYear()} Alishan Furnitures • Showroom Quotations</span>
+        <span className="hidden sm:inline">•</span>
+        <div className="flex items-center gap-3">
+          <a href="/privacy-policy" target="_blank" className="hover:text-slate-600 underline underline-offset-2">
+            Privacy Policy (DPDP Act 2023)
+          </a>
+          <span>•</span>
+          <a href="/terms" target="_blank" className="hover:text-slate-600 underline underline-offset-2">
+            Terms of Service
+          </a>
+        </div>
       </footer>
     </div>
   );

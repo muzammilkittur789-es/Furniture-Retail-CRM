@@ -14,13 +14,23 @@ import {
 } from '@/lib/store/showroom-store';
 import { revalidatePath } from 'next/cache';
 
+import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '@/lib/security/rate-limit';
+
 /**
- * Server Action: Instant Verify salesman 4-digit PIN.
+ * Server Action: Instant Verify salesman 4-digit PIN with Brute-Force Rate Limiting.
  */
 export async function verifyPin(
   pin: string
 ): Promise<{ success: boolean; staff?: StaffSession; error?: string }> {
   try {
+    const rateCheck = checkRateLimit('sales_terminal');
+    if (!rateCheck.allowed) {
+      return {
+        success: false,
+        error: `Terminal temporarily locked due to repeated incorrect attempts. Please retry in ${rateCheck.retryAfterSeconds} seconds.`,
+      };
+    }
+
     if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
       return { success: false, error: 'PIN must be exactly 4 digits.' };
     }
@@ -28,6 +38,7 @@ export async function verifyPin(
     // Check staff store (includes admin-created / updated salesmen)
     const storeVerification = verifyStaffPin(pin);
     if (storeVerification.success && storeVerification.staff) {
+      resetRateLimit('sales_terminal');
       return storeVerification;
     }
 
@@ -41,6 +52,7 @@ export async function verifyPin(
       if (dbStaff && dbStaff.length > 0) {
         const found = dbStaff.find((s: any) => s.pin === pin || s.pin_hash === pin);
         if (found) {
+          resetRateLimit('sales_terminal');
           return {
             success: true,
             staff: {
@@ -53,7 +65,18 @@ export async function verifyPin(
       }
     }
 
-    return { success: false, error: 'Incorrect PIN. Please check your credentials or ask the owner.' };
+    const failRecord = recordFailedAttempt('sales_terminal');
+    if (failRecord.isLocked) {
+      return {
+        success: false,
+        error: `Too many incorrect attempts. Terminal locked for ${failRecord.retryAfterSeconds} seconds.`,
+      };
+    }
+
+    return {
+      success: false,
+      error: 'Incorrect PIN. Please check your credentials or ask the owner.',
+    };
   } catch (error) {
     console.error('Error verifying PIN:', error);
     return { success: false, error: 'Failed to verify PIN.' };

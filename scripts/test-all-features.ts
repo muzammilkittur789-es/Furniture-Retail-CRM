@@ -422,6 +422,92 @@ async function main() {
   // Clean up test product
   store.deleteProduct(testProductId);
 
+  // -------------------------------------------------------------
+  // MODULE 8: BANK-GRADE SECURITY & DPDP ACT 2023 COMPLIANCE
+  // -------------------------------------------------------------
+  console.log('\n📦 MODULE 8: BANK-GRADE APPLICATION SECURITY & DPDP ACT 2023');
+  const rateLimit = await import('../lib/security/rate-limit');
+  const nextConfigModule = await import('../next.config.mjs');
+
+  runTest('Brute-force shield locks terminal after 5 consecutive failed PIN attempts', () => {
+    const testId = 'test_security_terminal_' + Date.now();
+    rateLimit.resetRateLimit(testId);
+
+    // Initial check: allowed
+    let check = rateLimit.checkRateLimit(testId);
+    assert.strictEqual(check.allowed, true);
+    assert.strictEqual(check.remainingAttempts, 5);
+
+    // 4 failed attempts: still allowed
+    for (let i = 0; i < 4; i++) {
+      rateLimit.recordFailedAttempt(testId);
+    }
+    check = rateLimit.checkRateLimit(testId);
+    assert.strictEqual(check.allowed, true);
+    assert.strictEqual(check.remainingAttempts, 1);
+
+    // 5th failed attempt: triggers lockout
+    const fifthRecord = rateLimit.recordFailedAttempt(testId);
+    assert.strictEqual(fifthRecord.isLocked, true);
+    assert.ok((fifthRecord.retryAfterSeconds || 0) > 0);
+
+    // Terminal is now locked
+    check = rateLimit.checkRateLimit(testId);
+    assert.strictEqual(check.allowed, false);
+    assert.strictEqual(check.remainingAttempts, 0);
+
+    // Reset clears lockout
+    rateLimit.resetRateLimit(testId);
+    check = rateLimit.checkRateLimit(testId);
+    assert.strictEqual(check.allowed, true);
+  });
+
+  runTest('Indian Mobile Regex validates genuine numbers and rejects invalid prefixes', () => {
+    const indianMobileRegex = /^[6-9]\d{9}$/;
+    // Valid Indian mobile numbers
+    assert.strictEqual(indianMobileRegex.test('9876543210'), true);
+    assert.strictEqual(indianMobileRegex.test('8123456789'), true);
+    assert.strictEqual(indianMobileRegex.test('7000112233'), true);
+    assert.strictEqual(indianMobileRegex.test('6987654321'), true);
+
+    // Invalid numbers (starting with 1-5, wrong length, letters)
+    assert.strictEqual(indianMobileRegex.test('5123456789'), false);
+    assert.strictEqual(indianMobileRegex.test('1234567890'), false);
+    assert.strictEqual(indianMobileRegex.test('98765'), false);
+    assert.strictEqual(indianMobileRegex.test('987654321012'), false);
+    assert.strictEqual(indianMobileRegex.test('abcdefghij'), false);
+  });
+
+  await runAsyncTest('Production HTTP Security Headers are fully configured in next.config.mjs', async () => {
+    const config = nextConfigModule.default;
+    assert.strictEqual(config.poweredByHeader, false, 'poweredByHeader must be false');
+    assert.strictEqual(config.productionBrowserSourceMaps, false, 'productionBrowserSourceMaps must be false');
+
+    assert.ok(typeof config.headers === 'function', 'headers() must be configured');
+    const headerRules = await config.headers();
+    assert.ok(headerRules.length > 0);
+
+    const headersList = headerRules[0].headers;
+    const headerMap = new Map(headersList.map((h: any) => [h.key, h.value]));
+
+    // Verify Content-Security-Policy (CSP)
+    assert.ok(headerMap.has('Content-Security-Policy'));
+    assert.match(headerMap.get('Content-Security-Policy') || '', /default-src 'self'/);
+    assert.match(headerMap.get('Content-Security-Policy') || '', /frame-ancestors 'none'/);
+
+    // Verify HSTS
+    assert.ok(headerMap.has('Strict-Transport-Security'));
+    assert.match(headerMap.get('Strict-Transport-Security') || '', /max-age=63072000/);
+
+    // Verify Anti-Clickjacking & MIME Protection
+    assert.strictEqual(headerMap.get('X-Frame-Options'), 'DENY');
+    assert.strictEqual(headerMap.get('X-Content-Type-Options'), 'nosniff');
+
+    // Verify Permissions-Policy & Referrer
+    assert.match(headerMap.get('Permissions-Policy') || '', /camera=\(\)/);
+    assert.strictEqual(headerMap.get('Referrer-Policy'), 'strict-origin-when-cross-origin');
+  });
+
   console.log('\n===============================================================');
   console.log(`🎉 ALL ${passedTests} OF ${totalTests} COMPREHENSIVE TESTS PASSED WITH 100% SUCCESS!`);
   console.log('===============================================================\n');
