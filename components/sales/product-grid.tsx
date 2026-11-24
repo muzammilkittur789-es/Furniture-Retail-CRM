@@ -9,6 +9,7 @@ interface ProductGridProps {
   products: Product[];
   selectedProductIds: string[];
   onToggleProduct: (product: Product) => void;
+  onDirectSoldProduct?: (product: Product) => void;
 }
 
 const CATEGORIES = [
@@ -23,6 +24,7 @@ export function ProductGrid({
   products,
   selectedProductIds,
   onToggleProduct,
+  onDirectSoldProduct,
 }: ProductGridProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All Items');
@@ -107,6 +109,7 @@ export function ProductGrid({
                 product={product}
                 isSelected={isSelected}
                 onToggle={onToggleProduct}
+                onDirectSold={onDirectSoldProduct}
               />
             );
           })}

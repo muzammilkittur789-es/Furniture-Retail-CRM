@@ -12,6 +12,7 @@ import {
   getAllStaffMembers,
   saveNewQuote,
   closeQuoteAndDeductInventory,
+  decrementProductStock,
 } from '@/lib/store/showroom-store';
 import { revalidatePath } from 'next/cache';
 
@@ -340,4 +341,58 @@ export async function addProductStockAction(productData: {
 }) {
   const { addProductStockAction: adminAdd } = await import('@/app/(admin)/admin/actions');
   return adminAdd(productData);
+}
+
+/**
+ * Server Action: Direct Showroom Walk-In Sale (Purchase without a Quote)
+ * Directly marks a piece as sold from the card itself, reducing quantity by -1.
+ * If stock reaches 0, marks product sold out and deactivates it.
+ */
+export async function directMarkProductSoldAction(
+  productId: string,
+  quantityToDeduct: number = 1
+): Promise<{
+  success: boolean;
+  remainingStock?: number;
+  isSoldOut?: boolean;
+  error?: string;
+}> {
+  try {
+    if (!productId) return { success: false, error: 'Product ID is required.' };
+
+    const res = decrementProductStock(productId, quantityToDeduct);
+    if (!res.success) {
+      return { success: false, error: 'Product not found or already sold out.' };
+    }
+
+    if (isSupabaseConfigured()) {
+      try {
+        const supabase = createServerClient();
+        await supabase
+          .from('products')
+          .update({
+            stock_quantity: res.remainingStock,
+            is_active: !res.isSoldOut,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', productId);
+      } catch (e) {
+        console.warn('Failed to update stock in Supabase:', e);
+      }
+    }
+
+    revalidatePath('/sales');
+    revalidatePath('/admin');
+    revalidatePath('/admin/products');
+    revalidatePath('/');
+
+    return {
+      success: true,
+      remainingStock: res.remainingStock,
+      isSoldOut: res.isSoldOut,
+    };
+  } catch (err: any) {
+    console.error('Error in directMarkProductSoldAction:', err);
+    return { success: false, error: err?.message || 'Failed to record direct sale.' };
+  }
 }

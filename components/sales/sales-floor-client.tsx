@@ -8,9 +8,9 @@ import { PinPadModal } from '@/components/sales/pin-pad-modal';
 import { ProductGrid } from '@/components/sales/product-grid';
 import { QuoteCart } from '@/components/sales/quote-cart';
 import { SalesmanFollowupsView } from '@/components/sales/salesman-followups-view';
-import { addProductStockAction } from '@/app/(sales)/sales/actions';
+import { addProductStockAction, directMarkProductSoldAction } from '@/app/(sales)/sales/actions';
 import { formatINR } from '@/lib/utils';
-import { Lock, ShoppingBag, ChevronUp, Armchair, PhoneCall, Plus, Camera, X, ArrowLeft } from 'lucide-react';
+import { Lock, ShoppingBag, ChevronUp, Armchair, PhoneCall, Plus, Camera, X, ArrowLeft, Check } from 'lucide-react';
 
 interface SalesFloorClientProps {
   initialProducts: Product[];
@@ -182,6 +182,46 @@ export function SalesFloorClient({
     );
   }, [selectedProducts, quantities]);
 
+  // Direct Walk-In Sale (Purchase without a Quote)
+  const [directSaleProduct, setDirectSaleProduct] = useState<Product | null>(null);
+  const [isDirectSalePending, startDirectSaleTransition] = useTransition();
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const handleConfirmDirectSale = () => {
+    if (!directSaleProduct) return;
+    const target = directSaleProduct;
+
+    startDirectSaleTransition(async () => {
+      const res = await directMarkProductSoldAction(target.id, 1);
+      if (res.success) {
+        if (res.isSoldOut) {
+          // If completely sold out, remove from available products on floor
+          setProducts((prev) => prev.filter((p) => p.id !== target.id));
+          handleRemoveProduct(target.id);
+          setToastMessage({
+            text: `“${target.name}” marked as SOLD OUT! Inventory updated in Admin.`,
+            type: 'success',
+          });
+        } else {
+          // Multi-copy: decrement stock quantity
+          setProducts((prev) =>
+            prev.map((p) =>
+              p.id === target.id ? { ...p, stock_quantity: res.remainingStock } : p
+            )
+          );
+          setToastMessage({
+            text: `“${target.name}” direct sale recorded! ${res.remainingStock} copies left.`,
+            type: 'success',
+          });
+        }
+        setDirectSaleProduct(null);
+        setTimeout(() => setToastMessage(null), 4000);
+      } else {
+        alert(res.error || 'Failed to record direct sale.');
+      }
+    });
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans pb-24 lg:pb-12 text-slate-900">
       {/* 1. Terminal PIN Pad Modal */}
@@ -326,6 +366,7 @@ export function SalesFloorClient({
                 products={products}
                 selectedProductIds={selectedProductIds}
                 onToggleProduct={handleToggleProduct}
+                onDirectSoldProduct={(p) => setDirectSaleProduct(p)}
               />
             </div>
 
@@ -582,6 +623,79 @@ export function SalesFloorClient({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* TOAST NOTIFICATION */}
+      {toastMessage && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-slate-900/95 backdrop-blur-md text-white text-xs sm:text-sm font-semibold shadow-2xl border border-slate-700 flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-200">
+          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMessage.text}</span>
+        </div>
+      )}
+
+      {/* DIRECT WALK-IN SALE CONFIRMATION MODAL */}
+      {directSaleProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-200 text-center">
+            <div className="w-14 h-14 rounded-3xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+              <ShoppingBag className="w-7 h-7 stroke-[2]" />
+            </div>
+
+            <span className="inline-block px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase tracking-wider mb-2">
+              Direct Walk-In Sale (No Quote)
+            </span>
+
+            <h3 className="font-display font-extrabold text-xl text-slate-900 mb-2">
+              Confirm Showroom Sale
+            </h3>
+
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
+              Mark 1 unit of{' '}
+              <strong className="text-slate-900 font-bold">
+                &ldquo;{directSaleProduct.name}&rdquo;
+              </strong>{' '}
+              as sold to a direct walk-in customer?
+            </p>
+
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1.5 mb-6 text-left">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Current Stock:</span>
+                <span className="font-mono font-bold text-slate-900">{directSaleProduct.stock_quantity ?? 1} units</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">After Sale:</span>
+                <span className="font-mono font-bold text-emerald-600">
+                  {Math.max(0, (directSaleProduct.stock_quantity ?? 1) - 1)} units
+                </span>
+              </div>
+              {(directSaleProduct.stock_quantity ?? 1) <= 1 && (
+                <p className="text-[11px] text-amber-800 bg-amber-50 p-2.5 rounded-xl border border-amber-200 font-medium mt-2 leading-relaxed">
+                  ⚠️ <strong>This is the last copy!</strong> Product will immediately disappear from the sales catalogue and mark as &ldquo;Sold&rdquo; in the Owner Admin Panel.
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-2.5 sm:gap-3">
+              <button
+                type="button"
+                disabled={isDirectSalePending}
+                onClick={() => setDirectSaleProduct(null)}
+                className="flex-1 py-2.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-100 transition whitespace-nowrap text-center"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDirectSalePending}
+                onClick={handleConfirmDirectSale}
+                className="flex-1 py-2.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 active:scale-95 transition flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-50"
+              >
+                <Check className="w-3.5 h-3.5 shrink-0" />
+                <span>{isDirectSalePending ? 'Updating...' : 'Confirm Sale (-1)'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

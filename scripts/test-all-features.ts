@@ -224,6 +224,34 @@ async function main() {
     assert.strictEqual(p?.is_active, true);
   });
 
+  runTest('Direct Showroom Walk-in Sale: card button directly deducts stock by -1 without a quote', () => {
+    const walkInItem = store.addNewProduct({
+      name: 'Artisan Solid Teak Accent Stool',
+      price: 32000,
+      material: 'Reclaimed Teakwood',
+      dimensions: '45cm x 45cm x 45cm',
+      stock_quantity: 2,
+    });
+
+    assert.strictEqual(walkInItem.stock_quantity, 2);
+
+    // Salesperson clicks direct walk-in sale button on card
+    const sale1 = store.decrementProductStock(walkInItem.id, 1);
+    assert.strictEqual(sale1.success, true);
+    assert.strictEqual(sale1.remainingStock, 1);
+    assert.strictEqual(sale1.isSoldOut, false);
+
+    // Second walk-in buys remaining copy
+    const sale2 = store.decrementProductStock(walkInItem.id, 1);
+    assert.strictEqual(sale2.success, true);
+    assert.strictEqual(sale2.remainingStock, 0);
+    assert.strictEqual(sale2.isSoldOut, true);
+
+    const afterSale = store.getAllProducts().find((item) => item.id === walkInItem.id);
+    assert.strictEqual(afterSale?.stock_quantity, 0);
+    assert.strictEqual(afterSale?.is_active, false);
+  });
+
   // -------------------------------------------------------------
   // MODULE 4: HALAL FINANCIAL MATH & ADVANCE TOKEN DEPOSIT
   // -------------------------------------------------------------

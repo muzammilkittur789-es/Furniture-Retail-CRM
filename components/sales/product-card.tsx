@@ -4,12 +4,13 @@ import React from 'react';
 import Image from 'next/image';
 import { Product } from '@/lib/types/database';
 import { formatINR } from '@/lib/utils';
-import { Check, Plus, Ruler, Sparkles, Lock } from 'lucide-react';
+import { Check, Plus, Ruler, Sparkles, Lock, ShoppingBag } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
   isSelected: boolean;
   onToggle: (product: Product) => void;
+  onDirectSold?: (product: Product) => void;
 }
 
 // Color Theory: Dynamic soft pastel tags for category clarity
@@ -39,7 +40,7 @@ function getCategoryBadge(name: string, material: string) {
   };
 }
 
-export function ProductCard({ product, isSelected, onToggle }: ProductCardProps) {
+export function ProductCard({ product, isSelected, onToggle, onDirectSold }: ProductCardProps) {
   const badge = getCategoryBadge(product.name, product.material);
   const isSold = product.is_active === false || (product.stock_quantity !== undefined && product.stock_quantity <= 0);
   const stockCount = product.stock_quantity !== undefined ? product.stock_quantity : 1;
@@ -186,34 +187,51 @@ export function ProductCard({ product, isSelected, onToggle }: ProductCardProps)
           </div>
         </div>
 
-        {/* Action Button Touch Target - Full Size */}
-        <div className="mt-5 sm:mt-6 pt-2">
+        {/* Action Button Touch Targets */}
+        <div className="mt-5 sm:mt-6 pt-2 space-y-2">
           {isSold ? (
             <div className="w-full py-3.5 px-4 rounded-2xl font-bold text-xs bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center gap-2 select-none shadow-2xs">
               <span>🏷️ Sold Out</span>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggle(product);
-              }}
-              className={`w-full py-3.5 px-4 rounded-2xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] ${
-                isSelected
-                  ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/25 shadow-md'
-                  : 'bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 text-slate-800 border border-slate-200/90'
-              }`}
-            >
-              {isSelected ? (
-                <>
-                  <Check className="w-4 h-4 stroke-[2.5]" />
-                  <span>Added to Quote</span>
-                </>
-              ) : (
-                <span>+ Add to Quote</span>
-              )}
-            </button>
+            <>
+              {/* Button 1: Add to Quote Cart */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggle(product);
+                }}
+                className={`w-full py-3 px-4 rounded-2xl font-semibold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] ${
+                  isSelected
+                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/25 shadow-md'
+                    : 'bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 text-slate-800 border border-slate-200/90'
+                }`}
+              >
+                {isSelected ? (
+                  <>
+                    <Check className="w-4 h-4 stroke-[2.5]" />
+                    <span>Added to Quote</span>
+                  </>
+                ) : (
+                  <span>+ Add to Quote</span>
+                )}
+              </button>
+
+              {/* Button 2: Direct Showroom Walk-in Sale (-1 Stock) */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDirectSold?.(product);
+                }}
+                className="w-full py-2.5 px-3 rounded-xl font-bold text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-[0.98]"
+                title="Direct walk-in purchase without quote (-1 Stock)"
+              >
+                <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Mark Sold (-1 Stock)</span>
+              </button>
+            </>
           )}
         </div>
       </div>
