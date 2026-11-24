@@ -191,7 +191,7 @@ export default async function CustomerQuotePage({ params }: QuotePageProps) {
         <span className="hidden sm:inline">•</span>
         <div className="flex items-center gap-3">
           <a href="/privacy-policy" target="_blank" className="hover:text-slate-600 underline underline-offset-2">
-            Privacy Policy (DPDP Act 2023)
+            Privacy Policy
           </a>
           <span>•</span>
           <a href="/terms" target="_blank" className="hover:text-slate-600 underline underline-offset-2">

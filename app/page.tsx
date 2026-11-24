@@ -102,14 +102,10 @@ export default function RootHomePage() {
       {/* Footer */}
       <footer className="relative z-10 max-w-6xl w-full mx-auto border-t border-slate-200/80 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
         <p>© 2026 Alishan Furnitures. All rights reserved.</p>
-        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs font-medium">
-          <Link href="/sales" className="hover:text-indigo-600 transition">Sales Floor</Link>
+        <div className="flex items-center gap-3 sm:gap-4 text-xs font-medium">
+          <Link href="/privacy-policy" className="hover:text-indigo-600 transition">Privacy Policy</Link>
           <span>•</span>
-          <Link href="/admin" className="hover:text-indigo-600 transition">Admin Dashboard</Link>
-          <span>•</span>
-          <Link href="/privacy-policy" className="hover:text-indigo-600 transition text-amber-800 font-semibold">Privacy Policy (DPDP Act)</Link>
-          <span>•</span>
-          <Link href="/terms" className="hover:text-indigo-600 transition text-stone-800 font-semibold">Terms & Conditions</Link>
+          <Link href="/terms" className="hover:text-indigo-600 transition">Terms & Conditions</Link>
         </div>
       </footer>
     </div>

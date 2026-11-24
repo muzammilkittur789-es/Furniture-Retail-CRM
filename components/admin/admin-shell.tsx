@@ -198,7 +198,7 @@ export function AdminShell({ children }: AdminShellProps) {
 
           <div className="flex items-center justify-between text-[10px] text-slate-500 px-1">
             <Link href="/privacy-policy" target="_blank" className="hover:text-slate-300 transition underline underline-offset-2">
-              Privacy (DPDP Act)
+              Privacy Policy
             </Link>
             <span>•</span>
             <Link href="/terms" target="_blank" className="hover:text-slate-300 transition underline underline-offset-2">
