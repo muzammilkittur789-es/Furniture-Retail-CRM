@@ -3,30 +3,30 @@ import { Tablet, LayoutDashboard, ArrowRight, Sparkles, PhoneCall, ShieldCheck }
 
 export default function RootHomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-indigo-50/20 to-slate-50 text-slate-900 flex flex-col justify-between p-6 sm:p-12 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-indigo-50/20 to-slate-50 text-slate-900 flex flex-col justify-between p-4 sm:p-12 relative overflow-hidden font-sans">
       {/* Background Soft Blobs */}
       <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-indigo-200/30 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-emerald-200/30 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Top Header */}
-      <header className="relative z-10 max-w-6xl w-full mx-auto flex items-center justify-between border-b border-slate-200/80 pb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-display text-xl font-bold shadow-brand">
+      <header className="relative z-10 max-w-6xl w-full mx-auto flex items-center justify-between border-b border-slate-200/80 pb-4 sm:pb-6 gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-display text-base sm:text-xl font-bold shadow-md shadow-indigo-600/20 shrink-0">
             AF
           </div>
-          <div>
-            <span className="font-display text-2xl tracking-tight font-bold text-slate-900 block leading-tight">
+          <div className="min-w-0">
+            <span className="font-display text-base sm:text-2xl font-bold tracking-tight text-slate-900 block leading-tight truncate">
               Alishan Furnitures
             </span>
-            <span className="text-[10px] uppercase tracking-[0.2em] text-indigo-600 font-semibold">
-              Showroom Management System
+            <span className="text-[10px] sm:text-xs text-indigo-600 font-semibold tracking-wide block truncate">
+              Showroom Management OS
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 shadow-2xs">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Showroom Floor Ready</span>
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-emerald-50 border border-emerald-200/90 text-[11px] sm:text-xs font-semibold text-emerald-700 shadow-2xs whitespace-nowrap shrink-0">
+          <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <span>Floor Ready</span>
         </div>
       </header>
 
