@@ -103,8 +103,13 @@ export function QuoteCart({
   // Discount label: clean standard "Discount"
   const discountLabel = 'Discount';
 
-  // 4. WhatsApp Number Validation (Strict Indian Mobile Regex: starts with 6-9, exactly 10 digits)
-  const cleanWhatsappNumber = whatsappNumber.replace(/\D/g, '');
+  // 4. WhatsApp Number Validation (Strict Indian Mobile Regex: handles 10 digits, +91, and leading 0)
+  let cleanWhatsappNumber = whatsappNumber.replace(/\D/g, '');
+  if (cleanWhatsappNumber.startsWith('91') && cleanWhatsappNumber.length === 12) {
+    cleanWhatsappNumber = cleanWhatsappNumber.slice(2);
+  } else if (cleanWhatsappNumber.startsWith('0') && cleanWhatsappNumber.length === 11) {
+    cleanWhatsappNumber = cleanWhatsappNumber.slice(1);
+  }
   const isValidWhatsapp = /^[6-9]\d{9}$/.test(cleanWhatsappNumber);
 
   // 5. Submit Handler

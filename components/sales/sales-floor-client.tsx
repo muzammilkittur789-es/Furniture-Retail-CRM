@@ -39,6 +39,7 @@ export function SalesFloorClient({
   const [newMoreInfo, setNewMoreInfo] = useState('');
   const [newImageUrl, setNewImageUrl] = useState('');
   const [newCategory, setNewCategory] = useState('Living Room');
+  const [newStockQuantity, setNewStockQuantity] = useState('1');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAddingPending, startAddTransition] = useTransition();
 
@@ -87,6 +88,8 @@ export function SalesFloorClient({
       return;
     }
 
+    const stockQtyNum = Math.max(1, parseInt(newStockQuantity) || 1);
+
     startAddTransition(async () => {
       const res = await addProductStockAction({
         name: newName,
@@ -96,6 +99,7 @@ export function SalesFloorClient({
         more_info: newMoreInfo.trim() || undefined,
         image_url: newImageUrl,
         category: newCategory,
+        stock_quantity: stockQtyNum,
         is_active: true,
       });
 
@@ -109,6 +113,7 @@ export function SalesFloorClient({
         setNewMoreInfo('');
         setNewImageUrl('');
         setNewCategory('Living Room');
+        setNewStockQuantity('1');
       } else {
         alert(res.error || 'Failed to add product to stock.');
       }
@@ -575,6 +580,20 @@ export function SalesFloorClient({
                   onChange={(e) => setNewMoreInfo(e.target.value)}
                   placeholder="e.g. King Size / 3-Seater / Reversible Chaise / 6-Seater"
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Stock Quantity (Available Copies)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={newStockQuantity}
+                  onChange={(e) => setNewStockQuantity(e.target.value)}
+                  placeholder="e.g. 1 for unique floor piece, 4 for batch"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-mono font-bold"
                 />
               </div>
 

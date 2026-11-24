@@ -123,9 +123,14 @@ export async function createQuote(
       return { success: false, error: "Please enter the customer's full name." };
     }
 
-    const cleanWhatsapp = customerWhatsapp.replace(/\D/g, '');
-    if (cleanWhatsapp.length !== 10) {
-      return { success: false, error: '10-digit WhatsApp number required.' };
+    let cleanWhatsapp = customerWhatsapp.replace(/\D/g, '');
+    if (cleanWhatsapp.startsWith('91') && cleanWhatsapp.length === 12) {
+      cleanWhatsapp = cleanWhatsapp.slice(2);
+    } else if (cleanWhatsapp.startsWith('0') && cleanWhatsapp.length === 11) {
+      cleanWhatsapp = cleanWhatsapp.slice(1);
+    }
+    if (!/^[6-9]\d{9}$/.test(cleanWhatsapp)) {
+      return { success: false, error: 'Valid 10-digit Indian WhatsApp number required.' };
     }
 
     if (!items || items.length === 0) {
@@ -338,6 +343,7 @@ export async function addProductStockAction(productData: {
   image_url?: string;
   category?: string;
   is_active?: boolean;
+  stock_quantity?: number;
 }) {
   const { addProductStockAction: adminAdd } = await import('@/app/(admin)/admin/actions');
   return adminAdd(productData);

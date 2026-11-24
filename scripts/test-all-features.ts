@@ -520,20 +520,32 @@ async function main() {
     assert.strictEqual(check.allowed, true);
   });
 
-  runTest('Indian Mobile Regex validates genuine numbers and rejects invalid prefixes', () => {
+  runTest('Indian Mobile Regex & Sanitizer validates genuine numbers and strips +91/0 prefixes', () => {
+    const sanitizePhone = (val: string) => {
+      let clean = val.replace(/\D/g, '');
+      if (clean.startsWith('91') && clean.length === 12) clean = clean.slice(2);
+      else if (clean.startsWith('0') && clean.length === 11) clean = clean.slice(1);
+      return clean;
+    };
     const indianMobileRegex = /^[6-9]\d{9}$/;
-    // Valid Indian mobile numbers
-    assert.strictEqual(indianMobileRegex.test('9876543210'), true);
-    assert.strictEqual(indianMobileRegex.test('8123456789'), true);
-    assert.strictEqual(indianMobileRegex.test('7000112233'), true);
-    assert.strictEqual(indianMobileRegex.test('6987654321'), true);
+
+    // Direct 10-digit
+    assert.strictEqual(indianMobileRegex.test(sanitizePhone('9876543210')), true);
+    assert.strictEqual(indianMobileRegex.test(sanitizePhone('8123456789')), true);
+
+    // Formatted with +91 country code
+    assert.strictEqual(indianMobileRegex.test(sanitizePhone('+91 98765 43210')), true);
+    assert.strictEqual(sanitizePhone('+91-9876543210'), '9876543210');
+
+    // Leading zero
+    assert.strictEqual(indianMobileRegex.test(sanitizePhone('09876543210')), true);
+    assert.strictEqual(sanitizePhone('09876543210'), '9876543210');
 
     // Invalid numbers (starting with 1-5, wrong length, letters)
-    assert.strictEqual(indianMobileRegex.test('5123456789'), false);
-    assert.strictEqual(indianMobileRegex.test('1234567890'), false);
-    assert.strictEqual(indianMobileRegex.test('98765'), false);
-    assert.strictEqual(indianMobileRegex.test('987654321012'), false);
-    assert.strictEqual(indianMobileRegex.test('abcdefghij'), false);
+    assert.strictEqual(indianMobileRegex.test(sanitizePhone('5123456789')), false);
+    assert.strictEqual(indianMobileRegex.test(sanitizePhone('1234567890')), false);
+    assert.strictEqual(indianMobileRegex.test(sanitizePhone('98765')), false);
+    assert.strictEqual(indianMobileRegex.test(sanitizePhone('abcdefghij')), false);
   });
 
   await runAsyncTest('Production HTTP Security Headers are fully configured in next.config.mjs', async () => {
