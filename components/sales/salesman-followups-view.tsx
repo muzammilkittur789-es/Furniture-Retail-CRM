@@ -3,21 +3,42 @@
 import React, { useState, useTransition } from 'react';
 import { FollowUpLead, StaffSession } from '@/lib/types/database';
 import { formatINR } from '@/lib/utils';
-import { Phone, MessageSquare, CheckCircle2, Check, Search } from 'lucide-react';
-import { markFollowUpContactedAction } from '@/app/(sales)/sales/actions';
+import { Phone, MessageSquare, CheckCircle2, Check, Search, ShoppingBag } from 'lucide-react';
+import { markFollowUpContactedAction, markQuoteSoldAction } from '@/app/(sales)/sales/actions';
 
 interface SalesmanFollowupsViewProps {
   staff: StaffSession;
   initialLeads: FollowUpLead[];
+  onDealClosed?: (affectedProducts?: { id: string; name: string; remainingStock: number; isSoldOut: boolean }[]) => void;
 }
 
 export function SalesmanFollowupsView({
   staff,
   initialLeads,
+  onDealClosed,
 }: SalesmanFollowupsViewProps) {
   const [leads, setLeads] = useState<FollowUpLead[]>(initialLeads);
   const [searchQuery, setSearchQuery] = useState('');
+  const [closingLeadId, setClosingLeadId] = useState<string | null>(null);
+  const [confirmLead, setConfirmLead] = useState<FollowUpLead | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const handleExecuteCloseDeal = (lead: FollowUpLead) => {
+    setClosingLeadId(lead.id);
+    setConfirmLead(null);
+    startTransition(async () => {
+      const res = await markQuoteSoldAction(lead.quoteId);
+      setClosingLeadId(null);
+      if (res.success) {
+        setLeads((prev) =>
+          prev.map((l) => (l.id === lead.id ? { ...l, status: 'deal_closed' } : l))
+        );
+        onDealClosed?.(res.affectedProducts);
+      } else {
+        alert(res.error || 'Failed to close deal.');
+      }
+    });
+  };
 
   const handleToggleCalled = (leadId: string) => {
     // Optimistic update
@@ -139,56 +160,124 @@ export function SalesmanFollowupsView({
                   </p>
                 </div>
 
-                {/* Actions: Row 1 = Call & WhatsApp, Row 2 = Mark Called */}
+                {/* Actions */}
                 <div className="flex flex-col gap-2 shrink-0 w-full sm:w-64">
-                  {/* Row 1: Direct Contact Buttons */}
-                  <div className="grid grid-cols-2 gap-2 w-full">
-                    <a
-                      href={`tel:+91${lead.customerWhatsapp}`}
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm active:scale-95 transition shadow-2xs whitespace-nowrap"
-                    >
-                      <Phone className="w-3.5 h-3.5 shrink-0" />
-                      <span>Call</span>
-                    </a>
+                  {lead.status === 'deal_closed' ? (
+                    <div className="w-full py-2.5 px-3 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs select-none">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                      <span>Deal Won & Closed!</span>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Row 1: Direct Contact Buttons */}
+                      <div className="grid grid-cols-2 gap-2 w-full">
+                        <a
+                          href={`tel:+91${lead.customerWhatsapp}`}
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm active:scale-95 transition shadow-2xs whitespace-nowrap"
+                        >
+                          <Phone className="w-3.5 h-3.5 shrink-0" />
+                          <span>Call</span>
+                        </a>
 
-                    <a
-                      href={`https://wa.me/91${lead.customerWhatsapp}?text=${whatsappMsg}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm active:scale-95 transition shadow-2xs whitespace-nowrap"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5 shrink-0" />
-                      <span>WhatsApp</span>
-                    </a>
-                  </div>
+                        <a
+                          href={`https://wa.me/91${lead.customerWhatsapp}?text=${whatsappMsg}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm active:scale-95 transition shadow-2xs whitespace-nowrap"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                          <span>WhatsApp</span>
+                        </a>
+                      </div>
 
-                  {/* Row 2: Mark as Called (Below Call & WhatsApp, clean 1-line layout) */}
-                  <button
-                    type="button"
-                    onClick={() => handleToggleCalled(lead.id)}
-                    className={`w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border transition active:scale-95 whitespace-nowrap ${
-                      isCalled
-                        ? 'bg-emerald-100 border-emerald-300 text-emerald-900 shadow-2xs'
-                        : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-2xs'
-                    }`}
-                    title={isCalled ? 'Click to unmark' : 'Mark customer as called'}
-                  >
-                    {isCalled ? (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                        <span className="whitespace-nowrap">Called</span>
-                      </>
-                    ) : (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span className="whitespace-nowrap">Mark Called</span>
-                      </>
-                    )}
-                  </button>
+                      {/* Row 2: Mark as Called */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleCalled(lead.id)}
+                        className={`w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border transition active:scale-95 whitespace-nowrap ${
+                          isCalled
+                            ? 'bg-emerald-100 border-emerald-300 text-emerald-900 shadow-2xs'
+                            : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-2xs'
+                        }`}
+                        title={isCalled ? 'Click to unmark' : 'Mark customer as called'}
+                      >
+                        {isCalled ? (
+                          <>
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                            <span className="whitespace-nowrap">Called</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span className="whitespace-nowrap">Mark Called</span>
+                          </>
+                        )}
+                      </button>
+
+                      {/* Row 3: Mark Deal Closed (Customer Bought) */}
+                      <button
+                        type="button"
+                        disabled={closingLeadId === lead.id || isPending}
+                        onClick={() => setConfirmLead(lead)}
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs active:scale-95 transition disabled:opacity-50 whitespace-nowrap"
+                        title="Customer bought items on call - deduct showroom inventory"
+                      >
+                        <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
+                        <span>{closingLeadId === lead.id ? 'Updating Stock...' : 'Mark Deal Closed (Bought)'}</span>
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* CONFIRM DEAL CLOSED MODAL */}
+      {confirmLead && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-200 text-center">
+            <div className="w-14 h-14 rounded-3xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+              <ShoppingBag className="w-7 h-7 stroke-[2]" />
+            </div>
+
+            <h3 className="font-display font-extrabold text-xl text-slate-900 mb-2">
+              Confirm Deal Closure
+            </h3>
+
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
+              Did <strong className="text-slate-900 font-bold">{confirmLead.customerName}</strong> confirm the purchase for{' '}
+              <strong className="text-emerald-700 font-bold">{formatINR(confirmLead.quotedAmount)}</strong>?
+            </p>
+
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700 mb-6 text-left space-y-1">
+              <div><strong>Items:</strong> {confirmLead.itemsSummary}</div>
+              <div className="text-[11px] text-slate-500">
+                Showroom inventory for these quoted items will be deducted immediately.
+              </div>
+            </div>
+
+            <div className="flex gap-2.5 sm:gap-3">
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => setConfirmLead(null)}
+                className="flex-1 py-2.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-100 transition whitespace-nowrap text-center"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => handleExecuteCloseDeal(confirmLead)}
+                className="flex-1 py-2.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 active:scale-95 transition flex items-center justify-center gap-1.5 whitespace-nowrap"
+              >
+                <Check className="w-3.5 h-3.5 shrink-0" />
+                <span>Yes, Deal Closed</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

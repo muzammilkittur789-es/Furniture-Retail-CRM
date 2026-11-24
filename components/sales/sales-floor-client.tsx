@@ -192,7 +192,7 @@ export function SalesFloorClient({
     const target = directSaleProduct;
 
     startDirectSaleTransition(async () => {
-      const res = await directMarkProductSoldAction(target.id, 1);
+      const res = await directMarkProductSoldAction(target.id, 1, activeStaff?.id, activeStaff?.name);
       if (res.success) {
         if (res.isSoldOut) {
           // If completely sold out, remove from available products on floor
@@ -219,6 +219,27 @@ export function SalesFloorClient({
       } else {
         alert(res.error || 'Failed to record direct sale.');
       }
+    });
+  };
+
+  // Instant Floor Sync when a Quote deal is marked Closed / Won
+  const handleQuoteDealClosed = (
+    affectedProducts?: { id: string; name: string; remainingStock: number; isSoldOut: boolean }[]
+  ) => {
+    if (!affectedProducts || affectedProducts.length === 0) return;
+    setProducts((prev) => {
+      let updated = [...prev];
+      for (const aff of affectedProducts) {
+        if (aff.isSoldOut) {
+          updated = updated.filter((p) => p.id !== aff.id);
+          handleRemoveProduct(aff.id);
+        } else {
+          updated = updated.map((p) =>
+            p.id === aff.id ? { ...p, stock_quantity: aff.remainingStock } : p
+          );
+        }
+      }
+      return updated;
     });
   };
 
@@ -333,6 +354,7 @@ export function SalesFloorClient({
           <SalesmanFollowupsView
             staff={activeStaff}
             initialLeads={staffFollowUps}
+            onDealClosed={handleQuoteDealClosed}
           />
         ) : (
           /* Showroom Floor Product Catalog Grid & Sticky Cart */
@@ -380,6 +402,7 @@ export function SalesFloorClient({
                   staff={activeStaff}
                   onRemoveProduct={handleRemoveProduct}
                   onClearCart={handleClearCart}
+                  onDealClosed={handleQuoteDealClosed}
                 />
               )}
             </div>
@@ -436,6 +459,7 @@ export function SalesFloorClient({
               onRemoveProduct={handleRemoveProduct}
               onClearCart={handleClearCart}
               onCloseMobile={() => setIsMobileCartOpen(false)}
+              onDealClosed={handleQuoteDealClosed}
             />
           </div>
         </div>

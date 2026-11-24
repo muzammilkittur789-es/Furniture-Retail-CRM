@@ -83,7 +83,7 @@ export function QuoteDocument({ quote }: QuoteDocumentProps) {
     whatsappMsg = `Hello Alishan Furnitures! Regarding Quote #${shortRef}, I would like to ask a question or explore alternative pieces.`;
   }
 
-  const whatsappConfirmUrl = `https://wa.me/919876543210?text=${encodeURIComponent(whatsappMsg)}`;
+  const whatsappConfirmUrl = `https://wa.me/917676482481?text=${encodeURIComponent(whatsappMsg)}`;
 
   return (
     <div className="w-full max-w-2xl mx-auto bg-white border border-slate-200/90 rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_4px_24px_-4px_rgba(15,23,42,0.06)] overflow-hidden text-slate-900 my-2 sm:my-6 md:my-10 print:border-none print:shadow-none print:my-0 print:p-0 relative">
@@ -379,11 +379,11 @@ export function QuoteDocument({ quote }: QuoteDocumentProps) {
           </a>
 
           <a
-            href="tel:+919876543210"
+            href="tel:+917676482481"
             className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-bold text-xs sm:text-sm shadow-xs active:scale-98 transition"
           >
             <Phone className="w-4 h-4 text-indigo-600 shrink-0" />
-            <span>Call Showroom (+91 9876543210)</span>
+            <span>Call Showroom (+91 7676482481)</span>
           </a>
         </div>
 

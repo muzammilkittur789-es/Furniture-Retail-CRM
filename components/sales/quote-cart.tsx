@@ -29,6 +29,7 @@ interface QuoteCartProps {
   onRemoveProduct: (productId: string) => void;
   onClearCart: () => void;
   onCloseMobile?: () => void;
+  onDealClosed?: (affectedProducts?: { id: string; name: string; remainingStock: number; isSoldOut: boolean }[]) => void;
 }
 
 export function QuoteCart({
@@ -39,6 +40,7 @@ export function QuoteCart({
   onRemoveProduct,
   onClearCart,
   onCloseMobile,
+  onDealClosed,
 }: QuoteCartProps) {
   const [discountType, setDiscountType] = useState<DiscountType>('percentage');
   const [discountValueInput, setDiscountValueInput] = useState<string>('0');
@@ -290,6 +292,7 @@ Alishan Furnitures`;
       setIsMarkingSold(false);
       if (res.success) {
         setIsDealClosed(true);
+        onDealClosed?.(res.affectedProducts);
       } else {
         alert(res.error || 'Failed to update deal status.');
       }

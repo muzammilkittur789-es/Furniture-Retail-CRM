@@ -23,6 +23,8 @@ import {
   releaseProductHoldByQuoteId,
   updateQuoteStatusInStore,
   getQuoteById,
+  closeQuoteAndDeductInventory,
+  getAllProducts,
 } from '@/lib/store/showroom-store';
 import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '@/lib/security/rate-limit';
 
@@ -137,31 +139,31 @@ export async function updateQuoteStatus(
     // Sync status in in-memory store
     updateQuoteStatusInStore(quoteId, newStatus);
 
-    // Auto-mark products as sold & release hold when deal is closed
+    // Properly deduct inventory and handle multi-copy stock when deal is closed
     if (newStatus === 'closed') {
-      const q = getQuoteById(quoteId);
-      if (q && q.items) {
-        q.items.forEach((item) => {
-          if (item.product?.id) {
-            toggleProductActive(item.product.id, false);
-          }
-        });
-      }
-      if ((global as any).__ALISHAN_PRODUCT_HOLDS__) {
-        const held = (global as any).__ALISHAN_PRODUCT_HOLDS__.filter((h: any) => h.quoteId === quoteId);
-        held.forEach((h: any) => {
-          toggleProductActive(h.productId, false);
-        });
-      }
-      releaseProductHoldByQuoteId(quoteId);
-    }
+      const closeRes = closeQuoteAndDeductInventory(quoteId);
 
-    // Auto-release 24h product reservation hold if deal did not go through
-    if (newStatus === 'no_deal') {
-      releaseProductHoldByQuoteId(quoteId);
+      if (isSupabaseConfigured() && closeRes.affectedProducts) {
+        try {
+          const supabase = createServerClient();
+          for (const aff of closeRes.affectedProducts) {
+            await supabase
+              .from('products')
+              .update({
+                stock_quantity: aff.remainingStock,
+                is_active: !aff.isSoldOut,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', aff.id);
+          }
+        } catch (e) {
+          console.warn('Could not sync stock to Supabase on admin deal closure:', e);
+        }
+      }
     }
 
     revalidatePath('/admin');
+    revalidatePath('/admin/products');
     revalidatePath('/admin/analytics');
     revalidatePath('/sales');
 

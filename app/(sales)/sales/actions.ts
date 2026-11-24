@@ -350,7 +350,9 @@ export async function addProductStockAction(productData: {
  */
 export async function directMarkProductSoldAction(
   productId: string,
-  quantityToDeduct: number = 1
+  quantityToDeduct: number = 1,
+  staffId?: string,
+  staffName?: string
 ): Promise<{
   success: boolean;
   remainingStock?: number;
@@ -360,9 +362,87 @@ export async function directMarkProductSoldAction(
   try {
     if (!productId) return { success: false, error: 'Product ID is required.' };
 
+    const product = getAllProducts().find((p) => p.id === productId);
     const res = decrementProductStock(productId, quantityToDeduct);
     if (!res.success) {
       return { success: false, error: 'Product not found or already sold out.' };
+    }
+
+    // Log this transaction as a completed direct walk-in sale so it reflects in daily revenue & reports
+    if (product) {
+      const saleAmount = Number(product.price) * quantityToDeduct;
+      const walkInQuoteId = `walkin-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const activeStaffId = staffId || 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
+      const activeStaffName = staffName || 'Arjun Verma';
+
+      saveNewQuote({
+        id: walkInQuoteId,
+        created_at: new Date().toISOString(),
+        customer_name: 'Walk-In Customer',
+        customer_whatsapp: 'Direct Showroom Sale',
+        subtotal: saleAmount,
+        discount_type: 'flat',
+        discount_value: 0,
+        final_price: saleAmount,
+        advance_deposit: saleAmount,
+        order_notes: `Direct Walk-In Floor Purchase (${quantityToDeduct} unit)`,
+        status: 'closed',
+        staffName: activeStaffName,
+        itemsSummary: `${product.name} (Direct Sale)`,
+        itemsCount: quantityToDeduct,
+        staff: {
+          id: activeStaffId,
+          name: activeStaffName,
+          role: 'sales',
+        },
+        items: [
+          {
+            id: `item-${Date.now()}`,
+            price_at_time: Number(product.price),
+            quantity: quantityToDeduct,
+            product: {
+              id: product.id,
+              name: product.name,
+              material: product.material,
+              dimensions: product.dimensions,
+              more_info: product.more_info,
+              image_url: product.image_url,
+            },
+          },
+        ],
+      });
+
+      if (isSupabaseConfigured()) {
+        try {
+          const supabase = createServerClient();
+          const { data: qData } = await supabase
+            .from('quotes')
+            .insert({
+              staff_id: activeStaffId,
+              customer_name: 'Walk-In Customer',
+              customer_whatsapp: 'Direct Showroom Sale',
+              subtotal: saleAmount,
+              discount_type: 'flat',
+              discount_value: 0,
+              final_price: saleAmount,
+              advance_deposit: saleAmount,
+              order_notes: `Direct Walk-In Floor Purchase (${quantityToDeduct} unit)`,
+              status: 'closed',
+            })
+            .select('id')
+            .single();
+
+          if (qData?.id) {
+            await supabase.from('quote_items').insert({
+              quote_id: qData.id,
+              product_id: productId,
+              price_at_time: Number(product.price),
+            });
+          }
+        } catch (dbErr) {
+          console.warn('Could not record direct sale in Supabase:', dbErr);
+        }
+      }
     }
 
     if (isSupabaseConfigured()) {
