@@ -196,16 +196,6 @@ export function AdminShell({ children }: AdminShellProps) {
             <ChevronRight className="w-3.5 h-3.5 opacity-50" />
           </Link>
 
-          <div className="flex items-center justify-between text-[10px] text-slate-500 px-1">
-            <Link href="/privacy-policy" target="_blank" className="hover:text-slate-300 transition underline underline-offset-2">
-              Privacy Policy
-            </Link>
-            <span>•</span>
-            <Link href="/terms" target="_blank" className="hover:text-slate-300 transition underline underline-offset-2">
-              Terms & Conditions
-            </Link>
-          </div>
-
           {adminSession && (
             <div className="pt-2 flex items-center justify-between">
               <div className="min-w-0">

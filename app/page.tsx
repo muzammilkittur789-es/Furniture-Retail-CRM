@@ -100,13 +100,9 @@ export default function RootHomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 max-w-6xl w-full mx-auto border-t border-slate-200/80 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-        <p>© 2026 Alishan Furnitures. All rights reserved.</p>
-        <div className="flex items-center gap-3 sm:gap-4 text-xs font-medium">
-          <Link href="/privacy-policy" className="hover:text-indigo-600 transition">Privacy Policy</Link>
-          <span>•</span>
-          <Link href="/terms" className="hover:text-indigo-600 transition">Terms & Conditions</Link>
-        </div>
+      <footer className="relative z-10 max-w-6xl w-full mx-auto border-t border-slate-200/80 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+        <p>© 2026 Alishan Furnitures • Showroom Operating System</p>
+        <p className="text-[11px] text-slate-400 font-mono">Internal Store Terminal • Authorized Personnel Only</p>
       </footer>
     </div>
   );
