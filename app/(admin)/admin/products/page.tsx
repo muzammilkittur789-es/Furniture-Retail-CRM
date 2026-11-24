@@ -35,7 +35,7 @@ export default async function AdminProductsPage() {
           Furniture Stock List
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal">
-          Tap the status badge anytime to change between <strong className="text-emerald-700">In Stock</strong> and <strong className="text-orange-700">Sold</strong>.
+          Live showroom inventory. Status updates automatically to <strong className="text-orange-700">Sold</strong> when sales staff close deals and stock reaches zero.
         </p>
       </div>
 
