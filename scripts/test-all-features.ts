@@ -165,26 +165,63 @@ async function main() {
   });
 
   // -------------------------------------------------------------
-  // MODULE 3: 24-HOUR PRODUCT QUOTE HOLD / RESERVATION
+  // MODULE 3: MULTI-COPY STOCK INVENTORY & DEAL CLOSURE ENGINE
   // -------------------------------------------------------------
-  console.log('\n📦 MODULE 3: 24-HOUR PRODUCT HOLD & ANTI-COLLISION ENGINE');
+  console.log('\n📦 MODULE 3: MULTI-COPY STOCK INVENTORY & DEAL CLOSURE ENGINE');
 
-  runTest('Quoting a product locks it for 24 hours', () => {
-    store.lockProductsFor24Hours(
-      [{ productId: testProductId, name: 'Milanese Emerald Velvet Chaise' }],
-      'test-quote-999'
-    );
+  runTest('Multi-copy stock inventory: selling 1 of 3 leaves 2 copies and product remains in stock', () => {
+    const multiCopyProd = store.addNewProduct({
+      name: 'Verona Dining Chair (Set of 6)',
+      price: 90000,
+      material: 'Velvet & Walnut',
+      dimensions: '55cm x 60cm x 90cm',
+      stock_quantity: 3,
+    });
 
-    const holdStatus = store.getProductHoldStatus(testProductId);
-    assert.strictEqual(holdStatus.isLocked, true);
-    assert.ok(holdStatus.remainingHours === 24 || holdStatus.remainingHours === 23);
-    assert.ok(holdStatus.lockedUntilFormatted);
+    assert.strictEqual(multiCopyProd.stock_quantity, 3);
+    assert.strictEqual(multiCopyProd.is_active, true);
+
+    const decRes = store.decrementProductStock(multiCopyProd.id, 1);
+    assert.strictEqual(decRes.success, true);
+    assert.strictEqual(decRes.remainingStock, 2);
+    assert.strictEqual(decRes.isSoldOut, false);
+
+    const p = store.getAllProducts().find((item) => item.id === multiCopyProd.id);
+    assert.strictEqual(p?.stock_quantity, 2);
+    assert.strictEqual(p?.is_active, true);
   });
 
-  runTest('Releasing hold by quote ID unlocks product immediately', () => {
-    store.releaseProductHoldByQuoteId('test-quote-999');
-    const holdStatus = store.getProductHoldStatus(testProductId);
-    assert.strictEqual(holdStatus.isLocked, false);
+  runTest('Selling final copy: remaining stock reaches 0 and product marks is_active = false (Sold Out)', () => {
+    const singleProd = store.addNewProduct({
+      name: 'Bespoke Royal Onyx Console Table',
+      price: 210000,
+      material: 'Onyx & Brass',
+      dimensions: '140cm x 40cm x 85cm',
+      stock_quantity: 1,
+    });
+
+    const decRes = store.decrementProductStock(singleProd.id, 1);
+    assert.strictEqual(decRes.success, true);
+    assert.strictEqual(decRes.remainingStock, 0);
+    assert.strictEqual(decRes.isSoldOut, true);
+
+    const p = store.getAllProducts().find((item) => item.id === singleProd.id);
+    assert.strictEqual(p?.stock_quantity, 0);
+    assert.strictEqual(p?.is_active, false);
+  });
+
+  runTest('Restocking product: admin restocks 2 units, product becomes active again', () => {
+    const all = store.getAllProducts();
+    const soldOnyx = all.find((item) => item.name === 'Bespoke Royal Onyx Console Table');
+    assert.ok(soldOnyx);
+
+    const restockRes = store.restockProduct(soldOnyx.id, 2);
+    assert.strictEqual(restockRes.success, true);
+    assert.strictEqual(restockRes.newStock, 2);
+
+    const p = store.getAllProducts().find((item) => item.id === soldOnyx.id);
+    assert.strictEqual(p?.stock_quantity, 2);
+    assert.strictEqual(p?.is_active, true);
   });
 
   // -------------------------------------------------------------
@@ -343,20 +380,13 @@ async function main() {
     const q = store.getQuoteById(createdQuoteId);
     assert.strictEqual(q?.status, 'closed');
 
-    // Simulate closing deal logic: product marked sold out, hold released
-    q.items.forEach((item) => {
-      if (item.product?.id) {
-        store.toggleProductActive(item.product.id, false);
-      }
-    });
-    store.releaseProductHoldByQuoteId(createdQuoteId);
+    // Test closeQuoteAndDeductInventory
+    const dealRes = store.closeQuoteAndDeductInventory(createdQuoteId);
+    assert.strictEqual(dealRes.success, true);
+    assert.ok(dealRes.affectedProducts.length > 0);
 
-    // Verify product is sold out and hold is gone
-    const prod = store.getAllProducts().find((p) => p.id === testProductId);
-    assert.strictEqual(prod?.is_active, false);
-
-    const hold = store.getProductHoldStatus(testProductId);
-    assert.strictEqual(hold.isLocked, false);
+    const closedQuote = store.getQuoteById(createdQuoteId);
+    assert.strictEqual(closedQuote?.status, 'closed');
   });
 
   // -------------------------------------------------------------
@@ -369,7 +399,7 @@ async function main() {
       quoteId: 'e0eebc99-9c0b-4ef8-bb6d-123456789012',
       shortRef: 'E0EEBC99',
       dateFormatted: '22 November 2026',
-      validUntilFormatted: '10:00 PM (24 Hours)',
+      validUntilFormatted: '29 November 2026 (7 Days)',
       staffName: 'Arjun Verma',
       customerName: 'Farhan Akhtar',
       customerWhatsapp: '9876543210',

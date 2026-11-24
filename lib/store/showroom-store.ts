@@ -118,6 +118,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     image_url:
       'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
     is_active: true,
+    stock_quantity: 1, // Single bespoke display unit
   },
   {
     id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
@@ -130,6 +131,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     image_url:
       'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80',
     is_active: true,
+    stock_quantity: 2, // 2 units in warehouse
   },
   {
     id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
@@ -142,6 +144,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     image_url:
       'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1200&q=80',
     is_active: true,
+    stock_quantity: 4, // 4 armchairs in stock
   },
   {
     id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a77',
@@ -154,6 +157,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     image_url:
       'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
     is_active: true,
+    stock_quantity: 2, // 2 bedframes in warehouse
   },
   {
     id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a88',
@@ -166,6 +170,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     image_url:
       'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=1200&q=80',
     is_active: true,
+    stock_quantity: 3, // 3 tables in stock
   },
   {
     id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a99',
@@ -178,6 +183,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
     image_url:
       'https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&w=1200&q=80',
     is_active: true,
+    stock_quantity: 1, // 1 floor model
   },
 ];
 
@@ -672,7 +678,9 @@ export function addNewProduct(productData: {
   image_url?: string;
   category?: string;
   is_active?: boolean;
+  stock_quantity?: number;
 }): Product {
+  const stockQty = productData.stock_quantity !== undefined ? Math.max(0, Number(productData.stock_quantity)) : 1;
   const newProduct: Product = {
     id: 'prod-' + Date.now(),
     name: productData.name.trim(),
@@ -684,7 +692,8 @@ export function addNewProduct(productData: {
     image_url:
       productData.image_url?.trim() ||
       'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
-    is_active: productData.is_active !== undefined ? productData.is_active : true,
+    stock_quantity: stockQty,
+    is_active: productData.is_active !== undefined ? productData.is_active : (stockQty > 0),
     created_at: new Date().toISOString(),
   };
 
@@ -704,6 +713,7 @@ export function updateProduct(
     image_url?: string;
     category?: string;
     is_active?: boolean;
+    stock_quantity?: number;
   }
 ): Product | null {
   if (!global.__ALISHAN_PRODUCTS_STORE__) {
@@ -713,6 +723,7 @@ export function updateProduct(
   if (index === -1) return null;
 
   const existing = global.__ALISHAN_PRODUCTS_STORE__[index];
+  const newStock = updates.stock_quantity !== undefined ? Math.max(0, Number(updates.stock_quantity)) : (existing.stock_quantity ?? 1);
   const updated: Product = {
     ...existing,
     name: updates.name !== undefined ? updates.name.trim() : existing.name,
@@ -722,12 +733,71 @@ export function updateProduct(
     more_info: updates.more_info !== undefined ? (updates.more_info.trim() || undefined) : existing.more_info,
     category: updates.category !== undefined ? updates.category.trim() : existing.category,
     image_url: updates.image_url !== undefined ? updates.image_url.trim() : existing.image_url,
-    is_active: updates.is_active !== undefined ? updates.is_active : existing.is_active,
+    stock_quantity: newStock,
+    is_active: updates.is_active !== undefined ? updates.is_active : (newStock > 0),
     updated_at: new Date().toISOString(),
   };
 
   global.__ALISHAN_PRODUCTS_STORE__[index] = updated;
   return updated;
+}
+
+export function decrementProductStock(
+  productId: string,
+  quantityToDeduct: number = 1
+): { success: boolean; remainingStock: number; isSoldOut: boolean; product?: Product } {
+  if (!global.__ALISHAN_PRODUCTS_STORE__) {
+    global.__ALISHAN_PRODUCTS_STORE__ = [...DEFAULT_PRODUCTS];
+  }
+  const index = global.__ALISHAN_PRODUCTS_STORE__.findIndex((p) => p.id === productId);
+  if (index === -1) return { success: false, remainingStock: 0, isSoldOut: true };
+
+  const current = global.__ALISHAN_PRODUCTS_STORE__[index];
+  const currentStock = current.stock_quantity ?? 1;
+  const nextStock = Math.max(0, currentStock - quantityToDeduct);
+  const isSoldOut = nextStock === 0;
+
+  global.__ALISHAN_PRODUCTS_STORE__[index] = {
+    ...current,
+    stock_quantity: nextStock,
+    is_active: !isSoldOut,
+    updated_at: new Date().toISOString(),
+  };
+
+  return {
+    success: true,
+    remainingStock: nextStock,
+    isSoldOut,
+    product: global.__ALISHAN_PRODUCTS_STORE__[index],
+  };
+}
+
+export function restockProduct(
+  productId: string,
+  quantityToAdd: number
+): { success: boolean; newStock: number; product?: Product } {
+  if (!global.__ALISHAN_PRODUCTS_STORE__) {
+    global.__ALISHAN_PRODUCTS_STORE__ = [...DEFAULT_PRODUCTS];
+  }
+  const index = global.__ALISHAN_PRODUCTS_STORE__.findIndex((p) => p.id === productId);
+  if (index === -1) return { success: false, newStock: 0 };
+
+  const current = global.__ALISHAN_PRODUCTS_STORE__[index];
+  const currentStock = current.stock_quantity ?? 0;
+  const nextStock = Math.max(0, currentStock + quantityToAdd);
+
+  global.__ALISHAN_PRODUCTS_STORE__[index] = {
+    ...current,
+    stock_quantity: nextStock,
+    is_active: nextStock > 0,
+    updated_at: new Date().toISOString(),
+  };
+
+  return {
+    success: true,
+    newStock: nextStock,
+    product: global.__ALISHAN_PRODUCTS_STORE__[index],
+  };
 }
 
 export function deleteProduct(productId: string): boolean {
@@ -914,5 +984,46 @@ export function updateQuoteStatusInStore(quoteId: string, newStatus: QuoteStatus
   if (index === -1) return false;
   global.__ALISHAN_QUOTES_STORE__[index].status = newStatus;
   return true;
+}
+
+export function closeQuoteAndDeductInventory(quoteId: string): {
+  success: boolean;
+  affectedProducts: { id: string; name: string; remainingStock: number; isSoldOut: boolean }[];
+} {
+  const quote = getQuoteById(quoteId);
+  if (!quote) return { success: false, affectedProducts: [] };
+
+  // 1. Mark quote status as closed
+  updateQuoteStatusInStore(quoteId, 'closed');
+
+  // 2. Mark any related follow up as deal_closed
+  if (global.__ALISHAN_FOLLOWUPS_STORE__) {
+    const fIdx = global.__ALISHAN_FOLLOWUPS_STORE__.findIndex((f) => f.quoteId === quoteId);
+    if (fIdx !== -1) {
+      global.__ALISHAN_FOLLOWUPS_STORE__[fIdx].status = 'deal_closed';
+      global.__ALISHAN_FOLLOWUPS_STORE__[fIdx].lastUpdated = new Date().toISOString();
+    }
+  }
+
+  // 3. Deduct stock for each item in the quote
+  const affected: { id: string; name: string; remainingStock: number; isSoldOut: boolean }[] = [];
+  const items = quote.items || [];
+  for (const it of items) {
+    const pId = it.product?.id || it.id;
+    const qty = it.quantity && it.quantity > 0 ? it.quantity : 1;
+    if (pId) {
+      const decRes = decrementProductStock(pId, qty);
+      if (decRes.success && decRes.product) {
+        affected.push({
+          id: decRes.product.id,
+          name: decRes.product.name,
+          remainingStock: decRes.remainingStock,
+          isSoldOut: decRes.isSoldOut,
+        });
+      }
+    }
+  }
+
+  return { success: true, affectedProducts: affected };
 }
 

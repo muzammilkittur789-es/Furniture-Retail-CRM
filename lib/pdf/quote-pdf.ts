@@ -750,10 +750,10 @@ export async function generateQuotePdfBlob(data: QuotePdfPayload): Promise<Blob>
 
   // Notice Title
   const noticeX = margin + 46;
-  page.drawText('Notice: Quote Valid for 24 Hours Only', {
+  page.drawText('Notice: Showroom Estimate (Prices Valid for 7 Days)', {
     x: noticeX,
     y: currentY - 19,
-    size: 10.5,
+    size: 10,
     font: fontBold,
     color: colorAmberTitle,
   });
@@ -780,7 +780,7 @@ export async function generateQuotePdfBlob(data: QuotePdfPayload): Promise<Blob>
 
   // Notice Body
   page.drawText(
-    'This quote and price are valid for 24 hours only. These items are reserved for you during',
+    'Quotation prices are valid for 7 days from issue date. Inventory reservation is confirmed upon',
     {
       x: noticeX,
       y: currentY - 33,
@@ -790,7 +790,7 @@ export async function generateQuotePdfBlob(data: QuotePdfPayload): Promise<Blob>
     }
   );
   page.drawText(
-    'this time. No other quote will be generated for these products until 24 hours have passed.',
+    'advance token payment or order booking at the showroom. Subject to stock availability.',
     {
       x: noticeX,
       y: currentY - 43,

@@ -148,46 +148,12 @@ export function PinPadModal({ isOpen, onSuccess }: PinPadModalProps) {
           </button>
         </div>
 
-        {/* Profile Fast-Pill Selectors (Inspired by image colorful category tags!) */}
+        {/* Security Footnote */}
         <div className="w-full pt-4 border-t border-slate-100 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2.5">
-            Tap Profile to Quick-Login
+          <p className="text-[11px] text-slate-400 font-medium flex items-center justify-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
+            <span>Authorized Showroom Sales Staff Only</span>
           </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setPin('1111');
-                submitPin('1111');
-              }}
-              className="text-xs px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 transition font-semibold flex items-center gap-1.5 shadow-2xs active:scale-95"
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>Arjun (1111)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setPin('2222');
-                submitPin('2222');
-              }}
-              className="text-xs px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 transition font-semibold flex items-center gap-1.5 shadow-2xs active:scale-95"
-            >
-              <span className="w-2 h-2 rounded-full bg-purple-500" />
-              <span>Sneha (2222)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setPin('1234');
-                submitPin('1234');
-              }}
-              className="text-xs px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-800 transition font-semibold flex items-center gap-1.5 shadow-2xs active:scale-95"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Vikram (1234)</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>

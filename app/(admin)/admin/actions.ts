@@ -14,6 +14,7 @@ import {
   updateProduct,
   deleteProduct,
   toggleProductActive,
+  restockProduct,
   getFollowUpsForStaff,
   getAllFollowUps,
   updateFollowUpStatus,
@@ -212,6 +213,7 @@ export async function addProductStockAction(productData: {
   image_url?: string;
   category?: string;
   is_active?: boolean;
+  stock_quantity?: number;
 }): Promise<{ success: boolean; product?: Product; error?: string }> {
   try {
     if (!productData.name || !productData.price || !productData.material || !productData.dimensions) {
@@ -261,6 +263,7 @@ export async function updateProductStockAction(
     image_url?: string;
     category?: string;
     is_active?: boolean;
+    stock_quantity?: number;
   }
 ): Promise<{ success: boolean; product?: Product; error?: string }> {
   try {
@@ -331,6 +334,27 @@ export async function deleteProductStockAction(
   } catch (err) {
     console.error('Error deleting product:', err);
     return { success: false, error: 'Failed to delete furniture piece.' };
+  }
+}
+
+export async function restockProductStockAction(
+  productId: string,
+  quantityToAdd: number
+): Promise<{ success: boolean; newStock?: number; error?: string }> {
+  try {
+    if (!productId || quantityToAdd <= 0) {
+      return { success: false, error: 'Invalid product or restock quantity.' };
+    }
+
+    const res = restockProduct(productId, quantityToAdd);
+    revalidatePath('/admin/products');
+    revalidatePath('/sales');
+    revalidatePath('/');
+
+    return { success: res.success, newStock: res.newStock };
+  } catch (err) {
+    console.error('Error restocking product:', err);
+    return { success: false, error: 'Failed to restock furniture piece.' };
   }
 }
 

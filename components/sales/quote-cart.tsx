@@ -4,7 +4,7 @@ import React, { useState, useMemo, useTransition } from 'react';
 import Image from 'next/image';
 import { Product, StaffSession, DiscountType } from '@/lib/types/database';
 import { formatINR } from '@/lib/utils';
-import { createQuote } from '@/app/(sales)/sales/actions';
+import { createQuote, markQuoteSoldAction } from '@/app/(sales)/sales/actions';
 import {
   Trash2,
   Send,
@@ -47,6 +47,8 @@ export function QuoteCart({
   const [orderNotes, setOrderNotes] = useState<string>('');
   const [advanceDepositInput, setAdvanceDepositInput] = useState<string>('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [isDealClosed, setIsDealClosed] = useState<boolean>(false);
+  const [isMarkingSold, setIsMarkingSold] = useState<boolean>(false);
   const [generatedQuote, setGeneratedQuote] = useState<{
     id: string;
     url: string;
@@ -164,7 +166,7 @@ export function QuoteCart({
 
 Please find attached your official furniture quotation (Quote #${shortRef}) for ${formattedPrice}.${advanceLine}${notesLine}
 
-Note: This quote is valid for 24 hours only.
+Note: Prices are valid for 7 days, subject to showroom stock availability.
 
 Thank you,
 ${staff.name}
@@ -179,11 +181,10 @@ Alishan Furnitures`;
           month: 'long',
           year: 'numeric',
         }),
-        validUntilFormatted: new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleTimeString('en-IN', {
-          hour: '2-digit',
-          minute: '2-digit',
+        validUntilFormatted: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', {
           day: 'numeric',
           month: 'short',
+          year: 'numeric',
         }),
         staffName: staff.name,
         customerName: trimmedCustomerName,
@@ -281,8 +282,24 @@ Alishan Furnitures`;
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleMarkDealClosed = () => {
+    if (!generatedQuote?.id || isMarkingSold) return;
+    setIsMarkingSold(true);
+    startTransition(async () => {
+      const res = await markQuoteSoldAction(generatedQuote.id);
+      setIsMarkingSold(false);
+      if (res.success) {
+        setIsDealClosed(true);
+      } else {
+        alert(res.error || 'Failed to update deal status.');
+      }
+    });
+  };
+
   const handleResetForNewQuote = () => {
     setGeneratedQuote(null);
+    setIsDealClosed(false);
+    setIsMarkingSold(false);
     setCustomerName('');
     setWhatsappNumber('');
     setOrderNotes('');
@@ -374,6 +391,34 @@ Alishan Furnitures`;
             >
               <Download className="w-4 h-4 text-indigo-600" />
             </a>
+          </div>
+
+          {/* Post-Quote Customer Decision & Inventory Stock Action */}
+          <div className="w-full mt-4 p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-slate-50/70 text-left">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-2">
+              Customer Decision / Inventory Status
+            </span>
+            {isDealClosed ? (
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Deal Closed! Inventory stock deducted in showroom store.</span>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  disabled={isMarkingSold || isPending}
+                  onClick={handleMarkDealClosed}
+                  className="w-full py-2.5 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs flex items-center justify-center gap-2 transition shadow-xs disabled:opacity-50"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{isMarkingSold ? 'Updating Stock...' : 'Mark Deal Closed (Customer Bought)'}</span>
+                </button>
+                <p className="text-[10px] text-slate-500 text-center leading-relaxed">
+                  Tap if customer pays advance token or purchases now. Otherwise, pieces remain available for other floor customers.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="w-full grid grid-cols-1 gap-2.5 sm:gap-3 mt-4">

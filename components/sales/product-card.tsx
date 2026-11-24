@@ -41,20 +41,17 @@ function getCategoryBadge(name: string, material: string) {
 
 export function ProductCard({ product, isSelected, onToggle }: ProductCardProps) {
   const badge = getCategoryBadge(product.name, product.material);
-  const isSold = product.is_active === false;
-  const isLocked = Boolean(product.isLocked24h);
-  const isUnavailable = isSold || isLocked;
+  const isSold = product.is_active === false || (product.stock_quantity !== undefined && product.stock_quantity <= 0);
+  const stockCount = product.stock_quantity !== undefined ? product.stock_quantity : 1;
 
   return (
     <div
       onClick={() => {
-        if (!isUnavailable) onToggle(product);
+        if (!isSold) onToggle(product);
       }}
       className={`group relative flex flex-col justify-between bg-white rounded-3xl border transition-all duration-300 overflow-hidden ${
         isSold
-          ? 'border-amber-300/80 bg-amber-50/15 shadow-xs cursor-not-allowed opacity-85'
-          : isLocked
-          ? 'border-amber-300/80 bg-amber-50/20 shadow-xs cursor-not-allowed opacity-90'
+          ? 'border-slate-200 bg-slate-50/60 shadow-xs cursor-not-allowed opacity-80'
           : isSelected
           ? 'border-indigo-500 ring-2 ring-indigo-500/25 shadow-lg shadow-indigo-500/10 -translate-y-1 cursor-pointer'
           : 'border-slate-200/80 hover:border-indigo-300 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-xl hover:-translate-y-1 cursor-pointer'
@@ -68,7 +65,7 @@ export function ProductCard({ product, isSelected, onToggle }: ProductCardProps)
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className={`object-cover transition-transform duration-700 ease-out ${
-            isSold ? 'grayscale-[0.4] opacity-80' : isLocked ? 'grayscale-[0.25]' : 'group-hover:scale-105'
+            isSold ? 'grayscale-[0.5] opacity-75' : 'group-hover:scale-105'
           }`}
           priority={false}
         />
@@ -76,36 +73,37 @@ export function ProductCard({ product, isSelected, onToggle }: ProductCardProps)
         {/* Soft Vignette Gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-60" />
 
-        {/* Dynamic Category Pastel Pill or Sold / 24h Lock Warning */}
+        {/* Dynamic Category Pastel Pill & Live Stock Indicator */}
         <div className="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start">
           {isSold ? (
-            <span className="px-3 py-1 rounded-full bg-amber-500 text-white text-[11px] font-bold tracking-wide shadow-sm flex items-center gap-1">
+            <span className="px-3 py-1 rounded-full bg-rose-600 text-white text-[11px] font-bold tracking-wide shadow-sm flex items-center gap-1">
               <span>🏷️ Sold Out</span>
             </span>
           ) : (
-            <span
-              className={`px-3 py-1 rounded-full border text-[11px] font-semibold tracking-wide shadow-xs backdrop-blur-sm ${badge.className}`}
-            >
-              {badge.label}
-            </span>
-          )}
-          {isLocked && !isSold && (
-            <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-bold tracking-wide shadow-sm flex items-center gap-1">
-              <Lock className="w-3 h-3" />
-              <span>24h Hold</span>
-            </span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span
+                className={`px-3 py-1 rounded-full border text-[11px] font-semibold tracking-wide shadow-xs backdrop-blur-sm ${badge.className}`}
+              >
+                {badge.label}
+              </span>
+              {stockCount > 1 ? (
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold tracking-wide shadow-sm flex items-center gap-1">
+                  <span>{stockCount} in Stock</span>
+                </span>
+              ) : (
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-bold tracking-wide shadow-sm flex items-center gap-1">
+                  <span>Only 1 Left</span>
+                </span>
+              )}
+            </div>
           )}
         </div>
 
-        {/* Selection Status Pin or Lock Indicator */}
+        {/* Selection Status Pin */}
         <div className="absolute top-3.5 right-3.5">
           {isSold ? (
-            <div className="px-2.5 py-1 rounded-xl bg-amber-500 text-white text-[10px] font-bold shadow-md ring-2 ring-white">
-              Sold
-            </div>
-          ) : isLocked ? (
-            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-amber-500 text-white shadow-md ring-2 ring-white">
-              <Lock className="w-4 h-4 stroke-[2.5]" />
+            <div className="px-2.5 py-1 rounded-xl bg-slate-800 text-white text-[10px] font-bold shadow-md ring-2 ring-white">
+              Sold Out
             </div>
           ) : (
             <div
@@ -136,8 +134,8 @@ export function ProductCard({ product, isSelected, onToggle }: ProductCardProps)
 
           <h3
             className={`font-display text-lg sm:text-xl font-bold leading-snug line-clamp-1 mb-2 transition-colors ${
-              isUnavailable
-                ? 'text-slate-700'
+              isSold
+                ? 'text-slate-500'
                 : 'text-slate-900 group-hover:text-indigo-600'
             }`}
           >
@@ -155,19 +153,8 @@ export function ProductCard({ product, isSelected, onToggle }: ProductCardProps)
 
           {/* Sold Out Notice */}
           {isSold && (
-            <div className="mb-3 p-2.5 rounded-xl bg-amber-50 border border-amber-300 text-[11px] text-amber-900 font-bold flex items-center gap-2">
-              <span>🏷️ This piece has been sold to another customer.</span>
-            </div>
-          )}
-
-          {/* 24h Hold Notice If Locked */}
-          {isLocked && !isSold && (
-            <div className="mb-3 p-2.5 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-900 font-medium flex items-center gap-2">
-              <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span>
-                Quoted recently. Reserved until{' '}
-                <strong className="font-bold">{product.lockedUntil || '24 hrs'}</strong>
-              </span>
+            <div className="mb-3 p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-[11px] text-slate-700 font-bold flex items-center gap-2">
+              <span>🏷️ All units sold out.</span>
             </div>
           )}
 
@@ -202,13 +189,8 @@ export function ProductCard({ product, isSelected, onToggle }: ProductCardProps)
         {/* Action Button Touch Target - Full Size */}
         <div className="mt-5 sm:mt-6 pt-2">
           {isSold ? (
-            <div className="w-full py-3.5 px-4 rounded-2xl font-bold text-xs bg-amber-50 border border-amber-300 text-amber-900 flex items-center justify-center gap-2 select-none shadow-2xs">
-              <span>🏷️ Sold Out (Out of Stock)</span>
-            </div>
-          ) : isLocked ? (
-            <div className="w-full py-3.5 px-4 rounded-2xl font-bold text-xs bg-amber-50 border border-amber-300 text-amber-800 flex items-center justify-center gap-2 select-none shadow-2xs">
-              <Lock className="w-4 h-4 text-amber-600" />
-              <span>🔒 On 24h Hold (Cannot Quote)</span>
+            <div className="w-full py-3.5 px-4 rounded-2xl font-bold text-xs bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center gap-2 select-none shadow-2xs">
+              <span>🏷️ Sold Out</span>
             </div>
           ) : (
             <button

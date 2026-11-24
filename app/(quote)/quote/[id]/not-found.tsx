@@ -15,7 +15,7 @@ export default function QuoteNotFound() {
         </h1>
 
         <p className="text-sm text-slate-500 leading-relaxed mb-6">
-          This quotation link may have expired (validity is 24 hours) or the reference
+          This quotation link may have expired or the reference
           number is invalid. Please get in touch with your showroom sales team for a renewed
           quote.
         </p>

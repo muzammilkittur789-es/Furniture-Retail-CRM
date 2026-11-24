@@ -11,6 +11,7 @@ import {
   markFollowUpContacted,
   getAllStaffMembers,
   saveNewQuote,
+  closeQuoteAndDeductInventory,
 } from '@/lib/store/showroom-store';
 import { revalidatePath } from 'next/cache';
 
@@ -38,6 +39,12 @@ export async function verifyPin(
     // Check staff store (includes admin-created / updated salesmen)
     const storeVerification = verifyStaffPin(pin);
     if (storeVerification.success && storeVerification.staff) {
+      if (storeVerification.staff.role === 'admin') {
+        return {
+          success: false,
+          error: 'Admin credentials cannot be used on the sales floor. Please access the Owner Admin Dashboard or use your dedicated Sales Staff PIN.',
+        };
+      }
       resetRateLimit('sales_terminal');
       return storeVerification;
     }
@@ -52,6 +59,12 @@ export async function verifyPin(
       if (dbStaff && dbStaff.length > 0) {
         const found = dbStaff.find((s: any) => s.pin === pin || s.pin_hash === pin);
         if (found) {
+          if (found.role === 'admin') {
+            return {
+              success: false,
+              error: 'Admin credentials cannot be used on the sales floor. Please access the Owner Admin Dashboard or use your dedicated Sales Staff PIN.',
+            };
+          }
           resetRateLimit('sales_terminal');
           return {
             success: true,
@@ -130,17 +143,6 @@ export async function createQuote(
       }
     }
 
-    // 2. 24-Hour Product Hold Check
-    for (const item of items) {
-      const hold = getProductHoldStatus(item.productId);
-      if (hold.isLocked) {
-        return {
-          success: false,
-          error: `"${item.name}" was quoted within the last 24 hours and is currently reserved. Quotes cannot be generated for this product until ${hold.lockedUntilFormatted} (${hold.remainingHours}h ${hold.remainingMinutes}m remaining).`,
-        };
-      }
-    }
-
     const itemsSummary = items
       .map((it) => (it.quantity && it.quantity > 1 ? `${it.name} (x${it.quantity})` : it.name))
       .join(' + ');
@@ -153,12 +155,6 @@ export async function createQuote(
     if (!isSupabaseConfigured()) {
       // Instant mock quote ID for rapid offline / demo testing
       const mockQuoteId = 'e0eebc99-9c0b-4ef8-bb6d-' + Date.now().toString().slice(-12);
-
-      // Lock all products in this quote for 24 hours
-      lockProductsFor24Hours(
-        items.map((it) => ({ productId: it.productId, name: it.name })),
-        mockQuoteId
-      );
 
       // Automatically assign follow-up lead to the actual logged-in salesperson
       assignQuoteToStaff(
@@ -262,12 +258,6 @@ export async function createQuote(
 
     await supabase.from('quote_items').insert(quoteItemsData);
 
-    // Lock all products in this quote for 24 hours
-    lockProductsFor24Hours(
-      items.map((it) => ({ productId: it.productId, name: it.name })),
-      quote.id
-    );
-
     // Sync in-memory follow-up store under logged-in salesman
     assignQuoteToStaff(
       quote.id,
@@ -310,6 +300,31 @@ export async function markFollowUpContactedAction(
   } catch (err) {
     console.error('Error in markFollowUpContactedAction:', err);
     return { success: false, error: 'Failed to update follow-up.' };
+  }
+}
+
+/**
+ * Server Action: Mark Deal Closed / Sold by salesperson immediately
+ * Deducts stock_quantity. If stock reaches 0, marks product sold out.
+ */
+export async function markQuoteSoldAction(
+  quoteId: string
+): Promise<{
+  success: boolean;
+  error?: string;
+  affectedProducts?: { id: string; name: string; remainingStock: number; isSoldOut: boolean }[];
+}> {
+  try {
+    if (!quoteId) return { success: false, error: 'Quote reference missing.' };
+    const res = closeQuoteAndDeductInventory(quoteId);
+    revalidatePath('/sales');
+    revalidatePath('/admin');
+    revalidatePath('/admin/products');
+    revalidatePath('/');
+    return res;
+  } catch (err: any) {
+    console.error('Error in markQuoteSoldAction:', err);
+    return { success: false, error: err?.message || 'Failed to record deal completion.' };
   }
 }
 

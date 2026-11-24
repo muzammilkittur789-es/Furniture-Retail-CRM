@@ -13,6 +13,7 @@ const FALLBACK_PRODUCTS: Product[] = [
     image_url:
       'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
     is_active: true,
+    stock_quantity: 1,
   },
   {
     id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
@@ -23,6 +24,7 @@ const FALLBACK_PRODUCTS: Product[] = [
     image_url:
       'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80',
     is_active: true,
+    stock_quantity: 2,
   },
   {
     id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
@@ -33,6 +35,7 @@ const FALLBACK_PRODUCTS: Product[] = [
     image_url:
       'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1200&q=80',
     is_active: true,
+    stock_quantity: 4,
   },
   {
     id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a77',
@@ -43,6 +46,7 @@ const FALLBACK_PRODUCTS: Product[] = [
     image_url:
       'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
     is_active: true,
+    stock_quantity: 2,
   },
   {
     id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a88',
@@ -53,6 +57,7 @@ const FALLBACK_PRODUCTS: Product[] = [
     image_url:
       'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=1200&q=80',
     is_active: true,
+    stock_quantity: 3,
   },
   {
     id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a99',
@@ -63,13 +68,16 @@ const FALLBACK_PRODUCTS: Product[] = [
     image_url:
       'https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&w=1200&q=80',
     is_active: true,
+    stock_quantity: 1,
   },
 ];
 
 export const dynamic = 'force-dynamic';
 
 export default async function SalesFloorPage() {
-  let products: Product[] = getAllProducts().filter((p) => p.is_active);
+  let products: Product[] = getAllProducts().filter(
+    (p) => p.is_active && (p.stock_quantity === undefined || p.stock_quantity > 0)
+  );
 
   if (isSupabaseConfigured()) {
     try {
@@ -88,20 +96,11 @@ export default async function SalesFloorPage() {
     }
   }
 
-  const productsWithHolds: Product[] = products.map((p) => {
-    const hold = getProductHoldStatus(p.id);
-    return {
-      ...p,
-      isLocked24h: hold.isLocked,
-      lockedUntil: hold.lockedUntilFormatted,
-    };
-  });
-
   const followUps = getAllFollowUps();
 
   return (
     <SalesFloorClient
-      initialProducts={productsWithHolds}
+      initialProducts={products}
       initialFollowUps={followUps}
     />
   );

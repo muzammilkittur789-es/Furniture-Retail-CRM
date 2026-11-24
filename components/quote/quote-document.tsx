@@ -56,12 +56,11 @@ export function QuoteDocument({ quote }: QuoteDocumentProps) {
   const shortRef = quote.id.split('-')[0].toUpperCase();
 
   const createdAtDate = new Date(quote.created_at);
-  const validUntilDate = new Date(createdAtDate.getTime() + 24 * 60 * 60 * 1000);
-  const validUntilFormatted = validUntilDate.toLocaleTimeString('en-IN', {
-    hour: '2-digit',
-    minute: '2-digit',
+  const validUntilDate = new Date(createdAtDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const validUntilFormatted = validUntilDate.toLocaleDateString('en-IN', {
     day: 'numeric',
     month: 'short',
+    year: 'numeric',
   });
 
   const isClosed = quote.status === 'closed';
@@ -317,21 +316,21 @@ export function QuoteDocument({ quote }: QuoteDocumentProps) {
               </div>
             </div>
           ) : (
-            <div className="mt-6 sm:mt-8 p-4 sm:p-5 rounded-2xl bg-amber-50 border-2 border-amber-300 text-left flex items-start gap-3 sm:gap-3.5">
-              <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <div className="mt-6 sm:mt-8 p-4 sm:p-5 rounded-2xl bg-indigo-50/80 border border-indigo-200 text-left flex items-start gap-3 sm:gap-3.5">
+              <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
                 <Clock className="w-5 h-5 stroke-[2.5]" />
               </div>
               <div className="space-y-1 min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="font-display font-bold text-amber-950 text-xs sm:text-sm md:text-base">
-                    Notice: Quote Valid for 24 Hours Only
+                  <span className="font-display font-bold text-slate-900 text-xs sm:text-sm md:text-base">
+                    Showroom Estimate Notice
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-200/90 text-amber-900 text-[10px] sm:text-[11px] font-bold font-mono">
-                    Valid till: {validUntilFormatted}
+                  <span className="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] sm:text-[11px] font-bold font-mono">
+                    Prices valid till: {validUntilFormatted}
                   </span>
                 </div>
-                <p className="text-[11px] sm:text-xs text-amber-900 leading-relaxed font-medium">
-                  This quote and price are valid for 24 hours only. These items are reserved for you during this time. No other quote will be generated for these products until 24 hours have passed.
+                <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed font-medium">
+                  Quotation prices are valid for 7 days from issue date. Inventory reservation is confirmed upon advance token payment or order booking at the showroom.
                 </p>
               </div>
             </div>

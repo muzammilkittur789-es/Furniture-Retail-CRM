@@ -8,6 +8,7 @@ import {
   addProductStockAction,
   updateProductStockAction,
   deleteProductStockAction,
+  restockProductStockAction,
 } from '@/app/(admin)/admin/actions';
 import { Product } from '@/lib/types/database';
 import {
@@ -58,6 +59,7 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
   const [newMoreInfo, setNewMoreInfo] = useState('');
   const [newImageUrl, setNewImageUrl] = useState('');
   const [newCategory, setNewCategory] = useState('Living Room');
+  const [newStockQuantity, setNewStockQuantity] = useState('1');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Edit product form states
@@ -68,6 +70,7 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
   const [editMoreInfo, setEditMoreInfo] = useState('');
   const [editImageUrl, setEditImageUrl] = useState('');
   const [editCategory, setEditCategory] = useState('Living Room');
+  const [editStockQuantity, setEditStockQuantity] = useState('1');
   const editFileInputRef = useRef<HTMLInputElement>(null);
 
   const [isPending, startTransition] = useTransition();
@@ -81,6 +84,23 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
     setEditMoreInfo(p.more_info || '');
     setEditImageUrl(p.image_url);
     setEditCategory(p.category || 'Living Room');
+    setEditStockQuantity((p.stock_quantity ?? 1).toString());
+  };
+
+  const handleRestock = (productId: string, addQty: number = 1) => {
+    startTransition(async () => {
+      const res = await restockProductStockAction(productId, addQty);
+      if (res.success && res.newStock !== undefined) {
+        setProducts((prev) =>
+          prev.map((p) =>
+            p.id === productId ? { ...p, stock_quantity: res.newStock!, is_active: res.newStock! > 0 } : p
+          )
+        );
+        showFeedback(`Stock updated! (${res.newStock} units available)`);
+      } else {
+        showFeedback(res.error || 'Failed to restock piece.', 'error');
+      }
+    });
   };
 
   const handleEditImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,6 +130,8 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
       return;
     }
 
+    const stockQtyNum = Math.max(0, parseInt(editStockQuantity) || 1);
+
     startTransition(async () => {
       const res = await updateProductStockAction(editingProduct.id, {
         name: editName,
@@ -119,6 +141,8 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
         more_info: editMoreInfo.trim() || undefined,
         image_url: editImageUrl || editingProduct.image_url,
         category: editCategory,
+        stock_quantity: stockQtyNum,
+        is_active: stockQtyNum > 0,
       });
 
       if (res.success && res.product) {
@@ -210,6 +234,8 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
       return;
     }
 
+    const newStockNum = Math.max(1, parseInt(newStockQuantity) || 1);
+
     startTransition(async () => {
       const res = await addProductStockAction({
         name: newName,
@@ -219,6 +245,7 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
         more_info: newMoreInfo.trim() || undefined,
         image_url: newImageUrl,
         category: newCategory,
+        stock_quantity: newStockNum,
         is_active: true,
       });
 
@@ -232,6 +259,7 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
         setNewMoreInfo('');
         setNewImageUrl('');
         setNewCategory('Living Room');
+        setNewStockQuantity('1');
         showFeedback(`"${res.product.name}" added to stock successfully!`);
       } else {
         showFeedback(res.error || 'Failed to add product.', 'error');
@@ -353,7 +381,21 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold text-slate-600">
+                    Stock: <strong className="font-mono text-slate-900">{p.stock_quantity !== undefined ? p.stock_quantity : 1}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleRestock(p.id, 1)}
+                    className="px-2 py-0.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold border border-indigo-200 transition active:scale-95"
+                    title="Add 1 copy"
+                  >
+                    +1 Restock
+                  </button>
+                </div>
+
                 {/* Interactive Status Badge Button */}
                 <button
                   type="button"
@@ -413,7 +455,8 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                 <th className="py-4 px-6">Material</th>
                 <th className="py-4 px-6">Dimensions</th>
                 <th className="py-4 px-6 text-right">Price</th>
-                <th className="py-4 px-6 text-center">Stock Status (Tap to Change)</th>
+                <th className="py-4 px-6 text-center">Stock Copies</th>
+                <th className="py-4 px-6 text-center">Status</th>
                 <th className="py-4 px-6 text-right">Actions</th>
               </tr>
             </thead>
@@ -453,6 +496,21 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                     </td>
                     <td className="py-4 px-6 text-right font-display text-base font-extrabold text-slate-900 whitespace-nowrap">
                       {formatINR(Number(p.price))}
+                    </td>
+                    <td className="py-4 px-6 text-center whitespace-nowrap">
+                      <div className="inline-flex items-center gap-2">
+                        <span className="font-mono font-bold text-xs px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-800">
+                          {p.stock_quantity !== undefined ? p.stock_quantity : 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRestock(p.id, 1)}
+                          className="px-2 py-0.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold border border-indigo-200 transition active:scale-95"
+                          title="Add 1 more copy to stock"
+                        >
+                          +1
+                        </button>
+                      </div>
                     </td>
                     <td className="py-4 px-6 text-center whitespace-nowrap">
                       <button
@@ -618,6 +676,20 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                   onChange={(e) => setNewMoreInfo(e.target.value)}
                   placeholder="e.g. King Size / 3-Seater / Reversible Chaise / 6-Seater"
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Stock Quantity (Available Copies)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={newStockQuantity}
+                  onChange={(e) => setNewStockQuantity(e.target.value)}
+                  placeholder="e.g. 1 for unique floor piece, 4 for batch"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-mono font-bold"
                 />
               </div>
 
@@ -815,6 +887,20 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                   onChange={(e) => setEditMoreInfo(e.target.value)}
                   placeholder="e.g. King Size / 3-Seater / Reversible Chaise / 6-Seater"
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Stock Quantity (Available Copies)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={editStockQuantity}
+                  onChange={(e) => setEditStockQuantity(e.target.value)}
+                  placeholder="e.g. 1"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-mono font-bold"
                 />
               </div>
 
