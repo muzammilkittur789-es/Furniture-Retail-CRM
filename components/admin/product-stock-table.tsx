@@ -390,10 +390,11 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                   <button
                     type="button"
                     onClick={() => setRestockConfirmProduct({ product: p, qty: 1 })}
-                    className="px-2 py-0.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold border border-indigo-200 transition active:scale-95"
-                    title="Restock piece"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[10.5px] font-bold shadow-xs hover:shadow transition-all active:scale-95 shrink-0"
+                    title="Restock piece (+1)"
                   >
-                    +1 Restock
+                    <span className="font-mono font-extrabold text-[11px]">+1</span>
+                    <span>Restock</span>
                   </button>
                 </div>
 
@@ -505,10 +506,11 @@ export function ProductStockTable({ initialProducts }: ProductStockTableProps) {
                         <button
                           type="button"
                           onClick={() => setRestockConfirmProduct({ product: p, qty: 1 })}
-                          className="px-2 py-0.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold border border-indigo-200 transition active:scale-95"
+                          className="inline-flex items-center gap-0.5 px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold shadow-xs hover:shadow transition-all active:scale-95"
                           title="Restock piece (+1)"
                         >
-                          +1
+                          <Plus className="w-3 h-3 stroke-[2.5]" />
+                          <span>1</span>
                         </button>
                       </div>
                     </td>
