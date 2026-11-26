@@ -24,6 +24,7 @@ import {
   User,
   AlertCircle,
   AlertTriangle,
+  UserX,
 } from 'lucide-react';
 
 interface StaffCredentialsClientProps {
@@ -420,21 +421,21 @@ export function StaffCredentialsClient({ initialStaff }: StaffCredentialsClientP
                 </p>
               </div>
 
-              <div className="pt-3 flex gap-3">
+              <div className="pt-3 flex gap-2.5 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="flex-1 py-3 px-4 rounded-2xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition"
+                  className="flex-1 py-2.5 px-3.5 sm:px-4 rounded-xl border border-slate-200 text-slate-700 font-semibold text-xs sm:text-sm hover:bg-slate-50 transition whitespace-nowrap text-center"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 px-3.5 sm:px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold sm:font-bold text-xs sm:text-sm shadow-sm hover:shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center justify-center gap-1.5 whitespace-nowrap"
                 >
-                  <UserPlus className="w-4 h-4" />
-                  <span>Save Staff</span>
+                  <UserPlus className="w-4 h-4 shrink-0" />
+                  <span className="whitespace-nowrap">Save Staff</span>
                 </button>
               </div>
             </form>
@@ -461,12 +462,12 @@ export function StaffCredentialsClient({ initialStaff }: StaffCredentialsClientP
               ? They will be locked out and cannot log in to make quotes on the showroom floor until reactivated.
             </p>
 
-            <div className="flex gap-3">
+            <div className="flex items-center gap-2.5 sm:gap-3">
               <button
                 type="button"
                 disabled={isPending}
                 onClick={() => setDeactivateConfirmStaff(null)}
-                className="flex-1 py-3 px-4 rounded-2xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-100 transition"
+                className="flex-1 py-2.5 px-3.5 sm:px-4 rounded-xl border border-slate-200 text-slate-700 font-semibold text-xs sm:text-sm hover:bg-slate-100 transition whitespace-nowrap text-center"
               >
                 No, Keep Active
               </button>
@@ -474,9 +475,10 @@ export function StaffCredentialsClient({ initialStaff }: StaffCredentialsClientP
                 type="button"
                 disabled={isPending}
                 onClick={handleConfirmDeactivate}
-                className="flex-1 py-3 px-4 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md shadow-amber-600/20 active:scale-95 transition flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 px-3.5 sm:px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold sm:font-bold text-xs sm:text-sm shadow-sm hover:shadow-md shadow-amber-600/20 active:scale-95 transition flex items-center justify-center gap-1.5 whitespace-nowrap"
               >
-                <span>Yes, Deactivate Staff</span>
+                <UserX className="w-4 h-4 shrink-0" />
+                <span className="whitespace-nowrap">Yes, Deactivate</span>
               </button>
             </div>
           </div>
