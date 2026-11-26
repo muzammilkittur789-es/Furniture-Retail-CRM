@@ -528,7 +528,7 @@ export function ExportReportModal({
             type="button"
             disabled={isGenerating || !fromDate || !toDate}
             onClick={handleDownloadPdf}
-            className="flex-1 py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold sm:font-bold text-xs sm:text-sm shadow-sm hover:shadow-md shadow-red-600/20 active:scale-95 transition flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-50"
+            className="flex-1 py-2.5 px-4 rounded-xl bg-red-700 hover:bg-red-800 text-white font-semibold sm:font-bold text-xs sm:text-sm shadow-sm hover:shadow-md shadow-red-700/20 active:scale-95 transition flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-50"
           >
             {isGenerating ? (
               <>
