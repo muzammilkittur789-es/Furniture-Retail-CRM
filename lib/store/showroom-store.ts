@@ -104,6 +104,14 @@ const DEFAULT_STAFF: StaffMember[] = [
     is_active: true,
     created_at: '2026-11-08T10:00:00.000Z',
   },
+  {
+    id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+    name: 'Rahul Sharma',
+    pin: '3333',
+    role: 'sales',
+    is_active: true,
+    created_at: '2026-11-10T10:00:00.000Z',
+  },
 ];
 
 export const DEFAULT_PRODUCTS: Product[] = [
@@ -184,6 +192,32 @@ export const DEFAULT_PRODUCTS: Product[] = [
       'https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&w=1200&q=80',
     is_active: true,
     stock_quantity: 1, // 1 floor model
+  },
+  {
+    id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380baa',
+    name: 'Sorrento Velvet Accent Chaise',
+    price: 145000.0,
+    material: 'Deep Emerald Velvet & Brushed Gold Steel',
+    dimensions: '175cm x 85cm x 80cm',
+    more_info: 'Luxury Reading Lounge Chaise',
+    category: 'Living Room',
+    image_url:
+      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1200&q=80',
+    is_active: true,
+    stock_quantity: 2, // 2 units in stock
+  },
+  {
+    id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380cbb',
+    name: 'Royal Teak Master Wardrobe',
+    price: 320000.0,
+    material: 'Grade-A Burma Teak & Hand-Finished Hardware',
+    dimensions: '220cm x 65cm x 210cm',
+    more_info: '3-Bay Handcrafted Master Closet',
+    category: 'Bedroom',
+    image_url:
+      'https://images.unsplash.com/photo-1558997519-83ea9252def8?auto=format&fit=crop&w=1200&q=80',
+    is_active: true,
+    stock_quantity: 1, // 1 handcrafted piece
   },
 ];
 
@@ -467,6 +501,49 @@ export const DEFAULT_QUOTES: StoredQuote[] = [
           name: 'Aurelia Cognac Leather Lounge Chair',
           image_url:
             'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
+    created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+    customer_name: 'Rohit Oberoi',
+    customer_whatsapp: '9820556677',
+    subtotal: 245000,
+    final_price: 245000,
+    status: 'closed',
+    staffName: 'Arjun Verma',
+    itemsSummary: 'Verona Carrara Marble Dining Table',
+    itemsCount: 1,
+    staff: {
+      id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+      name: 'Arjun Verma',
+      role: 'sales',
+    },
+    items: [
+      {
+        id: 'item-8',
+        price_at_time: 245000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
+          name: 'Verona Carrara Marble Dining Table',
+          material: 'Honed Carrara Marble & Brushed Brass Trestle',
+          dimensions: '240cm x 110cm x 76cm',
+          more_info: '6-Seater Solid Marble Top',
+          image_url:
+            'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-8',
+        price_at_time: 245000,
+        product: {
+          name: 'Verona Carrara Marble Dining Table',
+          image_url:
+            'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=400&q=80',
         },
       },
     ],
@@ -1180,15 +1257,15 @@ export const DEFAULT_QUOTES: StoredQuote[] = [
 ];
 
 // Initialize global stores if not already present or if store has fewer than full dataset
-if (!global.__ALISHAN_STAFF_STORE__) {
+if (!global.__ALISHAN_STAFF_STORE__ || global.__ALISHAN_STAFF_STORE__.length < DEFAULT_STAFF.length) {
   global.__ALISHAN_STAFF_STORE__ = [...DEFAULT_STAFF];
 }
 
-if (!global.__ALISHAN_PRODUCTS_STORE__) {
+if (!global.__ALISHAN_PRODUCTS_STORE__ || global.__ALISHAN_PRODUCTS_STORE__.length < DEFAULT_PRODUCTS.length) {
   global.__ALISHAN_PRODUCTS_STORE__ = [...DEFAULT_PRODUCTS];
 }
 
-if (!global.__ALISHAN_FOLLOWUPS_STORE__) {
+if (!global.__ALISHAN_FOLLOWUPS_STORE__ || global.__ALISHAN_FOLLOWUPS_STORE__.length < DEFAULT_FOLLOWUPS.length) {
   global.__ALISHAN_FOLLOWUPS_STORE__ = [...DEFAULT_FOLLOWUPS];
 }
 

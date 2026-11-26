@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { formatINR } from '@/lib/utils';
 import { PendingQuotesTable, PendingQuoteRow } from './pending-quotes-table';
-import { Daily10pmReportModal } from './daily-10pm-report-modal';
+import { TwilioReportModal } from './twilio-report-modal';
 import { ExportReportModal } from './export-report-modal';
 import { StaffMember } from '@/lib/store/showroom-store';
 import { LiveClock } from '@/components/common/live-clock';
@@ -58,6 +58,7 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('today');
   const [isSoldModalOpen, setIsSoldModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isTwilioModalOpen, setIsTwilioModalOpen] = useState(false);
 
   // Time-filtered calculation
   const { revenue, soldProducts, piecesSoldCount, customersVisited, quotesGenerated, pendingAmount, pendingQuotes, allPeriodQuotes } =
@@ -187,6 +188,15 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
             >
               <FileDown className="w-3.5 h-3.5 text-red-600" />
               <span>Download PDF</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsTwilioModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200 text-emerald-800 text-xs font-bold transition shadow-2xs active:scale-95 shrink-0"
+              title="10 PM WhatsApp Settings & Twilio Test"
+            >
+              <Moon className="w-3.5 h-3.5 text-emerald-600" />
+              <span>10 PM WhatsApp</span>
             </button>
             <LiveClock variant="button" showSeconds={false} className="self-start sm:self-auto" />
           </div>
@@ -340,36 +350,6 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
         </div>
       </div>
 
-      {/* 10:00 PM Daily WhatsApp Summary Card */}
-      <div className="bg-gradient-to-r from-emerald-900 via-slate-900 to-teal-950 text-white rounded-3xl p-5 sm:p-7 shadow-lg border border-emerald-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-bold shrink-0 shadow-md shadow-emerald-500/25">
-            <Moon className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="font-display font-bold text-base sm:text-lg text-white">
-                Daily 10:00 PM WhatsApp Summary
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-bold">
-                Daily at 10 PM IST
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl font-normal leading-relaxed">
-              Every night at 10:00 PM, a daily closing report is generated for Alishan Furnitures including today&apos;s revenue, pending quotes amount, staff breakdown, and priority customer calls for tomorrow.
-            </p>
-          </div>
-        </div>
-
-        <div className="shrink-0 flex items-center gap-2">
-          <Daily10pmReportModal
-            totalPendingAmount={pendingAmount}
-            totalPendingCount={pendingQuotes.length}
-            todayClosedAmount={revenue}
-          />
-        </div>
-      </div>
-
       {/* Quotes Table Section */}
       <div id="quotes-table-section" className="space-y-4 pt-4">
         <div className="flex items-center justify-between">
@@ -508,6 +488,12 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
         onClose={() => setIsExportModalOpen(false)}
         quotes={quotes}
         staffList={staffList}
+      />
+
+      {/* 10:00 PM WhatsApp Twilio Settings & Test Modal */}
+      <TwilioReportModal
+        isOpen={isTwilioModalOpen}
+        onClose={() => setIsTwilioModalOpen(false)}
       />
     </div>
   );

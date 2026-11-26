@@ -35,8 +35,6 @@ interface StaffCredentialsClientProps {
 export function StaffCredentialsClient({ initialStaff }: StaffCredentialsClientProps) {
   const [staffList, setStaffList] = useState<StaffMember[]>(initialStaff);
   const [showPins, setShowPins] = useState<{ [id: string]: boolean }>({});
-  const [editingPinId, setEditingPinId] = useState<string | null>(null);
-  const [newPinValue, setNewPinValue] = useState<string>('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingStaffMember, setEditingStaffMember] = useState<StaffMember | null>(null);
   const [editName, setEditName] = useState('');
@@ -52,33 +50,6 @@ export function StaffCredentialsClient({ initialStaff }: StaffCredentialsClientP
 
   const togglePinVisibility = (id: string) => {
     setShowPins((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const handleStartEditPin = (staff: StaffMember) => {
-    setEditingPinId(staff.id);
-    setNewPinValue(staff.pin);
-    setErrorMessage(null);
-  };
-
-  const handleSavePin = (id: string) => {
-    if (!newPinValue || newPinValue.length !== 4 || !/^\d{4}$/.test(newPinValue)) {
-      setErrorMessage('PIN must be exactly 4 numbers (digits).');
-      return;
-    }
-
-    startTransition(async () => {
-      const res = await updateStaffPinAction(id, newPinValue);
-      if (res.success) {
-        setStaffList((prev) =>
-          prev.map((s) => (s.id === id ? { ...s, pin: newPinValue } : s))
-        );
-        setEditingPinId(null);
-        setSuccessMessage('PIN updated successfully!');
-        setTimeout(() => setSuccessMessage(null), 3000);
-      } else {
-        setErrorMessage(res.error || 'Failed to update PIN.');
-      }
-    });
   };
 
   const handleOpenEditModal = (staff: StaffMember) => {
@@ -249,7 +220,6 @@ export function StaffCredentialsClient({ initialStaff }: StaffCredentialsClientP
         {staffList.map((staff) => {
           const isOwner = staff.role === 'admin';
           const isPinVisible = showPins[staff.id];
-          const isEditingPin = editingPinId === staff.id;
 
           return (
             <div
@@ -315,71 +285,27 @@ export function StaffCredentialsClient({ initialStaff }: StaffCredentialsClientP
                   </button>
                 </div>
 
-                {/* PIN Control Box */}
-                <div className="mt-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
-                    <span className="font-semibold text-slate-700 flex items-center gap-1.5">
-                      <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
-                      Login PIN
+                {/* Sleek Single-Line PIN Row */}
+                <div className="mt-4 px-3.5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <KeyRound className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                    <span className="font-semibold text-slate-600">Login PIN:</span>
+                    <span className="font-mono text-sm font-extrabold text-slate-900 tracking-widest ml-1">
+                      {isPinVisible ? staff.pin : '••••'}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => togglePinVisibility(staff.id)}
-                      className="text-slate-400 hover:text-indigo-600 transition"
-                      title={isPinVisible ? 'Hide PIN' : 'View PIN'}
-                    >
-                      {isPinVisible ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
                   </div>
-
-                  {isEditingPin ? (
-                    <div className="flex items-center gap-2 mt-2">
-                      <input
-                        type="text"
-                        maxLength={4}
-                        value={newPinValue}
-                        onChange={(e) => setNewPinValue(e.target.value.replace(/\D/g, ''))}
-                        className="w-24 px-3 py-1.5 rounded-xl border border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-center text-base font-bold text-slate-900"
-                        placeholder="4 digits"
-                        autoFocus
-                      />
-                      <button
-                        type="button"
-                        disabled={isPending}
-                        onClick={() => handleSavePin(staff.id)}
-                        className="p-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition"
-                        title="Save PIN"
-                      >
-                        <Save className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditingPinId(null)}
-                        className="p-2 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 transition"
-                        title="Cancel"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="font-mono text-base font-extrabold text-slate-900 tracking-wider">
-                        {isPinVisible ? staff.pin : '••••'}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleStartEditPin(staff)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-200 transition"
-                      >
-                        <Edit2 className="w-3 h-3" />
-                        <span>Change PIN</span>
-                      </button>
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => togglePinVisibility(staff.id)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-200/60 transition"
+                    title={isPinVisible ? 'Hide PIN' : 'View PIN'}
+                  >
+                    {isPinVisible ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
               </div>
 

@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Studio Suite — Architectural Client Onboarding & Investment System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #1A1918;
+      --sheet-bg: #FAF8F5;
+      --card-bg: #FFFFFF;
+      --card-subtle: #F4EFEB;
+      --text: #191817;
+      --text-muted: #615C56;
+      --text-light: #948E85;
+      --accent: #5E6652;       /* Refined Architectural Olive */
+      --accent-warm: #A86B54;  /* Muted Terracotta */
+      --border-hairline: #E2DDD5;
+      --border-dark: #33312E;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Screen Navigation Bar */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #141312;
+      border-bottom: 1px solid #2B2927;
+      padding: 14px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand-mark {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #EDE8E1;
+      font-weight: 500;
+    }
+    .brand-mark span {
+      color: #8C947F;
+    }
+    .nav-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .nav-btn {
+      background: #5E6652;
+      color: #FFFFFF;
+      border: none;
+      padding: 8px 18px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border-radius: 2px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .nav-btn:hover {
+      background: #747D66;
+    }
+    .nav-btn-outline {
+      background: transparent;
+      border: 1px solid #3D3A36;
+      color: #D6CEC4;
+    }
+    .nav-btn-outline:hover {
+      background: #2B2927;
+      border-color: #524E49;
+    }
+
+    /* Outer Stage */
+    .stage {
+      display: flex;
+      justify-content: center;
+      padding: 50px 20px 80px;
+    }
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 50px;
+      align-items: center;
+    }
+
+    /* US Letter Sheet (8.5in x 11in standard aspect ratio) */
+    .sheet {
+      width: 816px;
+      height: 1056px;
+      background: var(--sheet-bg);
+      position: relative;
+      overflow: hidden;
+      padding: 60px 65px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Architectural Header & Footer */
+    .header-rule {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 0.5px solid var(--border-hairline);
+      padding-bottom: 10px;
+      margin-bottom: 30px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 8.5px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--text-light);
+    }
+    .footer-rule {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 0.5px solid var(--border-hairline);
+      padding-top: 10px;
+      margin-top: 30px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 8.5px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--text-light);
+    }
+
+    /* Typographic Hierarchy */
+    .kicker {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    h1.title-display {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 38px;
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: 0.5px;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+    h2.subtitle-display {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      line-height: 1.6;
+      margin-bottom: 28px;
+      max-width: 580px;
+    }
+    h3.block-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    p.copy {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      line-height: 1.75;
+      margin-bottom: 12px;
+    }
+
+    /* Grids & Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 18px;
+    }
+    .panel {
+      background: var(--card-bg);
+      border: 0.5px solid var(--border-hairline);
+      padding: 24px;
+      border-radius: 1px;
+    }
+    .panel-subtle {
+      background: var(--card-subtle);
+      border: 0.5px solid var(--border-hairline);
+      padding: 24px;
+    }
+    .panel-dark {
+      background: #242220;
+      color: #FAF8F5;
+      padding: 24px;
+    }
+    .panel-dark h3, .panel-dark h4 {
+      color: #FAF8F5;
+    }
+    .panel-dark p {
+      color: #B0A9A0;
+    }
+
+    /* Tabular Financial Schedules */
+    .table-schedule {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 10px;
+    }
+    .table-schedule th {
+      text-align: left;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 8.5px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-hairline);
+      color: var(--text-light);
+    }
+    .table-schedule td {
+      padding: 10px 0;
+      border-bottom: 0.5px solid var(--border-hairline);
+      color: var(--text-muted);
+    }
+    .table-schedule td.amount {
+      text-align: right;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Step Timeline */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 10px;
+    }
+    .timeline-item {
+      display: flex;
+      gap: 20px;
+      padding-bottom: 12px;
+      border-bottom: 0.5px solid var(--border-hairline);
+    }
+    .timeline-item:last-child {
+      border-bottom: none;
+    }
+    .item-tag {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--accent);
+      min-width: 35px;
+    }
+    .item-body h4 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .item-body p {
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Checkbox & Forms */
+    .form-row {
+      margin-bottom: 14px;
+    }
+    .form-field-label {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text);
+      font-weight: 600;
+      margin-bottom: 5px;
+      display: block;
+    }
+    .form-underline {
+      width: 100%;
+      height: 24px;
+      border-bottom: 0.5px solid #C4BEB4;
+      background: transparent;
+    }
+    .check-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .box {
+      width: 13px;
+      height: 13px;
+      border: 0.5px solid #8C867E;
+      border-radius: 1px;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    /* Print Formatting (Clean Page Breaks) */
+    @media print {
+      body {
+        background: none !important;
+        padding: 0 !important;
+      }
+      .top-bar {
+        display: none !important;
+      }
+      .stage {
+        padding: 0 !important;
+      }
+      .stack {
+        gap: 0 !important;
+      }
+      .sheet {
+        width: 100% !important;
+        height: 100vh !important;
+        box-shadow: none !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        padding: 40px 48px !important;
+        margin: 0 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <nav class="top-bar">
+    <div class="brand-mark">
+      Architectural Studio Suite <span>• Master 32-Page System</span>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-btn nav-btn-outline" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Cover</button>
+      <button class="nav-btn nav-btn-outline" onclick="document.getElementById('part-2').scrollIntoView({behavior: 'smooth'})">Part 2: Onboarding</button>
+      <button class="nav-btn nav-btn-outline" onclick="document.getElementById('part-3').scrollIntoView({behavior: 'smooth'})">Part 3: Intake</button>
+      <button class="nav-btn" onclick="window.print()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        Export PDF
+      </button>
+    </div>
+  </nav>
+
+  <main class="stage">
+    <div class="stack">
+
+      <!-- ======================================================== -->
+      <!-- PART 1: SERVICES & INVESTMENT GUIDE (PAGES 1 - 12)       -->
+      <!-- ======================================================== -->
+
+      <!-- PAGE 01: COVER -->
+      <section class="sheet" style="padding: 0;">
+        <div style="display: flex; height: 100%;">
+          <div style="width: 52%; height: 100%; overflow: hidden; background: #EEEAE4;">
+            <img src="hero-living-room.jpg" alt="Minimalist Architectural Living Room" style="width: 100%; height: 100%; object-fit: cover;">
+          </div>
+          <div style="width: 48%; padding: 75px 55px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div class="kicker">STUDIO PRACTICE & METHODOLOGY</div>
+              <h1 class="title-display" style="font-size: 40px; margin-top: 15px; line-height: 1.1;">
+                SERVICES & INVESTMENT GUIDE
+              </h1>
+              <div style="width: 35px; height: 1px; background: var(--accent); margin: 24px 0;"></div>
+              <p style="font-family: 'Cormorant Garamond', serif; font-size: 17px; color: var(--text-muted); font-style: italic; line-height: 1.55;">
+                "A transparent framework for architectural design, spatial planning, and residential furnishing."
+              </p>
+            </div>
+            <div>
+              <div style="font-family: 'Montserrat', sans-serif; font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; font-weight: 600; color: var(--text);">
+                [STUDIO NAME] ARCHITECTURE & INTERIORS
+              </div>
+              <div style="font-size: 9px; color: var(--text-light); margin-top: 4px; letter-spacing: 1px;">
+                NEW YORK • LONDON • SYDNEY
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAGE 02: FOUNDER LETTER & DESIGN PHILOSOPHY -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 1 • Services & Investment</span>
+          <span>Studio Philosophy</span>
+        </header>
+        <div class="grid-2" style="align-items: center; height: 100%;">
+          <div style="height: 680px; overflow: hidden; background: #EDE9E3; border-radius: 1px;">
+            <img src="studio-workspace.jpg" alt="Architectural Drafting Studio" style="width: 100%; height: 100%; object-fit: cover;">
+          </div>
+          <div style="padding-left: 10px;">
+            <div class="kicker">LETTER FROM THE PRINCIPAL</div>
+            <h1 class="title-display">Spaces That Breathe & Endure</h1>
+            <h2 class="subtitle-display">Designing homes that balance quiet restraint, natural materiality, and effortless daily function.</h2>
+            <p class="copy">
+              A home is far more than an assemblage of curated furnishings; it is the physical foundation of your daily life. It is where morning rituals unfold, where families gather around shared tables, and where you return to rest after the noise of the outside world.
+            </p>
+            <p class="copy">
+              At [Studio Name], our practice is rooted in architectural harmony. We reject fleeting social media trends in favor of honest organic finishes—honed limestone, solid white oak, raw unlacquered brass, and natural Belgian linen. Our objective is to eliminate the friction of endless decisions, delivering spaces of quiet permanence.
+            </p>
+            <div style="margin-top: 35px; border-top: 0.5px solid var(--border-hairline); padding-top: 18px;">
+              <div style="font-family: 'Cormorant Garamond', serif; font-size: 22px; font-style: italic;">[Principal Signature]</div>
+              <div style="font-family: 'Montserrat', sans-serif; font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: var(--text); font-weight: 600; margin-top: 4px;">
+                Principal Designer & Creative Director
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 02</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 03: OUR ETHOS & CORE PRINCIPLES -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 1 • Services & Investment</span>
+          <span>Core Ethos</span>
+        </header>
+        <div>
+          <div class="kicker">OPERATIONAL INTEGRITY</div>
+          <h1 class="title-display">The Foundations of Our Practice</h1>
+          <h2 class="subtitle-display">Three guiding principles that protect your investment, timeline, and peace of mind.</h2>
+
+          <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 25px;">
+            <div class="panel">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                <h3 class="block-title">01. Material Honesty</h3>
+                <span class="kicker" style="font-size: 8px; margin-bottom: 0;">Timeless Integrity</span>
+              </div>
+              <p class="copy" style="margin-bottom: 0;">
+                We favor natural finishes that acquire a rich patina over time. By specifying solid woods, honed stones, and natural textiles, our interiors grow more beautiful with age rather than succumbing to synthetic wear.
+              </p>
+            </div>
+
+            <div class="panel">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                <h3 class="block-title">02. Fiscal Transparency</h3>
+                <span class="kicker" style="font-size: 8px; margin-bottom: 0;">Unambiguous Budgeting</span>
+              </div>
+              <p class="copy" style="margin-bottom: 0;">
+                No hidden margins or ambiguous invoices. All procurement proposals, trade discounts, and storage fees are presented with line-item clarity before any purchase order is issued.
+              </p>
+            </div>
+
+            <div class="panel">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                <h3 class="block-title">03. Turnkey Project Management</h3>
+                <span class="kicker" style="font-size: 8px; margin-bottom: 0;">Complete Relief</span>
+              </div>
+              <p class="copy" style="margin-bottom: 0;">
+                From CAD millwork drawings through freight claims and white-glove installation day, our team coordinates the trades so that you experience the joy of design without logistical fatigue.
+              </p>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 03</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 04: SERVICE OFFERINGS AT A GLANCE -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 1 • Services & Investment</span>
+          <span>Service Menu</span>
+        </header>
+        <div>
+          <div class="kicker">CURATED ENGAGEMENTS</div>
+          <h1 class="title-display">Our Signature Services</h1>
+          <h2 class="subtitle-display">Tailored service tiers structured for comprehensive renovations, remote consultations, and design intensives.</h2>
+
+          <div class="grid-3" style="margin-top: 25px;">
+            <div class="panel" style="display: flex; flex-direction: column; justify-content: space-between; height: 580px;">
+              <div>
+                <div class="kicker" style="color: var(--accent-warm);">PACKAGE 01</div>
+                <h3 class="block-title" style="font-size: 18px; margin-bottom: 12px;">Full-Service Interior Design</h3>
+                <p class="copy">Our complete turnkey offering for gut renovations, custom architectural builds, and multi-room transformations.</p>
+                <div style="margin: 18px 0; border-top: 0.5px solid var(--border-hairline); padding-top: 14px;">
+                  <div class="form-field-label" style="font-size: 8.5px;">Deliverables Included:</div>
+                  <ul style="font-size: 9.5px; color: var(--text-muted); list-style: none; line-height: 1.8;">
+                    <li>✓ 2D Spatial & Electrical Plans</li>
+                    <li>✓ Photorealistic 3D Renderings</li>
+                    <li>✓ Trade-Only FF&E Procurement</li>
+                    <li>✓ White-Glove Installation Reveal</li>
+                  </ul>
+                </div>
+              </div>
+              <div style="border-top: 0.5px solid var(--border-hairline); padding-top: 14px;">
+                <div style="font-size: 8.5px; text-transform: uppercase; color: var(--text-light); letter-spacing: 1px;">Investment</div>
+                <div style="font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600;">Custom Scope Quote</div>
+              </div>
+            </div>
+
+            <div class="panel" style="display: flex; flex-direction: column; justify-content: space-between; height: 580px;">
+              <div>
+                <div class="kicker" style="color: var(--accent-warm);">PACKAGE 02</div>
+                <h3 class="block-title" style="font-size: 18px; margin-bottom: 12px;">Virtual E-Design Direction</h3>
+                <p class="copy">Full spatial planning, concept boards, and clickable vendor source lists delivered digitally for self-implementation.</p>
+                <div style="margin: 18px 0; border-top: 0.5px solid var(--border-hairline); padding-top: 14px;">
+                  <div class="form-field-label" style="font-size: 8.5px;">Deliverables Included:</div>
+                  <ul style="font-size: 9.5px; color: var(--text-muted); list-style: none; line-height: 1.8;">
+                    <li>✓ Digital Concept Moodboard</li>
+                    <li>✓ Scaled 2D Furniture Floor Plan</li>
+                    <li>✓ Clickable Shopping Directory</li>
+                    <li>✓ Step-by-Step Styling Guide</li>
+                  </ul>
+                </div>
+              </div>
+              <div style="border-top: 0.5px solid var(--border-hairline); padding-top: 14px;">
+                <div style="font-size: 8.5px; text-transform: uppercase; color: var(--text-light); letter-spacing: 1px;">Investment</div>
+                <div style="font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600;">$1,800 – $2,800 / Room</div>
+              </div>
+            </div>
+
+            <div class="panel" style="display: flex; flex-direction: column; justify-content: space-between; height: 580px;">
+              <div>
+                <div class="kicker" style="color: var(--accent-warm);">PACKAGE 03</div>
+                <h3 class="block-title" style="font-size: 18px; margin-bottom: 12px;">Designer for a Day</h3>
+                <p class="copy">A 6-hour intensive on-site design consultation covering showroom selections, spatial layouts, and paint finishes.</p>
+                <div style="margin: 18px 0; border-top: 0.5px solid var(--border-hairline); padding-top: 14px;">
+                  <div class="form-field-label" style="font-size: 8.5px;">Deliverables Included:</div>
+                  <ul style="font-size: 9.5px; color: var(--text-muted); list-style: none; line-height: 1.8;">
+                    <li>✓ On-Site Architectural Assessment</li>
+                    <li>✓ Working Showroom Appointments</li>
+                    <li>✓ Paint & Hardware Specifications</li>
+                    <li>✓ 48-Hour Written Action Plan</li>
+                  </ul>
+                </div>
+              </div>
+              <div style="border-top: 0.5px solid var(--border-hairline); padding-top: 14px;">
+                <div style="font-size: 8.5px; text-transform: uppercase; color: var(--text-light); letter-spacing: 1px;">Investment</div>
+                <div style="font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600;">$1,500 Flat Rate</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 04</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 05: FULL-SERVICE DESIGN SCOPE -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 1 • Services & Investment</span>
+          <span>Package 01 Details</span>
+        </header>
+        <div>
+          <div class="kicker">SIGNATURE SCOPE</div>
+          <h1 class="title-display">Package 01: Full-Service Design</h1>
+          <h2 class="subtitle-display">From preliminary architectural drawings through turnkey white-glove installation.</h2>
+
+          <div class="grid-2" style="margin-top: 25px;">
+            <div>
+              <h3 class="block-title" style="font-size: 18px;">Scope of Deliverables</h3>
+              <p class="copy">
+                Designed for clients undertaking significant renovations or complete furnishings who require uncompromising aesthetic direction and comprehensive project execution.
+              </p>
+              <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <div class="check-line"><span style="color: var(--accent); font-weight: 600; min-width: 20px;">01</span> <span>Comprehensive laser measurement & architectural photo audit.</span></div>
+                <div class="check-line"><span style="color: var(--accent); font-weight: 600; min-width: 20px;">02</span> <span>2D space-planning with custom cabinetry and lighting schematics.</span></div>
+                <div class="check-line"><span style="color: var(--accent); font-weight: 600; min-width: 20px;">03</span> <span>Photorealistic 3D renderings showcasing light, volume, and texture.</span></div>
+                <div class="check-line"><span style="color: var(--accent); font-weight: 600; min-width: 20px;">04</span> <span>Curated material trays with physical stone, wood, and textile swatches.</span></div>
+                <div class="check-line"><span style="color: var(--accent); font-weight: 600; min-width: 20px;">05</span> <span>Exclusive access to trade-only artisan workshops and custom upholstery.</span></div>
+                <div class="check-line"><span style="color: var(--accent); font-weight: 600; min-width: 20px;">06</span> <span>Turnkey procurement: ordering, warehouse inspection, and damage claims.</span></div>
+              </div>
+            </div>
+
+            <div class="panel-subtle" style="display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <h3 class="block-title" style="font-size: 18px;">Investment Architecture</h3>
+                <p class="copy">
+                  Design fees are structured as a transparent flat fee based on project square footage, keeping costs predictable.
+                </p>
+                <div style="background: #FFFFFF; padding: 18px; border: 0.5px solid var(--border-hairline); margin: 20px 0;">
+                  <div style="font-size: 9px; text-transform: uppercase; color: var(--text-light); letter-spacing: 1px;">Recommended Furnishings Target</div>
+                  <div style="font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 600; color: var(--text); margin-top: 2px;">$15,000+ per room</div>
+                  <p class="copy" style="font-size: 9.5px; margin-bottom: 0; margin-top: 4px;">Ensures heirloom-grade upholstery, hand-knotted rugs, and custom millwork.</p>
+                </div>
+              </div>
+              <div style="border-top: 0.5px solid var(--border-hairline); padding-top: 14px; font-size: 9.5px; color: var(--text-muted);">
+                *A 50% non-refundable design retainer secures your project kickoff on our studio calendar.
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 05</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 06: VIRTUAL E-DESIGN SPECIFICATIONS -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 1 • Services & Investment</span>
+          <span>Package 02 Details</span>
+        </header>
+        <div>
+          <div class="kicker">REMOTE CAPABILITIES</div>
+          <h1 class="title-display">Package 02: Virtual E-Design</h1>
+          <h2 class="subtitle-display">Our spatial expertise and curated sourcing roadmap delivered directly to your inbox.</h2>
+
+          <div class="grid-2" style="margin-top: 25px;">
+            <div>
+              <p class="copy">
+                Virtual E-Design is created for homeowners who seek our studio's signature spatial balance, but enjoy managing their own ordering, deliveries, and final styling at their own pace.
+              </p>
+              <div style="margin-top: 25px;">
+                <h3 class="block-title" style="font-size: 17px;">Complete Digital Deliverables:</h3>
+                <ul style="font-size: 10px; color: var(--text-muted); line-height: 2; margin-left: 15px; margin-top: 8px;">
+                  <li><strong>Digital Concept Board:</strong> Defining palette, texture, and visual balance.</li>
+                  <li><strong>Scaled 2D Floor Plan:</strong> Exact furniture placement and clearance walkways.</li>
+                  <li><strong>Clickable Shopping Directory:</strong> Private digital list with direct product links.</li>
+                  <li><strong>Detailed Styling Guide:</strong> Hanging heights, rug rules, and drapery mounting specs.</li>
+                  <li><strong>Post-Delivery Support:</strong> 7 days of design revisions to guarantee complete satisfaction.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="kicker">TIMELINE & SPECS</div>
+              <h3 class="block-title" style="font-size: 18px;">4 – 6 Week Delivery</h3>
+              <p class="copy">
+                Upon receiving your room measurements, intake brief, and photographs, our team delivers your complete digital presentation package ready for execution.
+              </p>
+              <div style="margin-top: 25px; border-top: 0.5px solid var(--border-hairline); padding-top: 16px;">
+                <div class="form-field-label" style="font-size: 8.5px;">Recommended For:</div>
+                <p class="copy" style="margin-bottom: 0;">Primary suites, guest rooms, home offices, and formal dining areas.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 06</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 07: DESIGNER FOR A DAY AGENDA -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 1 • Services & Investment</span>
+          <span>Package 03 Details</span>
+        </header>
+        <div>
+          <div class="kicker">VIP INTENSIVE</div>
+          <h1 class="title-display">Package 03: Designer for a Day</h1>
+          <h2 class="subtitle-display">6 Hours of high-focus architectural consulting, showroom sourcing, and material selections.</h2>
+
+          <p class="copy">
+            Ideal for clients mid-construction who feel paralyzed by finish selections, or homeowners seeking fast clarity on architectural layouts, paint schedules, and window treatments.
+          </p>
+
+          <div class="panel" style="margin-top: 25px;">
+            <h3 class="block-title" style="font-size: 17px; margin-bottom: 16px;">Structured Session Itinerary:</h3>
+            <div class="timeline">
+              <div class="timeline-item">
+                <div class="item-tag" style="font-size: 15px;">09:30 AM</div>
+                <div class="item-body">
+                  <h4>On-Site Walkthrough & Assessment</h4>
+                  <p>In-person spatial analysis, reviewing existing furniture, natural lighting, and functional pain points.</p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="item-tag" style="font-size: 15px;">11:30 AM</div>
+                <div class="item-body">
+                  <h4>Trade Showroom Appointments</h4>
+                  <p>Hands-on selections for tile, slab marble, plumbing fixtures, cabinetry hardware, and wood flooring.</p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="item-tag" style="font-size: 15px;">01:30 PM</div>
+                <div class="item-body">
+                  <h4>Working Lunch & Budget Alignment</h4>
+                  <p>Reviewing contractor quotes, trade priorities, and phasing out renovation milestones.</p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="item-tag" style="font-size: 15px;">02:30 PM</div>
+                <div class="item-body">
+                  <h4>Action Plan Synthesis & Wrap-up</h4>
+                  <p>Finalizing the color story and compiling paint codes and dimensional sketches.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 07</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 08: 5-PHASE PROCESS ROADMAP -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 1 • Services & Investment</span>
+          <span>Project Roadmap</span>
+        </header>
+        <div>
+          <div class="kicker">STRUCTURED PHASING</div>
+          <h1 class="title-display">The 5-Phase Project Roadmap</h1>
+          <h2 class="subtitle-display">A disciplined timeline that moves your project from concept through white-glove reveal.</h2>
+
+          <div class="timeline" style="margin-top: 25px;">
+            <div class="timeline-item">
+              <div class="item-tag">01</div>
+              <div class="item-body">
+                <h4>Discovery & Intake (Weeks 1 – 2)</h4>
+                <p>Onboarding questionnaire, in-depth site measurement, lifestyle brief, and budget alignment.</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="item-tag">02</div>
+              <div class="item-body">
+                <h4>Conceptual Design (Weeks 3 – 5)</h4>
+                <p>Space planning, 2D furniture plans, preliminary color palettes, and digital moodboards.</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="item-tag">03</div>
+              <div class="item-body">
+                <h4>Design Development & Specification (Weeks 6 – 8)</h4>
+                <p>Photorealistic 3D renderings, tactile material boxes, custom millwork drawings, and itemized procurement proposals.</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="item-tag">04</div>
+              <div class="item-body">
+                <h4>Procurement & Trade Coordination (Weeks 9 – 16+)</h4>
+                <p>Purchase orders, freight tracking, climate-controlled warehouse consolidation, and trade contractor alignment.</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="item-tag">05</div>
+              <div class="item-body">
+                <h4>White-Glove Installation & Reveal (Week 17+)</h4>
+                <p>Furniture placement, rug anchoring, drapery steaming, art installation, final styling, and the champagne reveal.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 08</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 09: FINANCIAL ARCHITECTURE & SCHEDULES -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 1 • Services & Investment</span>
+          <span>Payment Schedule</span>
+        </header>
+        <div>
+          <div class="kicker">FINANCIAL INTEGRITY</div>
+          <h1 class="title-display">Investment Architecture</h1>
+          <h2 class="subtitle-display">Structured billing milestones and purchasing boundaries for absolute peace of mind.</h2>
+
+          <div class="grid-2" style="margin-top: 25px;">
+            <div class="panel">
+              <h3 class="block-title" style="font-size: 17px;">Design Professional Fees</h3>
+              <p class="copy">Covers drafting, 3D renderings, project administration, and procurement management.</p>
+              <table class="table-schedule">
+                <thead>
+                  <tr>
+                    <th>Milestone</th>
+                    <th style="text-align: right;">Allocation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Initial Retainer (Upon Signing)</td>
+                    <td class="amount">50%</td>
+                  </tr>
+                  <tr>
+                    <td>Concept Presentation Sign-off</td>
+                    <td class="amount">25%</td>
+                  </tr>
+                  <tr>
+                    <td>Procurement Specifications Complete</td>
+                    <td class="amount">25%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="panel">
+              <h3 class="block-title" style="font-size: 17px;">Furnishings & Materials</h3>
+              <p class="copy">Physical furniture, lighting fixtures, artisan rugs, and custom textile orders.</p>
+              <div style="margin-top: 15px; font-size: 10px; color: var(--text-muted); line-height: 1.8;">
+                <p><strong>• 100% Prepayment Required:</strong> Custom trade makers require full payment prior to initiating frame construction or cutting textile yardage.</p>
+                <p style="margin-top: 8px;"><strong>• Contingency Reserve:</strong> A 10%–15% buffer is recommended for unexpected freight fuel surcharges or site modifications.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-subtle" style="margin-top: 25px;">
+            <div class="form-field-label" style="font-size: 8.5px;">Payment Processing Terms</div>
+            <p class="copy" style="font-size: 10px; margin-bottom: 0;">
+              All transactions are settled via ACH wire transfer. Credit cards are accepted subject to a standard 3% merchant processing charge.
+            </p>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 09</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 10: TRADE DISCOUNTS & PURCHASING POLICIES -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 1 • Services & Investment</span>
+          <span>Trade Procurement</span>
+        </header>
+        <div>
+          <div class="kicker">TRADE PRIVILEGES</div>
+          <h1 class="title-display">Trade Sourcing & Pricing Policies</h1>
+          <h2 class="subtitle-display">How our direct manufacturer access delivers superior craftsmanship and transparency.</h2>
+
+          <p class="copy">
+            As a licensed design studio, we hold privileged trade accounts with bespoke European textile mills, custom stone fabricators, and bench-made furniture makers not accessible via public retail.
+          </p>
+
+          <div class="panel" style="margin-top: 25px;">
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <div>
+                <h4 style="font-family: 'Montserrat', sans-serif; font-size: 10.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 4px;">Trade Discounts Shared Directly</h4>
+                <p class="copy" style="margin-bottom: 0;">Whenever available, we pass significant trade savings directly to you, typically pricing custom items below the Manufacturer's Suggested Retail Price (MSRP).</p>
+              </div>
+              <div style="border-top: 0.5px solid var(--border-hairline); padding-top: 14px;">
+                <h4 style="font-family: 'Montserrat', sans-serif; font-size: 10.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 4px;">Procurement Administration (15% – 20%)</h4>
+                <p class="copy" style="margin-bottom: 0;">Covers order entry, custom fabric dye-lot verification, shipping coordination, freight damage claims, and warehouse storage logistics.</p>
+              </div>
+              <div style="border-top: 0.5px solid var(--border-hairline); padding-top: 14px;">
+                <h4 style="font-family: 'Montserrat', sans-serif; font-size: 10.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 4px;">Direct Commercial Retail</h4>
+                <p class="copy" style="margin-bottom: 0;">If items are selected from commercial retail outlets (e.g., Restoration Hardware, Crate & Barrel), clients may purchase directly using our provided dimension specifications.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 10</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 11: PORTFOLIO CASE STUDY -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 1 • Services & Investment</span>
+          <span>Case Study</span>
+        </header>
+        <div class="grid-2" style="height: 100%; align-items: center;">
+          <div style="height: 650px; overflow: hidden; background: #EEE9E3; border-radius: 1px;">
+            <img src="material-swatches.jpg" alt="Architectural Finishes and Travertine" style="width: 100%; height: 100%; object-fit: cover;">
+          </div>
+          <div style="padding-left: 15px;">
+            <div class="kicker">RESIDENTIAL SPOTLIGHT</div>
+            <h1 class="title-display">The Highclere Estate</h1>
+            <h2 class="subtitle-display">Complete Renovation & Furnishing | 5,400 SQ FT</h2>
+            <div style="width: 30px; height: 1px; background: var(--accent); margin: 20px 0;"></div>
+            <p style="font-family: 'Cormorant Garamond', serif; font-size: 19px; font-style: italic; color: var(--text); line-height: 1.6; margin-bottom: 24px;">
+              "Working with [Studio Name] transformed our entire relationship with our home. They handled every contractor issue and shipping delay with total poise. The reveal day brought tears to our eyes—we could never have achieved this level of cohesion on our own."
+            </p>
+            <div style="font-family: 'Montserrat', sans-serif; font-size: 9.5px; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">
+              — The Sterling Residence
+            </div>
+            <div style="font-size: 9px; color: var(--text-light); margin-top: 3px;">Residential Architecture • Greenwich, Connecticut</div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 11</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 12: NEXT STEPS & CONSULTATION -->
+      <section class="sheet" style="text-align: center; justify-content: center;">
+        <div style="max-width: 540px; margin: 0 auto;">
+          <div class="kicker">GETTING STARTED</div>
+          <h1 class="title-display" style="font-size: 42px;">Begin Your Transformation</h1>
+          <p class="copy" style="font-size: 11.5px; margin-bottom: 35px;">
+            We accept a limited number of active residential commissions each quarter to preserve our standard of craftsmanship and rigorous detail.
+          </p>
+
+          <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 40px; text-align: left;">
+            <div class="panel" style="padding: 16px 20px;">
+              <strong style="font-size: 10.5px;">Step 01: Complete the Intake Brief</strong>
+              <p style="font-size: 9.5px; color: var(--text-muted); margin-top: 2px;">Share your room scope, timeline goals, and preliminary budget boundaries.</p>
+            </div>
+            <div class="panel" style="padding: 16px 20px;">
+              <strong style="font-size: 10.5px;">Step 02: 20-Minute Discovery Session</strong>
+              <p style="font-size: 9.5px; color: var(--text-muted); margin-top: 2px;">We review your project brief, feasibility, and architectural alignment.</p>
+            </div>
+            <div class="panel" style="padding: 16px 20px;">
+              <strong style="font-size: 10.5px;">Step 03: On-Site Walkthrough & Proposal</strong>
+              <p style="font-size: 9.5px; color: var(--text-muted); margin-top: 2px;">We walk through your home and deliver a customized design fee proposal in 5 business days.</p>
+            </div>
+          </div>
+
+          <div style="border-top: 0.5px solid var(--border-hairline); padding-top: 25px;">
+            <div style="font-family: 'Montserrat', sans-serif; font-size: 10.5px; letter-spacing: 2px; text-transform: uppercase; font-weight: 600;">
+              hello@yourstudiodomain.com • (555) 019-2834
+            </div>
+            <div style="font-size: 9px; color: var(--text-light); margin-top: 4px; letter-spacing: 1px;">
+              Studio Consultations by Appointment
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ======================================================== -->
+      <!-- PART 2: CLIENT WELCOME & ONBOARDING (PAGES 13 - 26)      -->
+      <!-- ======================================================== -->
+
+      <!-- PAGE 13: ONBOARDING COVER -->
+      <section class="sheet" id="part-2" style="background: #242220; color: #FAF8F5;">
+        <div style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+          <div style="border-bottom: 0.5px solid #44403C; padding-bottom: 15px; display: flex; justify-content: space-between; font-family: 'Montserrat', sans-serif; font-size: 8.5px; letter-spacing: 2.5px; text-transform: uppercase; color: #A6A097;">
+            <span>[Studio Name] Official Documentation</span>
+            <span>Client Onboarding</span>
+          </div>
+
+          <div style="max-width: 580px;">
+            <div style="color: #8C947F; font-family: 'Montserrat', sans-serif; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; font-weight: 600; margin-bottom: 16px;">
+              PROJECT SUCCESS PROTOCOL
+            </div>
+            <h1 style="font-family: 'Cormorant Garamond', serif; font-size: 48px; font-weight: 300; line-height: 1.15; color: #FAF8F5; margin-bottom: 22px;">
+              CLIENT WELCOME & ONBOARDING GUIDE
+            </h1>
+            <p style="font-size: 12px; color: #D1CAC0; line-height: 1.8;">
+              A comprehensive operational handbook detailing our communication policies, receiving logistics, revision limits, and installation protocol.
+            </p>
+          </div>
+
+          <div style="border-top: 0.5px solid #44403C; padding-top: 18px; display: flex; justify-content: space-between; font-size: 9.5px; color: #A6A097;">
+            <div>CLIENT: [CLIENT NAMES]</div>
+            <div>RESIDENCE: [PROJECT ADDRESS]</div>
+            <div>SESSION: 2026/2027</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAGE 14: WELCOME TO THE STUDIO -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 2 • Client Onboarding</span>
+          <span>Welcome Letter</span>
+        </header>
+        <div>
+          <div class="kicker">WE ARE UNDERWAY</div>
+          <h1 class="title-display">Welcome to the Studio Practice</h1>
+          <h2 class="subtitle-display">Honored to bring your home's highest architectural potential to life.</h2>
+
+          <div style="margin-top: 30px; max-width: 640px;">
+            <p class="copy" style="font-size: 11.5px;">
+              Welcome to the [Studio Name] creative family! We are thrilled to partner with you on this journey. Over the coming months, our studio will act as your advocate, lead designer, and project manager.
+            </p>
+            <p class="copy" style="font-size: 11.5px;">
+              We have engineered our onboarding systems to ensure that communication remains effortless, expectations are transparent, and the creative process is an inspiring, joyful experience.
+            </p>
+            <p class="copy" style="font-size: 11.5px;">
+              Please review this guide carefully and keep it accessible. It establishes the boundaries and operational workflows that allow our team to deliver world-class design with complete peace of mind.
+            </p>
+
+            <div class="panel-subtle" style="margin-top: 35px;">
+              <div class="form-field-label" style="font-size: 8.5px;">Next Immediate Action Item:</div>
+              <p class="copy" style="margin-bottom: 0;">
+                Review Page 15 (Communication Hours) and Page 26 (Sign-Off Confirmation) to formalize our project kickoff.
+              </p>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 14</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 15: OFFICE HOURS & COMMUNICATION -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 2 • Client Onboarding</span>
+          <span>Communication Policy</span>
+        </header>
+        <div>
+          <div class="kicker">RESPECTING FOCUSED TIME</div>
+          <h1 class="title-display">Office Hours & Communication</h1>
+          <h2 class="subtitle-display">How we preserve structured project records without chaotic text threads.</h2>
+
+          <div class="grid-2" style="margin-top: 25px;">
+            <div class="panel">
+              <h3 class="block-title" style="font-size: 17px;">Studio Working Hours</h3>
+              <p class="copy">We reserve focused creative time to draft, select finishes, and conduct site inspections.</p>
+              <div style="margin-top: 18px; font-size: 10.5px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Monday – Thursday</span>
+                  <strong>9:00 AM – 5:00 PM</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Friday</span>
+                  <strong>9:00 AM – 1:00 PM (Site Visits)</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: var(--accent-warm);">
+                  <span>Saturday & Sunday</span>
+                  <strong>Studio Closed</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h3 class="block-title" style="font-size: 17px;">Designated Channels</h3>
+              <p class="copy">All specifications and formal approvals must be documented in writing.</p>
+              <div style="margin-top: 18px; font-size: 10.5px; display: flex; flex-direction: column; gap: 10px;">
+                <div>
+                  <strong>✓ Email & Client Portal:</strong>
+                  <p class="copy" style="font-size: 9.5px; margin-top: 2px;">All approvals, specs, and questions should route to projects@yourstudiodomain.com.</p>
+                </div>
+                <div>
+                  <strong>✗ No SMS or Social DMs:</strong>
+                  <p class="copy" style="font-size: 9.5px; margin-top: 2px;">We do not conduct design business via text message or Instagram DMs.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-subtle" style="margin-top: 25px;">
+            <div class="form-field-label" style="font-size: 8.5px;">Response Time Commitment</div>
+            <p class="copy" style="margin-bottom: 0;">
+              Our studio responds to all client communications within <strong>24 to 48 business hours</strong>. Communications received over weekends or holidays will be reviewed on Monday morning.
+            </p>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 15</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 16: PROJECT TEAM DIRECTORY -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 2 • Client Onboarding</span>
+          <span>Project Directory</span>
+        </header>
+        <div>
+          <div class="kicker">DEDICATED ROLES</div>
+          <h1 class="title-display">Your Project Leadership</h1>
+          <h2 class="subtitle-display">The dedicated professionals coordinating your home's transformation.</h2>
+
+          <div class="grid-2" style="margin-top: 25px; gap: 20px;">
+            <div class="panel">
+              <div class="kicker" style="font-size: 8px;">CREATIVE DIRECTION</div>
+              <h3 class="block-title" style="font-size: 17px;">Principal Designer</h3>
+              <p class="copy">Directs overall aesthetic vision, space planning, custom millwork, and finishes.</p>
+              <div style="font-size: 9.5px; color: var(--text); border-top: 0.5px solid var(--border-hairline); padding-top: 8px;">
+                designer@yourstudiodomain.com
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="kicker" style="font-size: 8px;">SCHEDULE & TRADES</div>
+              <h3 class="block-title" style="font-size: 17px;">Lead Project Manager</h3>
+              <p class="copy">Coordinates site visits, contractor timelines, delivery dates, and meeting schedules.</p>
+              <div style="font-size: 9.5px; color: var(--text); border-top: 0.5px solid var(--border-hairline); padding-top: 8px;">
+                pm@yourstudiodomain.com
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="kicker" style="font-size: 8px;">ORDERS & WAREHOUSE</div>
+              <h3 class="block-title" style="font-size: 17px;">Procurement Specialist</h3>
+              <p class="copy">Manages manufacturer purchase orders, fabric dye-lots, tracking, and damage claims.</p>
+              <div style="font-size: 9.5px; color: var(--text); border-top: 0.5px solid var(--border-hairline); padding-top: 8px;">
+                orders@yourstudiodomain.com
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="kicker" style="font-size: 8px;">CONSTRUCTION TRADES</div>
+              <h3 class="block-title" style="font-size: 17px;">General Contractor</h3>
+              <p class="copy">Oversees framing, electrical, plumbing, permits, and on-site sub-trades.</p>
+              <div style="font-size: 9.5px; color: var(--text); border-top: 0.5px solid var(--border-hairline); padding-top: 8px;">
+                [Builder Name & Contact Phone]
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 16</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 17: WHAT TO EXPECT DURING DESIGN PHASE -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 2 • Client Onboarding</span>
+          <span>Design Phase</span>
+        </header>
+        <div>
+          <div class="kicker">METHODOLOGY</div>
+          <h1 class="title-display">The Design Phase: Behind the Scenes</h1>
+          <h2 class="subtitle-display">How raw architectural dimensions evolve into complete photorealistic presentations.</h2>
+
+          <div class="panel" style="margin-top: 25px;">
+            <div style="display: flex; flex-direction: column; gap: 18px;">
+              <div>
+                <h4 style="font-family: 'Montserrat', sans-serif; font-size: 10.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 4px;">01. Site Measurement Day</h4>
+                <p class="copy" style="margin-bottom: 0;">Our team spends 3–5 uninterrupted hours measuring walls, ceiling heights, electrical switch plates, and existing architectural trim.</p>
+              </div>
+              <div style="border-top: 0.5px solid var(--border-hairline); padding-top: 14px;">
+                <h4 style="font-family: 'Montserrat', sans-serif; font-size: 10.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 4px;">02. Concept Presentation Meeting</h4>
+                <p class="copy" style="margin-bottom: 0;">We present complete 2D floor plans, 3D renderings, and tactile material trays (fabrics, wood stains, stone slabs, hardware) for your review.</p>
+              </div>
+              <div style="border-top: 0.5px solid var(--border-hairline); padding-top: 14px;">
+                <h4 style="font-family: 'Montserrat', sans-serif; font-size: 10.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 4px;">03. Consolidated Household Feedback</h4>
+                <p class="copy" style="margin-bottom: 0;">We ask that all decision-makers take 5–7 days to review the concepts together and return one unified feedback document.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 17</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 18: REVISIONS & CHANGE ORDER PROTOCOL -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 2 • Client Onboarding</span>
+          <span>Revision Parameters</span>
+        </header>
+        <div>
+          <div class="kicker">SCOPE INTEGRITY</div>
+          <h1 class="title-display">Revisions & Scope Changes</h1>
+          <h2 class="subtitle-display">Protecting your construction timeline and eliminating unexpected expenses.</h2>
+
+          <div class="grid-2" style="margin-top: 25px;">
+            <div class="panel">
+              <h3 class="block-title" style="font-size: 17px;">Included Revisions</h3>
+              <p class="copy">Your contract includes <strong>two (2) complimentary rounds of revisions</strong> during the Concept Phase.</p>
+              <div style="font-size: 9.5px; color: var(--text-muted); margin-top: 12px;">
+                <p><strong>Permitted Adjustments:</strong> Swapping a dining chair, selecting an alternative fabric, or fine-tuning paint shades.</p>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h3 class="block-title" style="font-size: 17px;">What Is a Scope Change?</h3>
+              <p class="copy">Substantial additions outside the agreed initial Letter of Agreement.</p>
+              <div style="font-size: 9.5px; color: var(--text-muted); margin-top: 12px;">
+                <p><strong>Examples:</strong> Adding extra rooms, pivoting design styles entirely, or altering architectural layouts after construction sign-off.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-subtle" style="margin-top: 25px;">
+            <div class="form-field-label" style="font-size: 8.5px;">Change Order Protocol</div>
+            <p class="copy" style="margin-bottom: 0;">
+              Any scope changes require a written Change Order signed by both parties. Additional hours are billed at our standard studio rate of [$150/hr].
+            </p>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 18</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 19: WAREHOUSE RECEIVING & CLAIMS -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 2 • Client Onboarding</span>
+          <span>Receiving Protocol</span>
+        </header>
+        <div>
+          <div class="kicker">WHITE-GLOVE LOGISTICS</div>
+          <h1 class="title-display">Warehouse Receiving & Freight</h1>
+          <h2 class="subtitle-display">Why luxury furnishings are routed to climate-controlled consolidation facilities.</h2>
+
+          <div class="panel" style="margin-top: 25px;">
+            <p class="copy">
+              Commercial freight shipments are bulky and delicate. To protect your home from chaotic packaging waste and damaged boxes, <strong>we never ship products to your front porch</strong>. All purchases are received by our licensed receiver.
+            </p>
+            <div style="margin-top: 18px; display: flex; flex-direction: column; gap: 10px;">
+              <div class="check-line"><span style="color: var(--accent); font-weight: 600;">✓</span> <span>Dock inspection upon arrival to check for exterior freight damage.</span></div>
+              <div class="check-line"><span style="color: var(--accent); font-weight: 600;">✓</span> <span>Careful unboxing, inspection of finishes, and defect verification.</span></div>
+              <div class="check-line"><span style="color: var(--accent); font-weight: 600;">✓</span> <span>Direct claims filed with manufacturers without causing you stress.</span></div>
+              <div class="check-line"><span style="color: var(--accent); font-weight: 600;">✓</span> <span>Consolidated storage until 100% of your room is ready for installation.</span></div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 19</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 20: INSTALLATION DAY & THE REVEAL -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 2 • Client Onboarding</span>
+          <span>Installation Protocol</span>
+        </header>
+        <div>
+          <div class="kicker">THE GRAND FINALE</div>
+          <h1 class="title-display">Installation Day & Reveal Protocol</h1>
+          <h2 class="subtitle-display">The culmination of our collaboration in one seamless, transformative day.</h2>
+
+          <div class="panel" style="margin-top: 25px;">
+            <h3 class="block-title" style="font-size: 17px; margin-bottom: 12px;">1. Client Absence Is Required</h3>
+            <p class="copy">
+              On installation day, our movers, drapery technicians, and styling assistants require full, uninterrupted access. Homeowners and family pets must vacate the residence.
+            </p>
+            <p class="copy">
+              Watching crates unboxed and packaging scattered causes needless anxiety. We preserve the moment for the completed, pristine reveal.
+            </p>
+
+            <h3 class="block-title" style="font-size: 17px; margin-top: 22px; margin-bottom: 12px;">2. The Reveal Walkthrough</h3>
+            <p class="copy">
+              We welcome you home with chilled champagne! Together, we tour the finished rooms, celebrate the design, and document any minor touch-up items for our post-installation punch list.
+            </p>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 20</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 21: FINANCIAL POLICIES RECAP -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 2 • Client Onboarding</span>
+          <span>Billing Summary</span>
+        </header>
+        <div>
+          <div class="kicker">TERMS AT A GLANCE</div>
+          <h1 class="title-display">Financial Terms & Invoicing</h1>
+          <h2 class="subtitle-display">Clear guidelines governing retainers, purchase orders, and warehouse invoices.</h2>
+
+          <div style="margin-top: 25px; display: flex; flex-direction: column; gap: 14px;">
+            <div class="panel">
+              <h4 style="font-family: 'Montserrat', sans-serif; font-size: 10px; text-transform: uppercase; margin-bottom: 4px;">Design Retainers</h4>
+              <p class="copy" style="margin-bottom: 0;">Retainers are non-refundable and credited toward your total project design fee milestone balance.</p>
+            </div>
+            <div class="panel">
+              <h4 style="font-family: 'Montserrat', sans-serif; font-size: 10px; text-transform: uppercase; margin-bottom: 4px;">100% Prepayment on Product Invoices</h4>
+              <p class="copy" style="margin-bottom: 0;">Trade manufacturers do not allocate inventory or cut fabrics without full payment. Invoice delays risk item stock-outs.</p>
+            </div>
+            <div class="panel">
+              <h4 style="font-family: 'Montserrat', sans-serif; font-size: 10px; text-transform: uppercase; margin-bottom: 4px;">Freight & Delivery Costs</h4>
+              <p class="copy" style="margin-bottom: 0;">Freight handling, delivery, and storage fees are billed at actual cost as incurred from the receiving warehouse.</p>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 21</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 22: WORKING WITH GENERAL CONTRACTORS -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 2 • Client Onboarding</span>
+          <span>Construction Roles</span>
+        </header>
+        <div>
+          <div class="kicker">COLLABORATIVE HARMONY</div>
+          <h1 class="title-display">Working with General Contractors</h1>
+          <h2 class="subtitle-display">Clarifying jurisdictional roles between architectural design and jobsite trades.</h2>
+
+          <div class="grid-2" style="margin-top: 25px;">
+            <div class="panel">
+              <h3 class="block-title" style="font-size: 17px;">Designer Responsibilities</h3>
+              <p class="copy">We provide design intent drawings, finish schedules, electrical placement plans, and aesthetic oversight.</p>
+            </div>
+
+            <div class="panel">
+              <h3 class="block-title" style="font-size: 17px;">General Contractor Responsibilities</h3>
+              <p class="copy">Legally responsible for building permits, structural engineering, job site safety, licensing of sub-trades, and construction timelines.</p>
+            </div>
+          </div>
+
+          <div class="panel-subtle" style="margin-top: 25px;">
+            <p class="copy" style="margin-bottom: 0;">
+              <strong>Contractual Notice:</strong> [Studio Name] is an interior architecture practice, not a licensed general contractor. Construction contracts exist directly between the client and general builder.
+            </p>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 22</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 23: FREQUENTLY ASKED QUESTIONS -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 2 • Client Onboarding</span>
+          <span>Client FAQ</span>
+        </header>
+        <div>
+          <div class="kicker">RESOLVING DOUBTS</div>
+          <h1 class="title-display">Frequently Asked Questions</h1>
+          <h2 class="subtitle-display">Direct answers to the most common questions regarding purchases and warranties.</h2>
+
+          <div style="margin-top: 25px; display: flex; flex-direction: column; gap: 16px;">
+            <div class="panel">
+              <h4 style="font-size: 11px; margin-bottom: 4px;">Can I buy furniture pieces myself?</h4>
+              <p class="copy" style="margin-bottom: 0;">To ensure spatial scale accuracy, durability, and warranty protections, we require managing all core furnishings. Cherished heirlooms will be integrated during the concept phase.</p>
+            </div>
+            <div class="panel">
+              <h4 style="font-size: 11px; margin-bottom: 4px;">What if an item is backordered?</h4>
+              <p class="copy" style="margin-bottom: 0;">Global supply chains fluctuate. If an item is delayed, we present two designer-approved alternatives of equal quality to maintain project momentum.</p>
+            </div>
+            <div class="panel">
+              <h4 style="font-size: 11px; margin-bottom: 4px;">What if something arrives damaged?</h4>
+              <p class="copy" style="margin-bottom: 0;">Our warehouse inspects freight on delivery and manages claims directly with the manufacturer. You never have to deal with shipping disputes.</p>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 23</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 24: PHOTOGRAPHY PERMISSION AGREEMENT -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 2 • Client Onboarding</span>
+          <span>Media Protocol</span>
+        </header>
+        <div>
+          <div class="kicker">ARCHITECTURAL ARCHIVE</div>
+          <h1 class="title-display">Professional Photography</h1>
+          <h2 class="subtitle-display">Documenting the completed space for our studio portfolio and editorial press.</h2>
+
+          <div class="panel" style="margin-top: 25px;">
+            <p class="copy">
+              Upon completion, our studio schedules a professional architectural photoshoot to document the finished design for our portfolio, website, and potential editorial publication.
+            </p>
+            <div style="margin-top: 18px; border-top: 0.5px solid var(--border-hairline); padding-top: 14px;">
+              <div class="form-field-label" style="font-size: 8.5px;">Client Privacy Guarantees:</div>
+              <ul style="font-size: 10px; color: var(--text-muted); line-height: 1.8; margin-left: 15px;">
+                <li>We never disclose your family name or street address in press releases or social media.</li>
+                <li>All personal family photos and sensitive documents are safely stored before shooting.</li>
+                <li>You receive high-resolution digital copies of all photos for your personal family archives!</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 24</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 25: DIGITAL CLIENT PORTAL ACCESS -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 2 • Client Onboarding</span>
+          <span>Portal Access</span>
+        </header>
+        <div>
+          <div class="kicker">CENTRALIZED ARCHIVE</div>
+          <h1 class="title-display">Accessing Your Client Portal</h1>
+          <h2 class="subtitle-display">All specifications, budgets, and presentation files in one secure dashboard.</h2>
+
+          <div class="panel" style="margin-top: 25px;">
+            <h3 class="block-title" style="font-size: 17px;">Key Portal Modules:</h3>
+            <ul style="font-size: 10px; color: var(--text-muted); line-height: 1.8; margin-left: 15px; margin-top: 8px;">
+              <li><strong>Interactive Calendar:</strong> View scheduled site measurements, presentation dates, and delivery windows.</li>
+              <li><strong>Design Board Gallery:</strong> Review 2D floor plans, 3D renderings, and finish schedules anytime.</li>
+              <li><strong>1-Click Approval Center:</strong> Review itemized specifications and approve furniture proposals digitally.</li>
+            </ul>
+
+            <div class="panel-subtle" style="margin-top: 25px;">
+              <div class="form-field-label" style="font-size: 8.5px;">Your Portal Login Credentials</div>
+              <div style="font-size: 10px; color: var(--text); line-height: 1.6; margin-top: 4px;">
+                URL: <strong>portal.yourstudiodomain.com</strong><br>
+                User ID: <strong>[Client Email Address]</strong><br>
+                Initial Password: <strong>StudioKickoff2026!</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 25</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 26: ONBOARDING SIGN-OFF CONFIRMATION -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 2 • Client Onboarding</span>
+          <span>Confirmation</span>
+        </header>
+        <div>
+          <div class="kicker">FORMAL COMMENCEMENT</div>
+          <h1 class="title-display">Onboarding Acknowledgment</h1>
+          <h2 class="subtitle-display">Confirming alignment across all studio communication, revision, and purchasing policies.</h2>
+
+          <div class="panel" style="margin-top: 25px;">
+            <p class="copy">
+              By signing below, you acknowledge that you have reviewed the [Studio Name] Client Welcome & Onboarding Guide, understand our studio operating hours, communication channels, revision parameters, and purchasing policies.
+            </p>
+
+            <div style="margin-top: 45px; display: flex; flex-direction: column; gap: 35px;">
+              <div>
+                <div class="form-field-label" style="font-size: 8.5px; color: var(--text-light);">Homeowner Signature</div>
+                <div class="form-underline"></div>
+                <div style="display: flex; justify-content: space-between; font-size: 9.5px; color: var(--text-light); margin-top: 6px;">
+                  <span>Printed Name: ___________________________</span>
+                  <span>Date: _______________</span>
+                </div>
+              </div>
+
+              <div>
+                <div class="form-field-label" style="font-size: 8.5px; color: var(--text-light);">Principal Designer Signature</div>
+                <div class="form-underline"></div>
+                <div style="display: flex; justify-content: space-between; font-size: 9.5px; color: var(--text-light); margin-top: 6px;">
+                  <span>[Designer Name], Principal Designer</span>
+                  <span>Date: _______________</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 26</span>
+        </footer>
+      </section>
+
+
+      <!-- ======================================================== -->
+      <!-- PART 3: INTAKE & DISCOVERY WORKBOOK (PAGES 27 - 32)      -->
+      <!-- ======================================================== -->
+
+      <!-- PAGE 27: INTAKE COVER -->
+      <section class="sheet" id="part-3" style="background: #5E6652; color: #FAF8F5;">
+        <div style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+          <div style="border-bottom: 0.5px solid rgba(255,255,255,0.25); padding-bottom: 15px; font-family: 'Montserrat', sans-serif; font-size: 8.5px; letter-spacing: 2.5px; text-transform: uppercase;">
+            Part 3 • Discovery & Project Intake
+          </div>
+
+          <div>
+            <div style="font-family: 'Montserrat', sans-serif; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px;">
+              CLIENT DISCOVERY PHASE
+            </div>
+            <h1 style="font-family: 'Cormorant Garamond', serif; font-size: 48px; font-weight: 300; line-height: 1.15; color: #FAF8F5; margin-bottom: 22px;">
+              PROJECT INTAKE & DISCOVERY WORKBOOK
+            </h1>
+            <p style="font-size: 12px; color: #E8E5DF; line-height: 1.8; max-width: 520px;">
+              Documenting how your family lives, functional requirements, architectural preferences, and investment boundaries.
+            </p>
+          </div>
+
+          <div style="border-top: 0.5px solid rgba(255,255,255,0.25); padding-top: 18px; font-size: 9.5px; color: #E8E5DF;">
+            <div>CLIENT NAME: _____________________________________</div>
+            <div style="margin-top: 4px;">PROJECT RESIDENCE: _________________________________</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAGE 28: LIFESTYLE & HABITS -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 3 • Project Intake</span>
+          <span>Lifestyle Profile</span>
+        </header>
+        <div>
+          <div class="kicker">FUNCTIONAL FOUNDATIONS</div>
+          <h1 class="title-display">Household Lifestyle & Daily Habits</h1>
+          <h2 class="subtitle-display">Designing for authentic daily life, not just staged photography.</h2>
+
+          <div style="margin-top: 25px;">
+            <div class="form-row">
+              <label class="form-field-label">1. Household Residents (Adults, Children & Ages):</label>
+              <div class="form-underline"></div>
+            </div>
+
+            <div class="form-row" style="margin-top: 18px;">
+              <label class="form-field-label">2. Pets (Breeds, Habits, Furniture Privileges):</label>
+              <div class="form-underline"></div>
+            </div>
+
+            <div class="form-row" style="margin-top: 22px;">
+              <label class="form-field-label">3. Primary Room Usage Priorities:</label>
+              <div class="check-line"><div class="box"></div> <span>Casual family TV lounging & weekend movies</span></div>
+              <div class="check-line"><div class="box"></div> <span>Formal dinner parties & hosting large gatherings</span></div>
+              <div class="check-line"><div class="box"></div> <span>Work from home / quiet reading sanctuary</span></div>
+            </div>
+
+            <div class="form-row" style="margin-top: 22px;">
+              <label class="form-field-label">4. Sensory & Lighting Preferences:</label>
+              <div class="check-line"><div class="box"></div> <span>Bright, airy, flooded with daylight (linen drapery)</span></div>
+              <div class="check-line"><div class="box"></div> <span>Moody, cozy, warm, and cocooning (layered ambient lighting)</span></div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 28</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 29: AESTHETIC DISCOVERY MATRIX -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 3 • Project Intake</span>
+          <span>Aesthetic Profile</span>
+        </header>
+        <div>
+          <div class="kicker">MATERIAL TASTE</div>
+          <h1 class="title-display">Style & Material Discovery</h1>
+          <h2 class="subtitle-display">Selecting architectural finishes and textures that align with your vision.</h2>
+
+          <div style="margin-top: 25px;">
+            <div class="form-row">
+              <label class="form-field-label">1. Resonating Aesthetics (Select up to 2):</label>
+              <div class="grid-2" style="margin-top: 8px;">
+                <div class="check-line"><div class="box"></div> <span>Organic Modern / Warm Minimalist</span></div>
+                <div class="check-line"><div class="box"></div> <span>European Classic / Traditional</span></div>
+                <div class="check-line"><div class="box"></div> <span>Japandi / Earthy Naturalist</span></div>
+                <div class="check-line"><div class="box"></div> <span>Mid-Century Architectural</span></div>
+              </div>
+            </div>
+
+            <div class="form-row" style="margin-top: 25px;">
+              <label class="form-field-label">2. Preferred Material Finishes:</label>
+              <div class="grid-2" style="margin-top: 8px;">
+                <div>
+                  <div style="font-size: 9px; font-weight: 600; text-transform: uppercase; margin-bottom: 6px;">Wood Tones:</div>
+                  <div class="check-line"><div class="box"></div> <span>White Oak</span></div>
+                  <div class="check-line"><div class="box"></div> <span>Rich Walnut</span></div>
+                </div>
+                <div>
+                  <div style="font-size: 9px; font-weight: 600; text-transform: uppercase; margin-bottom: 6px;">Metals:</div>
+                  <div class="check-line"><div class="box"></div> <span>Unlacquered Brass</span></div>
+                  <div class="check-line"><div class="box"></div> <span>Matte Black</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row" style="margin-top: 25px;">
+              <label class="form-field-label">3. Colors or Materials You Dislike:</label>
+              <div class="form-underline"></div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 29</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 30: ROOM-BY-ROOM SCOPE INVENTORY -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 3 • Project Intake</span>
+          <span>Room Scope</span>
+        </header>
+        <div>
+          <div class="kicker">SPATIAL AUDIT</div>
+          <h1 class="title-display">Room-by-Room Scope Inventory</h1>
+          <h2 class="subtitle-display">Specifying heirlooms to preserve and functional friction points to resolve.</h2>
+
+          <div style="margin-top: 25px; display: flex; flex-direction: column; gap: 18px;">
+            <div class="panel">
+              <h4 style="font-size: 11px; margin-bottom: 6px;">Primary Living Room</h4>
+              <div class="form-row">
+                <label class="form-field-label" style="font-size: 8px;">Must-Keep Existing Items (Heirlooms / Art):</label>
+                <div class="form-underline"></div>
+              </div>
+              <div class="form-row" style="margin-bottom: 0;">
+                <label class="form-field-label" style="font-size: 8px;">Functional Pain Point of Existing Room:</label>
+                <div class="form-underline"></div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h4 style="font-size: 11px; margin-bottom: 6px;">Primary Bedroom Suite</h4>
+              <div class="form-row">
+                <label class="form-field-label" style="font-size: 8px;">Must-Keep Existing Items:</label>
+                <div class="form-underline"></div>
+              </div>
+              <div class="form-row" style="margin-bottom: 0;">
+                <label class="form-field-label" style="font-size: 8px;">Desired Ambiance & Lighting:</label>
+                <div class="form-underline"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 30</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 31: FURNISHINGS BUDGET WORKSHEET -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 3 • Project Intake</span>
+          <span>Budget Allocation</span>
+        </header>
+        <div>
+          <div class="kicker">FINANCIAL COMFORT</div>
+          <h1 class="title-display">Furnishings Budget Allocation</h1>
+          <h2 class="subtitle-display">Establishing investment comfort levels before product sourcing begins.</h2>
+
+          <div class="panel" style="margin-top: 25px;">
+            <h3 class="block-title" style="font-size: 17px;">Total Furnishings Investment Target:</h3>
+            <p class="copy" style="font-size: 9.5px;">Excludes design professional fees and general contractor remodeling labor.</p>
+            <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+              <div class="check-line"><div class="box"></div> <span><strong>$15,000 – $25,000:</strong> Ideal for 1 signature room or E-Design curation.</span></div>
+              <div class="check-line"><div class="box"></div> <span><strong>$25,000 – $50,000:</strong> High-end furnishings for 2–3 connected living spaces.</span></div>
+              <div class="check-line"><div class="box"></div> <span><strong>$50,000 – $100,000:</strong> Substantial multi-room luxury transformation.</span></div>
+              <div class="check-line"><div class="box"></div> <span><strong>$100,000+:</strong> Comprehensive bespoke whole-home custom furnishing.</span></div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top: 20px;">
+            <h3 class="block-title" style="font-size: 15px;">Priority Investment Areas (Rank 1 to 4):</h3>
+            <div class="grid-2" style="margin-top: 12px;">
+              <div class="check-line"><div class="box"></div> <span>Custom Upholstery (Sofas, Sectionals)</span></div>
+              <div class="check-line"><div class="box"></div> <span>Hand-Knotted Wool & Silk Rugs</span></div>
+              <div class="check-line"><div class="box"></div> <span>Architectural Statement Lighting</span></div>
+              <div class="check-line"><div class="box"></div> <span>Custom Linen Window Treatments</span></div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 31</span>
+        </footer>
+      </section>
+
+      <!-- PAGE 32: MEASUREMENT & SUBMISSION GUIDE -->
+      <section class="sheet">
+        <header class="header-rule">
+          <span>Part 3 • Project Intake</span>
+          <span>Submission Guide</span>
+        </header>
+        <div>
+          <div class="kicker">PREPARATION PROTOCOL</div>
+          <h1 class="title-display">Photo & Drawing Submission Guide</h1>
+          <h2 class="subtitle-display">How to submit existing architectural drawings, dimensions, and inspiration boards.</h2>
+
+          <div class="panel" style="margin-top: 25px;">
+            <div style="display: flex; flex-direction: column; gap: 18px;">
+              <div>
+                <h4 style="font-family: 'Montserrat', sans-serif; font-size: 10.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 4px;">1. Photographing Your Residence</h4>
+                <p class="copy" style="margin-bottom: 0;">Stand in each of the four room corners. Take eye-level landscape photos during natural daylight hours with artificial lights turned off.</p>
+              </div>
+              <div style="border-top: 0.5px solid var(--border-hairline); padding-top: 14px;">
+                <h4 style="font-family: 'Montserrat', sans-serif; font-size: 10.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 4px;">2. Shared Pinterest Board</h4>
+                <p class="copy" style="margin-bottom: 0;">Create a shared board and invite <strong>hello@yourstudiodomain.com</strong>. Include brief notes detailing specific finishes or silhouettes you love.</p>
+              </div>
+              <div style="border-top: 0.5px solid var(--border-hairline); padding-top: 14px;">
+                <h4 style="font-family: 'Montserrat', sans-serif; font-size: 10.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 4px;">3. Blueprints & Floor Plans</h4>
+                <p class="copy" style="margin-bottom: 0;">If you possess builder drawings or CAD files, upload them directly to your private project portal folder.</p>
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: 40px;">
+            <div style="font-family: 'Cormorant Garamond', serif; font-size: 22px; font-style: italic;">Thank you for entrusting our studio with your home.</div>
+            <div style="font-family: 'Montserrat', sans-serif; font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; color: var(--accent);">
+              [STUDIO NAME] ARCHITECTURE & INTERIORS
+            </div>
+          </div>
+        </div>
+        <footer class="footer-rule">
+          <span>[Studio Name]</span>
+          <span>Page 32 • Final Sheet</span>
+        </footer>
+      </section>
+
+    </div>
+  </main>
+
+</body>
+</html>

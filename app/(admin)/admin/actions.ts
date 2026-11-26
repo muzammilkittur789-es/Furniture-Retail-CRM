@@ -622,3 +622,12 @@ export async function deleteStaffAction(
     return { success: false, error: 'Failed to delete staff member.' };
   }
 }
+
+export async function dispatchTest10pmReportAction(): Promise<{
+  success: boolean;
+  result: any;
+  message: string;
+}> {
+  const { dispatchDaily10pmWhatsAppReport } = await import('@/lib/whatsapp/twilio');
+  return dispatchDaily10pmWhatsAppReport();
+}
