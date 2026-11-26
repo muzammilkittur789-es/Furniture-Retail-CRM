@@ -154,7 +154,20 @@ async function fetchAndEmbedImage(
     }
 
     // HTTP / HTTPS URL
-    const res = await fetch(urlOrBase64, { mode: 'cors' });
+    let targetUrl = urlOrBase64;
+    if (targetUrl.includes('images.unsplash.com')) {
+      if (targetUrl.includes('auto=format')) {
+        targetUrl = targetUrl.replace(/auto=format/g, 'fm=jpg');
+      } else if (!targetUrl.includes('fm=')) {
+        targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'fm=jpg';
+      }
+    }
+
+    const res = await fetch(targetUrl, {
+      headers: {
+        Accept: 'image/jpeg, image/png, */*',
+      },
+    });
     if (!res.ok) return null;
     const arrayBuffer = await res.arrayBuffer();
 

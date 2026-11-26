@@ -31,6 +31,38 @@ interface ExportReportModalProps {
   ownerName?: string;
 }
 
+const CATALOG_IMAGE_MAP: Record<string, string> = {
+  bouclé: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?fm=jpg&fit=crop&w=600&q=80',
+  florence: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?fm=jpg&fit=crop&w=600&q=80',
+  sectional: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?fm=jpg&fit=crop&w=600&q=80',
+  verona: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?fm=jpg&fit=crop&w=600&q=80',
+  marble: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?fm=jpg&fit=crop&w=600&q=80',
+  dining: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?fm=jpg&fit=crop&w=600&q=80',
+  aurelia: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?fm=jpg&fit=crop&w=600&q=80',
+  lounge: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?fm=jpg&fit=crop&w=600&q=80',
+  kyoto: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?fm=jpg&fit=crop&w=600&q=80',
+  bedstead: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?fm=jpg&fit=crop&w=600&q=80',
+  tivoli: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?fm=jpg&fit=crop&w=600&q=80',
+  travertine: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?fm=jpg&fit=crop&w=600&q=80',
+  coffee: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?fm=jpg&fit=crop&w=600&q=80',
+  monolith: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?fm=jpg&fit=crop&w=600&q=80',
+  credenza: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?fm=jpg&fit=crop&w=600&q=80',
+};
+
+function resolveProductImage(rawUrl?: string, productName?: string): string | undefined {
+  if (rawUrl && typeof rawUrl === 'string' && rawUrl.trim().length > 0) {
+    return rawUrl;
+  }
+  if (!productName) return undefined;
+  const lower = productName.toLowerCase();
+  for (const [key, url] of Object.entries(CATALOG_IMAGE_MAP)) {
+    if (lower.includes(key)) {
+      return url;
+    }
+  }
+  return undefined;
+}
+
 export function ExportReportModal({
   isOpen,
   onClose,
@@ -113,13 +145,15 @@ export function ExportReportModal({
       if (q.quote_items && q.quote_items.length > 0) {
         q.quote_items.forEach((item: any) => {
           const qty = item.quantity || 1;
+          const prodName = item.product?.name || q.itemsSummary || 'Furniture Piece';
+          const rawImg = item.product?.image_url || (item as any).image_url;
           soldItems.push({
             id: item.id || `sold-${Math.random()}`,
             dateFormatted,
             customerName,
             customerWhatsapp,
-            productName: item.product?.name || q.itemsSummary,
-            imageUrl: item.product?.image_url,
+            productName: prodName,
+            imageUrl: resolveProductImage(rawImg, prodName),
             quantity: qty,
             staffName,
             status: 'sold',
@@ -129,13 +163,15 @@ export function ExportReportModal({
       } else if ((q as any).items && (q as any).items.length > 0) {
         (q as any).items.forEach((item: any) => {
           const qty = item.quantity || 1;
+          const prodName = item.product?.name || item.name || q.itemsSummary || 'Furniture Piece';
+          const rawImg = item.product?.image_url || item.image_url;
           soldItems.push({
             id: item.id || `sold-${Math.random()}`,
             dateFormatted,
             customerName,
             customerWhatsapp,
-            productName: item.product?.name || item.name || q.itemsSummary,
-            imageUrl: item.product?.image_url || item.image_url,
+            productName: prodName,
+            imageUrl: resolveProductImage(rawImg, prodName),
             quantity: qty,
             staffName,
             status: 'sold',
@@ -143,13 +179,14 @@ export function ExportReportModal({
           });
         });
       } else {
+        const prodName = q.itemsSummary || 'Furniture Piece';
         soldItems.push({
           id: `sold-${q.id}`,
           dateFormatted,
           customerName,
           customerWhatsapp,
-          productName: q.itemsSummary,
-          imageUrl: undefined,
+          productName: prodName,
+          imageUrl: resolveProductImage(undefined, prodName),
           quantity: q.itemsCount || 1,
           staffName,
           status: 'sold',
@@ -209,13 +246,15 @@ export function ExportReportModal({
 
       if (q.quote_items && q.quote_items.length > 0) {
         q.quote_items.forEach((item: any) => {
+          const prodName = item.product?.name || q.itemsSummary || 'Furniture Piece';
+          const rawImg = item.product?.image_url || (item as any).image_url;
           reportQuotes.push({
             id: `${q.id}-${item.id || Math.random()}`,
             dateFormatted,
             customerName,
             customerWhatsapp,
-            productName: item.product?.name || q.itemsSummary,
-            imageUrl: item.product?.image_url,
+            productName: prodName,
+            imageUrl: resolveProductImage(rawImg, prodName),
             quantity: item.quantity || 1,
             staffName,
             status: quoteStatus,
@@ -224,13 +263,15 @@ export function ExportReportModal({
         });
       } else if ((q as any).items && (q as any).items.length > 0) {
         (q as any).items.forEach((item: any) => {
+          const prodName = item.product?.name || item.name || q.itemsSummary || 'Furniture Piece';
+          const rawImg = item.product?.image_url || item.image_url;
           reportQuotes.push({
             id: `${q.id}-${item.id || Math.random()}`,
             dateFormatted,
             customerName,
             customerWhatsapp,
-            productName: item.product?.name || item.name || q.itemsSummary,
-            imageUrl: item.product?.image_url || item.image_url,
+            productName: prodName,
+            imageUrl: resolveProductImage(rawImg, prodName),
             quantity: item.quantity || 1,
             staffName,
             status: quoteStatus,
@@ -238,13 +279,14 @@ export function ExportReportModal({
           });
         });
       } else {
+        const prodName = q.itemsSummary || 'Furniture Piece';
         reportQuotes.push({
           id: q.id,
           dateFormatted,
           customerName,
           customerWhatsapp,
-          productName: q.itemsSummary,
-          imageUrl: undefined,
+          productName: prodName,
+          imageUrl: resolveProductImage(undefined, prodName),
           quantity: q.itemsCount || 1,
           staffName,
           status: quoteStatus,

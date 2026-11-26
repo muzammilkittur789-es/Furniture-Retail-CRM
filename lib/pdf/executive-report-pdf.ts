@@ -117,6 +117,24 @@ function formatPhone(phone?: string): string {
   return phone.startsWith('+') ? phone : `+91 ${phone}`;
 }
 
+function sanitizeImageUrlForPdf(url: string): string {
+  if (!url) return url;
+  if (url.includes('images.unsplash.com')) {
+    let clean = url;
+    if (clean.includes('auto=format')) {
+      clean = clean.replace(/auto=format/g, 'fm=jpg');
+    } else if (!clean.includes('fm=')) {
+      clean += (clean.includes('?') ? '&' : '?') + 'fm=jpg';
+    }
+    // Enforce moderate size so thumbnail doesn't download multi-megabyte files
+    if (!clean.includes('w=')) {
+      clean += '&w=400';
+    }
+    return clean;
+  }
+  return url;
+}
+
 async function fetchAndEmbedImage(doc: PDFDocument, urlOrBase64?: string): Promise<any | null> {
   if (!urlOrBase64) return null;
   try {
@@ -139,13 +157,81 @@ async function fetchAndEmbedImage(doc: PDFDocument, urlOrBase64?: string): Promi
       return await doc.embedJpg(bytes);
     }
 
-    const res = await fetch(urlOrBase64);
+    const sanitizedUrl = sanitizeImageUrlForPdf(urlOrBase64);
+
+    // 1. In browser environment: Use an HTMLImageElement + Canvas to transcode any format (AVIF, WebP, etc.) to standard JPEG
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      try {
+        const canvasJpgBytes = await new Promise<Uint8Array | null>((resolve) => {
+          const img = new window.Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              const maxDim = 300;
+              let w = img.naturalWidth || maxDim;
+              let h = img.naturalHeight || maxDim;
+              if (w > h) {
+                if (w > maxDim) {
+                  h = Math.round((h * maxDim) / w);
+                  w = maxDim;
+                }
+              } else {
+                if (h > maxDim) {
+                  w = Math.round((w * maxDim) / h);
+                  h = maxDim;
+                }
+              }
+              canvas.width = Math.max(1, w);
+              canvas.height = Math.max(1, h);
+              const ctx = canvas.getContext('2d');
+              if (!ctx) return resolve(null);
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+              const base64 = dataUrl.split(',')[1];
+              const bin = atob(base64);
+              const bytes = new Uint8Array(bin.length);
+              for (let i = 0; i < bin.length; i++) {
+                bytes[i] = bin.charCodeAt(i);
+              }
+              resolve(bytes);
+            } catch {
+              resolve(null);
+            }
+          };
+          img.onerror = () => resolve(null);
+          img.src = sanitizedUrl;
+        });
+
+        if (canvasJpgBytes) {
+          try {
+            return await doc.embedJpg(canvasJpgBytes);
+          } catch {
+            // fall through to direct fetch
+          }
+        }
+      } catch {
+        // fall through to direct fetch
+      }
+    }
+
+    // 2. Direct fetch fallback with explicit Accept header forcing JPEG
+    const res = await fetch(sanitizedUrl, {
+      headers: {
+        Accept: 'image/jpeg, image/png, */*',
+      },
+    });
     if (!res.ok) return null;
     const arrayBuffer = await res.arrayBuffer();
+
     try {
       return await doc.embedJpg(arrayBuffer);
     } catch {
-      return await doc.embedPng(arrayBuffer);
+      try {
+        return await doc.embedPng(arrayBuffer);
+      } catch {
+        return null;
+      }
     }
   } catch {
     return null;
@@ -233,7 +319,11 @@ export async function generateExecutiveReportPdfBlob(
   await Promise.all(
     distinctUrls.map(async (url) => {
       const img = await fetchAndEmbedImage(pdfDoc, url);
-      if (img) imageCache.set(url, img);
+      if (img) {
+        imageCache.set(url, img);
+        const sanitized = sanitizeImageUrlForPdf(url);
+        imageCache.set(sanitized, img);
+      }
     })
   );
 
@@ -761,7 +851,9 @@ export async function generateExecutiveReportPdfBlob(
         const thumbX = MARGIN + 144;
         const thumbY = y - thumbSize - 4;
 
-        const img = item.imageUrl ? imageCache.get(item.imageUrl) : null;
+        const img = item.imageUrl
+          ? imageCache.get(item.imageUrl) || imageCache.get(sanitizeImageUrlForPdf(item.imageUrl))
+          : null;
         if (img) {
           currentPage.drawImage(img, {
             x: thumbX,
