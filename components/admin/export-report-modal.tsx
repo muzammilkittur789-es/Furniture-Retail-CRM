@@ -7,8 +7,7 @@ import { StaffMember } from '@/lib/store/showroom-store';
 import {
   generateExecutiveReportPdfBlob,
   ExecutiveReportPayload,
-  ReportQuoteItem,
-  ReportSoldItem,
+  ExecutiveReportTableItem,
   ReportStaffPerformance,
 } from '@/lib/pdf/executive-report-pdf';
 import {
@@ -100,22 +99,31 @@ export function ExportReportModal({
     const pendingAmount = pending.reduce((acc, q) => acc + (q.final_price || 0), 0);
 
     // Extract sold items list
-    const soldItems: ReportSoldItem[] = [];
+    const soldItems: ExecutiveReportTableItem[] = [];
     closed.forEach((q) => {
+      const dateFormatted = new Date(q.created_at).toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+      const customerName = q.customer_name || 'Showroom Customer';
+      const customerWhatsapp = q.customer_whatsapp;
+      const staffName = q.staffName || 'Showroom Staff';
+
       if (q.quote_items && q.quote_items.length > 0) {
         q.quote_items.forEach((item: any) => {
           const qty = item.quantity || 1;
           soldItems.push({
             id: item.id || `sold-${Math.random()}`,
-            name: item.product?.name || q.itemsSummary,
-            price: Number(item.price_at_time || q.final_price),
+            dateFormatted,
+            customerName,
+            customerWhatsapp,
+            productName: item.product?.name || q.itemsSummary,
+            imageUrl: item.product?.image_url,
             quantity: qty,
-            customerWhatsapp: q.customer_whatsapp,
-            staffName: q.staffName,
-            soldAtFormatted: new Date(q.created_at).toLocaleDateString('en-IN', {
-              day: '2-digit',
-              month: 'short',
-            }),
+            staffName,
+            status: 'sold',
+            amount: Number(item.price_at_time || q.final_price),
           });
         });
       } else if ((q as any).items && (q as any).items.length > 0) {
@@ -123,29 +131,29 @@ export function ExportReportModal({
           const qty = item.quantity || 1;
           soldItems.push({
             id: item.id || `sold-${Math.random()}`,
-            name: item.product?.name || item.name || q.itemsSummary,
-            price: Number(item.price_at_time || item.price || q.final_price),
+            dateFormatted,
+            customerName,
+            customerWhatsapp,
+            productName: item.product?.name || item.name || q.itemsSummary,
+            imageUrl: item.product?.image_url || item.image_url,
             quantity: qty,
-            customerWhatsapp: q.customer_whatsapp,
-            staffName: q.staffName,
-            soldAtFormatted: new Date(q.created_at).toLocaleDateString('en-IN', {
-              day: '2-digit',
-              month: 'short',
-            }),
+            staffName,
+            status: 'sold',
+            amount: Number(item.price_at_time || item.price || q.final_price),
           });
         });
       } else {
         soldItems.push({
           id: `sold-${q.id}`,
-          name: q.itemsSummary,
-          price: q.final_price,
+          dateFormatted,
+          customerName,
+          customerWhatsapp,
+          productName: q.itemsSummary,
+          imageUrl: undefined,
           quantity: q.itemsCount || 1,
-          customerWhatsapp: q.customer_whatsapp,
-          staffName: q.staffName,
-          soldAtFormatted: new Date(q.created_at).toLocaleDateString('en-IN', {
-            day: '2-digit',
-            month: 'short',
-          }),
+          staffName,
+          status: 'sold',
+          amount: q.final_price,
         });
       }
     });
@@ -179,21 +187,80 @@ export function ExportReportModal({
       })
     );
 
-    const reportQuotes: ReportQuoteItem[] = inRangeQuotes.map((q) => ({
-      id: q.id,
-      dateFormatted: new Date(q.created_at).toLocaleDateString('en-IN', {
+    // Quotations Audit Log list (pending, called, no deal, sold)
+    const reportQuotes: ExecutiveReportTableItem[] = [];
+    inRangeQuotes.forEach((q) => {
+      const dateFormatted = new Date(q.created_at).toLocaleDateString('en-IN', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
-      }),
-      customerName: q.customer_name || 'Showroom Customer',
-      customerWhatsapp: q.customer_whatsapp,
-      itemsSummary: q.itemsSummary,
-      staffName: q.staffName,
-      status: q.status === 'closed' ? 'closed' : 'pending',
-      finalPrice: q.final_price,
-      advanceDeposit: q.advanceDeposit ?? (q as any).advance_deposit,
-    }));
+      });
+      const customerName = q.customer_name || 'Showroom Customer';
+      const customerWhatsapp = q.customer_whatsapp;
+      const staffName = q.staffName || 'Showroom Staff';
+
+      const rawStatus = (q.status || 'pending').toLowerCase();
+      let quoteStatus: 'pending' | 'called' | 'no deal' | 'sold' = 'pending';
+      if (rawStatus === 'closed' || rawStatus === 'sold' || rawStatus === 'deal_closed') {
+        quoteStatus = 'sold';
+      } else if (
+        rawStatus === 'contacted' ||
+        rawStatus === 'called' ||
+        rawStatus === 'called_interested' ||
+        rawStatus === 'called_no_answer'
+      ) {
+        quoteStatus = 'called';
+      } else if (rawStatus === 'no_deal' || rawStatus === 'lost') {
+        quoteStatus = 'no deal';
+      } else {
+        quoteStatus = 'pending';
+      }
+
+      if (q.quote_items && q.quote_items.length > 0) {
+        q.quote_items.forEach((item: any) => {
+          reportQuotes.push({
+            id: `${q.id}-${item.id || Math.random()}`,
+            dateFormatted,
+            customerName,
+            customerWhatsapp,
+            productName: item.product?.name || q.itemsSummary,
+            imageUrl: item.product?.image_url,
+            quantity: item.quantity || 1,
+            staffName,
+            status: quoteStatus,
+            amount: Number(item.price_at_time || q.final_price),
+          });
+        });
+      } else if ((q as any).items && (q as any).items.length > 0) {
+        (q as any).items.forEach((item: any) => {
+          reportQuotes.push({
+            id: `${q.id}-${item.id || Math.random()}`,
+            dateFormatted,
+            customerName,
+            customerWhatsapp,
+            productName: item.product?.name || item.name || q.itemsSummary,
+            imageUrl: item.product?.image_url || item.image_url,
+            quantity: item.quantity || 1,
+            staffName,
+            status: quoteStatus,
+            amount: Number(item.price_at_time || item.price || q.final_price),
+          });
+        });
+      } else {
+        reportQuotes.push({
+          id: q.id,
+          dateFormatted,
+          customerName,
+          customerWhatsapp,
+          productName: q.itemsSummary,
+          imageUrl: undefined,
+          quantity: q.itemsCount || 1,
+          staffName,
+          status: quoteStatus,
+          amount: q.final_price,
+        });
+      }
+    });
 
     return {
       totalRevenue,

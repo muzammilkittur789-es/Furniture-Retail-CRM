@@ -1,25 +1,16 @@
 import { PDFDocument, rgb, StandardFonts, PDFPage, PDFFont, LineCapStyle } from 'pdf-lib';
 
-export interface ReportQuoteItem {
+export interface ExecutiveReportTableItem {
   id: string;
   dateFormatted: string;
   customerName: string;
   customerWhatsapp: string;
-  itemsSummary: string;
-  staffName: string;
-  status: 'closed' | 'pending';
-  finalPrice: number;
-  advanceDeposit?: number;
-}
-
-export interface ReportSoldItem {
-  id: string;
-  name: string;
-  price: number;
+  productName: string;
+  imageUrl?: string;
   quantity: number;
-  customerWhatsapp: string;
   staffName: string;
-  soldAtFormatted: string;
+  status: 'pending' | 'called' | 'no deal' | 'sold';
+  amount: number;
 }
 
 export interface ReportStaffPerformance {
@@ -41,8 +32,8 @@ export interface ExecutiveReportPayload {
   piecesSoldCount: number;
   pendingAmount: number;
   staffPerformance: ReportStaffPerformance[];
-  quotes: ReportQuoteItem[];
-  soldItems: ReportSoldItem[];
+  soldItems: ExecutiveReportTableItem[] | any[];
+  quotes: ExecutiveReportTableItem[] | any[];
 }
 
 // Official Lucide Indian Rupee SVG vector path
@@ -59,7 +50,7 @@ function drawRupeePrice(
   color: any,
   alignRight: boolean = false
 ): number {
-  const amountStr = Math.round(amount).toLocaleString('en-IN');
+  const amountStr = Math.round(amount || 0).toLocaleString('en-IN');
   const scale = fontSize / 28;
   const strokeW = Math.max(0.9, fontSize * 0.085);
   const symW = 12 * scale;
@@ -93,6 +84,7 @@ function drawRupeePrice(
 }
 
 function fitText(font: PDFFont, text: string, fontSize: number, maxWidth: number): string {
+  if (!text) return '';
   if (font.widthOfTextAtSize(text, fontSize) <= maxWidth) {
     return text;
   }
@@ -112,9 +104,93 @@ function fitText(font: PDFFont, text: string, fontSize: number, maxWidth: number
   return best;
 }
 
+function formatPhone(phone?: string): string {
+  if (!phone) return '—';
+  if (phone.startsWith('Direct')) return phone;
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 10) {
+    return `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`;
+  }
+  if (digits.length === 12 && digits.startsWith('91')) {
+    return `+91 ${digits.slice(2, 7)} ${digits.slice(7)}`;
+  }
+  return phone.startsWith('+') ? phone : `+91 ${phone}`;
+}
+
+async function fetchAndEmbedImage(doc: PDFDocument, urlOrBase64?: string): Promise<any | null> {
+  if (!urlOrBase64) return null;
+  try {
+    if (urlOrBase64.startsWith('data:image/png')) {
+      const base64Data = urlOrBase64.split(',')[1];
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return await doc.embedPng(bytes);
+    }
+    if (urlOrBase64.startsWith('data:image/jpeg') || urlOrBase64.startsWith('data:image/jpg')) {
+      const base64Data = urlOrBase64.split(',')[1];
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return await doc.embedJpg(bytes);
+    }
+
+    const res = await fetch(urlOrBase64);
+    if (!res.ok) return null;
+    const arrayBuffer = await res.arrayBuffer();
+    try {
+      return await doc.embedJpg(arrayBuffer);
+    } catch {
+      return await doc.embedPng(arrayBuffer);
+    }
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Normalizes input item to standard ExecutiveReportTableItem
+ */
+function normalizeTableItem(raw: any, defaultStatus: 'pending' | 'called' | 'no deal' | 'sold'): ExecutiveReportTableItem {
+  let status = defaultStatus;
+  const rawStatus = (raw.status || '').toLowerCase();
+  if (rawStatus === 'closed' || rawStatus === 'sold' || rawStatus === 'deal_closed') {
+    status = 'sold';
+  } else if (
+    rawStatus === 'contacted' ||
+    rawStatus === 'called' ||
+    rawStatus === 'called_interested' ||
+    rawStatus === 'called_no_answer'
+  ) {
+    status = 'called';
+  } else if (rawStatus === 'no_deal' || rawStatus === 'lost') {
+    status = 'no deal';
+  } else if (rawStatus === 'pending') {
+    status = 'pending';
+  }
+
+  return {
+    id: raw.id || `item-${Math.random()}`,
+    dateFormatted: raw.dateFormatted || raw.soldAtFormatted || '—',
+    customerName: raw.customerName || 'Showroom Customer',
+    customerWhatsapp: raw.customerWhatsapp || raw.customer_whatsapp || '',
+    productName: raw.productName || raw.name || raw.itemsSummary || 'Luxury Furniture Piece',
+    imageUrl: raw.imageUrl || raw.image_url,
+    quantity: raw.quantity || 1,
+    staffName: raw.staffName || 'Showroom Staff',
+    status,
+    amount: Number(raw.amount ?? raw.price ?? raw.finalPrice ?? 0),
+  };
+}
+
 /**
  * Generates an executive, print-ready Showroom Business Report PDF
- * covering the owner's selected custom date range.
+ * covering the owner's selected custom date range with standard executive header
+ * and unified table structure.
  */
 export async function generateExecutiveReportPdfBlob(
   payload: ExecutiveReportPayload
@@ -129,81 +205,163 @@ export async function generateExecutiveReportPdfBlob(
   const MARGIN = 36;
   const CONTENT_W = PAGE_W - MARGIN * 2; // 523.28 pt
 
-  // Color palette
-  const cDark = rgb(0.06, 0.09, 0.16); // Slate 900
-  const cIndigo = rgb(0.28, 0.31, 0.90); // Indigo 600
-  const cEmerald = rgb(0.02, 0.60, 0.38); // Emerald 600
-  const cMuted = rgb(0.39, 0.45, 0.55); // Slate 500
-  const cLight = rgb(0.96, 0.97, 0.98); // Slate 50
-  const cBorder = rgb(0.88, 0.91, 0.94); // Slate 200
+  // Executive Color Palette
+  const cDark = rgb(0.06, 0.09, 0.16); // Slate 900 #0F172A
+  const cNavy = rgb(0.12, 0.16, 0.28); // Deep Navy #1E293B
+  const cIndigo = rgb(0.28, 0.31, 0.90); // Indigo 600 #4F46E5
+  const cEmerald = rgb(0.02, 0.60, 0.38); // Emerald 600 #059669
+  const cMuted = rgb(0.39, 0.45, 0.55); // Slate 500 #64748B
+  const cBorder = rgb(0.88, 0.91, 0.94); // Slate 200 #E2E8F0
   const cWhite = rgb(1, 1, 1);
 
-  let currentPage = pdfDoc.addPage([PAGE_W, PAGE_H]);
-  let y = PAGE_H - MARGIN;
+  // Normalize items for both tables
+  const rawSold = payload.soldItems || [];
+  const rawQuotes = payload.quotes || [];
+  const normalizedSold: ExecutiveReportTableItem[] = rawSold.map((it) => normalizeTableItem(it, 'sold'));
+  const normalizedQuotes: ExecutiveReportTableItem[] = rawQuotes.map((it) => normalizeTableItem(it, 'pending'));
 
+  // Pre-fetch and cache distinct product images
+  const imageCache = new Map<string, any>();
+  const distinctUrls = Array.from(
+    new Set(
+      [...normalizedSold, ...normalizedQuotes]
+        .map((it) => it.imageUrl)
+        .filter((url): url is string => Boolean(url && typeof url === 'string'))
+    )
+  );
+
+  await Promise.all(
+    distinctUrls.map(async (url) => {
+      const img = await fetchAndEmbedImage(pdfDoc, url);
+      if (img) imageCache.set(url, img);
+    })
+  );
+
+  let currentPage = pdfDoc.addPage([PAGE_W, PAGE_H]);
+  let y = PAGE_H - 44;
+
+  // Header Drawer
   const drawHeader = (page: PDFPage, isFirstPage: boolean) => {
     if (isFirstPage) {
-      // Top colored accent bar
+      // 1. Sleek Top Accent Bar
       page.drawRectangle({
         x: MARGIN,
-        y: y - 4,
+        y: PAGE_H - 22,
         width: CONTENT_W,
-        height: 4,
+        height: 3.5,
         color: cIndigo,
       });
-      y -= 14;
 
-      // Brand Title
-      page.drawText('ALISHAN FURNITURES', {
+      // 2. Left Brand Monogram Logo Box
+      const logoSize = 38;
+      page.drawRectangle({
         x: MARGIN,
-        y,
-        size: 18,
+        y: y - logoSize + 10,
+        width: logoSize,
+        height: logoSize,
+        color: cNavy,
+      });
+
+      page.drawText('AF', {
+        x: MARGIN + 9,
+        y: y - logoSize + 22,
+        size: 15,
+        font: fontBold,
+        color: cWhite,
+      });
+
+      // Left Brand Typography
+      const brandX = MARGIN + logoSize + 12;
+      page.drawText('ALISHAN FURNITURES', {
+        x: brandX,
+        y: y + 2,
+        size: 16,
         font: fontBold,
         color: cDark,
       });
 
-      // Document Badge
-      const badgeText = 'EXECUTIVE SHOWROOM AUDIT REPORT';
-      const badgeW = fontBold.widthOfTextAtSize(badgeText, 8.5) + 16;
-      page.drawRectangle({
-        x: PAGE_W - MARGIN - badgeW,
-        y: y - 2,
-        width: badgeW,
-        height: 18,
-        color: rgb(0.93, 0.94, 0.99),
-        borderColor: rgb(0.80, 0.82, 0.98),
-        borderWidth: 1,
-      });
-      page.drawText(badgeText, {
-        x: PAGE_W - MARGIN - badgeW + 8,
-        y: y + 3,
-        size: 8.5,
+      page.drawText('LUXURY LIVING & BESPOKE INTERIORS', {
+        x: brandX,
+        y: y - 10,
+        size: 7.5,
         font: fontBold,
         color: cIndigo,
       });
 
-      y -= 18;
-
-      // Subtitle & Filter Window
-      page.drawText(`Custom Period: ${payload.fromDateFormatted}  to  ${payload.toDateFormatted}`, {
-        x: MARGIN,
-        y,
-        size: 10,
-        font: fontBold,
-        color: rgb(0.15, 0.20, 0.30),
-      });
-
-      const genStamp = `Generated: ${payload.generatedAtFormatted}`;
-      const genW = fontRegular.widthOfTextAtSize(genStamp, 8);
-      page.drawText(genStamp, {
-        x: PAGE_W - MARGIN - genW,
-        y,
-        size: 8,
+      page.drawText('Official Showroom Executive Audit & Business Intelligence Report', {
+        x: brandX,
+        y: y - 21,
+        size: 7,
         font: fontRegular,
         color: cMuted,
       });
 
-      y -= 14;
+      // 3. Right Executive Metadata Card
+      const cardW = 196;
+      const cardH = 44;
+      const cardX = PAGE_W - MARGIN - cardW;
+      const cardY = y - logoSize + 4;
+
+      page.drawRectangle({
+        x: cardX,
+        y: cardY,
+        width: cardW,
+        height: cardH,
+        color: rgb(0.97, 0.98, 1.0),
+        borderColor: rgb(0.85, 0.88, 0.96),
+        borderWidth: 0.75,
+      });
+
+      // Row 1: Reporting Period
+      page.drawText('AUDIT PERIOD:', {
+        x: cardX + 10,
+        y: cardY + 30,
+        size: 6.5,
+        font: fontBold,
+        color: cIndigo,
+      });
+      page.drawText(`${payload.fromDateFormatted}  to  ${payload.toDateFormatted}`, {
+        x: cardX + 68,
+        y: cardY + 30,
+        size: 7.5,
+        font: fontBold,
+        color: cDark,
+      });
+
+      // Row 2: Generated On
+      page.drawText('Generated On:', {
+        x: cardX + 10,
+        y: cardY + 18,
+        size: 6.5,
+        font: fontRegular,
+        color: cMuted,
+      });
+      page.drawText(payload.generatedAtFormatted, {
+        x: cardX + 68,
+        y: cardY + 18,
+        size: 6.5,
+        font: fontRegular,
+        color: cDark,
+      });
+
+      // Row 3: Account Owner
+      page.drawText('Audited For:', {
+        x: cardX + 10,
+        y: cardY + 7,
+        size: 6.5,
+        font: fontRegular,
+        color: cMuted,
+      });
+      page.drawText(payload.ownerName || 'Vikram Mehta (Owner)', {
+        x: cardX + 68,
+        y: cardY + 7,
+        size: 6.5,
+        font: fontBold,
+        color: cDark,
+      });
+
+      // Divider Line below header
+      y = cardY - 14;
       page.drawLine({
         start: { x: MARGIN, y },
         end: { x: PAGE_W - MARGIN, y },
@@ -213,30 +371,50 @@ export async function generateExecutiveReportPdfBlob(
       y -= 16;
     } else {
       // Continuation Header
-      page.drawText(`ALISHAN FURNITURES - Executive Audit Report (${payload.fromDateFormatted} - ${payload.toDateFormatted})`, {
+      page.drawRectangle({
         x: MARGIN,
-        y,
-        size: 8.5,
+        y: PAGE_H - 20,
+        width: CONTENT_W,
+        height: 2,
+        color: cIndigo,
+      });
+
+      page.drawText('ALISHAN FURNITURES  |  Executive Showroom Audit Report', {
+        x: MARGIN,
+        y: PAGE_H - 34,
+        size: 8,
         font: fontBold,
+        color: cDark,
+      });
+
+      const subStamp = `Period: ${payload.fromDateFormatted} to ${payload.toDateFormatted}`;
+      const subW = fontRegular.widthOfTextAtSize(subStamp, 7.5);
+      page.drawText(subStamp, {
+        x: PAGE_W - MARGIN - subW,
+        y: PAGE_H - 34,
+        size: 7.5,
+        font: fontRegular,
         color: cMuted,
       });
-      y -= 8;
+
       page.drawLine({
-        start: { x: MARGIN, y },
-        end: { x: PAGE_W - MARGIN, y },
+        start: { x: MARGIN, y: PAGE_H - 40 },
+        end: { x: PAGE_W - MARGIN, y: PAGE_H - 40 },
         thickness: 0.5,
         color: cBorder,
       });
-      y -= 16;
+
+      y = PAGE_H - 56;
     }
   };
 
   const checkPageBreak = (neededHeight: number) => {
     if (y - neededHeight < MARGIN + 30) {
       currentPage = pdfDoc.addPage([PAGE_W, PAGE_H]);
-      y = PAGE_H - MARGIN;
       drawHeader(currentPage, false);
+      return true;
     }
+    return false;
   };
 
   // Initial First Page Header
@@ -251,10 +429,34 @@ export async function generateExecutiveReportPdfBlob(
   const cardH = 50;
 
   const kpis = [
-    { label: 'Total Revenue', amount: payload.totalRevenue, isPrice: true, color: cEmerald },
-    { label: 'Closed Deals', value: `${payload.closedDealsCount} deals`, isPrice: false, color: cDark },
-    { label: 'Pieces Sold', value: `${payload.piecesSoldCount} units`, isPrice: false, color: cIndigo },
-    { label: 'Total Quotes', value: `${payload.quotesCount} generated`, isPrice: false, color: cDark },
+    {
+      title: 'TOTAL REVENUE',
+      value: payload.totalRevenue || 0,
+      isRupee: true,
+      color: cEmerald,
+      sub: `${payload.closedDealsCount || 0} Deals Closed`,
+    },
+    {
+      title: 'PIECES SOLD',
+      value: `${payload.piecesSoldCount || 0} Units`,
+      isRupee: false,
+      color: rgb(0.10, 0.45, 0.90),
+      sub: 'Delivered / Booked',
+    },
+    {
+      title: 'CLOSED DEALS',
+      value: String(payload.closedDealsCount || 0),
+      isRupee: false,
+      color: cIndigo,
+      sub: `From ${payload.quotesCount || 0} Quotes`,
+    },
+    {
+      title: 'QUOTES LOGGED',
+      value: String(payload.quotesCount || 0),
+      isRupee: false,
+      color: rgb(0.70, 0.35, 0.05),
+      sub: `${payload.totalVisitors || 0} Customer Visits`,
+    },
   ];
 
   kpis.forEach((kpi, idx) => {
@@ -264,38 +466,54 @@ export async function generateExecutiveReportPdfBlob(
       y: y - cardH,
       width: cardW,
       height: cardH,
-      color: cLight,
+      color: rgb(0.985, 0.99, 1.0),
       borderColor: cBorder,
       borderWidth: 0.75,
     });
 
-    currentPage.drawText(kpi.label, {
-      x: cardX + 8,
-      y: y - 16,
-      size: 7.5,
+    currentPage.drawRectangle({
+      x: cardX,
+      y: y - 3,
+      width: cardW,
+      height: 3,
+      color: kpi.color,
+    });
+
+    currentPage.drawText(kpi.title, {
+      x: cardX + 10,
+      y: y - 14,
+      size: 6.5,
       font: fontBold,
       color: cMuted,
     });
 
-    if (kpi.isPrice && kpi.amount !== undefined) {
-      drawRupeePrice(currentPage, cardX + 8, y - 36, kpi.amount, 12, fontBold, kpi.color);
-    } else if (kpi.value) {
-      currentPage.drawText(kpi.value, {
-        x: cardX + 8,
-        y: y - 36,
+    if (kpi.isRupee) {
+      drawRupeePrice(currentPage, cardX + 10, y - 30, kpi.value as number, 11, fontBold, kpi.color);
+    } else {
+      currentPage.drawText(String(kpi.value), {
+        x: cardX + 10,
+        y: y - 30,
         size: 11,
         font: fontBold,
         color: kpi.color,
       });
     }
+
+    currentPage.drawText(kpi.sub, {
+      x: cardX + 10,
+      y: y - 42,
+      size: 6.5,
+      font: fontRegular,
+      color: cMuted,
+    });
   });
 
-  y -= cardH + 20;
+  y -= cardH + 18;
 
   // =========================================================================
   // SECTION 2: SALES CONSULTANT PERFORMANCE BREAKDOWN
   // =========================================================================
-  checkPageBreak(90);
+  checkPageBreak(80);
 
   currentPage.drawText('SALES CONSULTANT PERFORMANCE', {
     x: MARGIN,
@@ -306,14 +524,13 @@ export async function generateExecutiveReportPdfBlob(
   });
   y -= 14;
 
-  // Table Header
   const staffTableH = 18;
   currentPage.drawRectangle({
     x: MARGIN,
     y: y - staffTableH,
     width: CONTENT_W,
     height: staffTableH,
-    color: rgb(0.12, 0.16, 0.24),
+    color: cNavy,
   });
 
   const staffCols = [
@@ -337,7 +554,6 @@ export async function generateExecutiveReportPdfBlob(
   y -= staffTableH;
 
   const staffPerfList = payload.staffPerformance || [];
-  // Table Rows
   if (staffPerfList.length === 0) {
     currentPage.drawRectangle({
       x: MARGIN,
@@ -359,7 +575,7 @@ export async function generateExecutiveReportPdfBlob(
   } else {
     staffPerfList.forEach((sp, i) => {
       checkPageBreak(20);
-      const rowBg = i % 2 === 0 ? cWhite : rgb(0.98, 0.98, 0.99);
+      const rowBg = i % 2 === 0 ? cWhite : rgb(0.985, 0.985, 0.99);
       currentPage.drawRectangle({
         x: MARGIN,
         y: y - 18,
@@ -409,290 +625,317 @@ export async function generateExecutiveReportPdfBlob(
     });
   }
 
-  y -= 16;
+  y -= 18;
 
   // =========================================================================
-  // SECTION 3: ITEMIZED CLOSED DEALS & SOLD PIECES
+  // UNIFIED TABLE DRAWING ENGINE (FOR BOTH SOLD PIECES & QUOTATIONS AUDIT)
+  // Columns: Date | Customer & Mobile | Furniture Piece & Preview | Qty | Staff | Status | Amount
   // =========================================================================
-  checkPageBreak(90);
-
-  currentPage.drawText(`SOLD FURNITURE PIECES (${payload.soldItems.length} Records)`, {
-    x: MARGIN,
-    y,
-    size: 9.5,
-    font: fontBold,
-    color: cDark,
-  });
-  y -= 14;
-
-  const soldTableH = 18;
-  currentPage.drawRectangle({
-    x: MARGIN,
-    y: y - soldTableH,
-    width: CONTENT_W,
-    height: soldTableH,
-    color: rgb(0.12, 0.16, 0.24),
-  });
-
-  const soldCols = [
-    { title: 'SOLD DATE', x: MARGIN + 8, w: 65 },
-    { title: 'FURNITURE ITEM', x: MARGIN + 75, w: 180 },
-    { title: 'QTY', x: MARGIN + 260, w: 30 },
-    { title: 'CUSTOMER / WHATSAPP', x: MARGIN + 295, w: 110 },
-    { title: 'CONSULTANT', x: MARGIN + 410, w: 55 },
-    { title: 'AMOUNT', x: MARGIN + 470, w: 45, alignRight: true },
+  const unifiedCols = [
+    { title: 'DATE', x: MARGIN + 6, w: 42 },
+    { title: 'CUSTOMER & MOBILE', x: MARGIN + 50, w: 92 },
+    { title: 'FURNITURE ITEM & PREVIEW', x: MARGIN + 144, w: 154 },
+    { title: 'QTY', x: MARGIN + 300, w: 26, alignCenter: true },
+    { title: 'STAFF', x: MARGIN + 328, w: 60 },
+    { title: 'STATUS', x: MARGIN + 390, w: 56, alignCenter: true },
+    { title: 'AMOUNT', x: MARGIN + 448, w: 69, alignRight: true },
   ];
 
-  soldCols.forEach((col) => {
-    currentPage.drawText(col.title, {
-      x: col.alignRight ? col.x + col.w - fontBold.widthOfTextAtSize(col.title, 6.5) : col.x,
-      y: y - 12,
-      size: 6.5,
-      font: fontBold,
-      color: cWhite,
-    });
-  });
-
-  y -= soldTableH;
-
-  const soldItemsList = payload.soldItems || [];
-  if (soldItemsList.length === 0) {
+  const drawUnifiedTableHeader = () => {
+    const tableHeaderH = 18;
     currentPage.drawRectangle({
       x: MARGIN,
-      y: y - 20,
+      y: y - tableHeaderH,
       width: CONTENT_W,
-      height: 20,
-      color: cWhite,
-      borderColor: cBorder,
-      borderWidth: 0.5,
+      height: tableHeaderH,
+      color: cNavy,
     });
-    currentPage.drawText('No furniture pieces closed in this selected timeframe.', {
-      x: MARGIN + 12,
-      y: y - 14,
-      size: 8,
-      font: fontRegular,
-      color: cMuted,
+
+    unifiedCols.forEach((col) => {
+      let titleX = col.x;
+      const textW = fontBold.widthOfTextAtSize(col.title, 6.5);
+      if (col.alignRight) {
+        titleX = col.x + col.w - textW;
+      } else if (col.alignCenter) {
+        titleX = col.x + (col.w - textW) / 2;
+      }
+
+      currentPage.drawText(col.title, {
+        x: titleX,
+        y: y - 12,
+        size: 6.5,
+        font: fontBold,
+        color: cWhite,
+      });
     });
-    y -= 20;
-  } else {
-    soldItemsList.forEach((item, i) => {
-      checkPageBreak(19);
-      const rowBg = i % 2 === 0 ? cWhite : rgb(0.98, 0.98, 0.99);
+
+    y -= tableHeaderH;
+  };
+
+  const drawUnifiedTable = (
+    title: string,
+    items: ExecutiveReportTableItem[],
+    emptyMessage: string
+  ) => {
+    checkPageBreak(90);
+
+    currentPage.drawText(title, {
+      x: MARGIN,
+      y,
+      size: 9.5,
+      font: fontBold,
+      color: cDark,
+    });
+    y -= 14;
+
+    drawUnifiedTableHeader();
+
+    if (items.length === 0) {
       currentPage.drawRectangle({
         x: MARGIN,
-        y: y - 18,
+        y: y - 22,
         width: CONTENT_W,
-        height: 18,
-        color: rowBg,
+        height: 22,
+        color: cWhite,
         borderColor: cBorder,
         borderWidth: 0.5,
       });
-
-      currentPage.drawText(fitText(fontRegular, item.soldAtFormatted, 7, 60), {
-        x: MARGIN + 8,
-        y: y - 12,
-        size: 7,
+      currentPage.drawText(emptyMessage, {
+        x: MARGIN + 12,
+        y: y - 15,
+        size: 8,
         font: fontRegular,
         color: cMuted,
       });
+      y -= 22;
+    } else {
+      const rowH = 32;
 
-      currentPage.drawText(fitText(fontBold, item.name, 7.5, 175), {
-        x: MARGIN + 75,
-        y: y - 12,
-        size: 7.5,
-        font: fontBold,
-        color: cDark,
+      items.forEach((item, i) => {
+        const didBreak = checkPageBreak(rowH + 6);
+        if (didBreak) {
+          drawUnifiedTableHeader();
+        }
+
+        const rowBg = i % 2 === 0 ? cWhite : rgb(0.985, 0.985, 0.99);
+        currentPage.drawRectangle({
+          x: MARGIN,
+          y: y - rowH,
+          width: CONTENT_W,
+          height: rowH,
+          color: rowBg,
+          borderColor: cBorder,
+          borderWidth: 0.5,
+        });
+
+        // 1. DATE
+        currentPage.drawText(fitText(fontRegular, item.dateFormatted, 6.8, 40), {
+          x: MARGIN + 6,
+          y: y - 19,
+          size: 6.8,
+          font: fontRegular,
+          color: cMuted,
+        });
+
+        // 2. CUSTOMER NAME & MOBILE NUMBER
+        const custName = fitText(fontBold, item.customerName || 'Showroom Customer', 7.5, 88);
+        currentPage.drawText(custName, {
+          x: MARGIN + 50,
+          y: y - 13,
+          size: 7.5,
+          font: fontBold,
+          color: cDark,
+        });
+
+        const custPhone = fitText(fontRegular, formatPhone(item.customerWhatsapp), 6.5, 88);
+        currentPage.drawText(custPhone, {
+          x: MARGIN + 50,
+          y: y - 23,
+          size: 6.5,
+          font: fontRegular,
+          color: cMuted,
+        });
+
+        // 3. FURNITURE IMAGE THUMBNAIL & NAME
+        const thumbSize = 24;
+        const thumbX = MARGIN + 144;
+        const thumbY = y - thumbSize - 4;
+
+        const img = item.imageUrl ? imageCache.get(item.imageUrl) : null;
+        if (img) {
+          currentPage.drawImage(img, {
+            x: thumbX,
+            y: thumbY,
+            width: thumbSize,
+            height: thumbSize,
+          });
+          currentPage.drawRectangle({
+            x: thumbX,
+            y: thumbY,
+            width: thumbSize,
+            height: thumbSize,
+            borderColor: cBorder,
+            borderWidth: 0.5,
+          });
+        } else {
+          // Placeholder Box
+          currentPage.drawRectangle({
+            x: thumbX,
+            y: thumbY,
+            width: thumbSize,
+            height: thumbSize,
+            color: rgb(0.94, 0.95, 0.98),
+            borderColor: cBorder,
+            borderWidth: 0.5,
+          });
+          currentPage.drawText('AF', {
+            x: thumbX + 6,
+            y: thumbY + 8,
+            size: 7.5,
+            font: fontBold,
+            color: cIndigo,
+          });
+        }
+
+        const textLeft = thumbX + thumbSize + 6;
+        const prodName = fitText(fontBold, item.productName || 'Bespoke Furniture', 7.5, 120);
+        currentPage.drawText(prodName, {
+          x: textLeft,
+          y: y - 14,
+          size: 7.5,
+          font: fontBold,
+          color: cDark,
+        });
+
+        const prodTag = fitText(fontRegular, 'Showroom Display / Order', 6, 120);
+        currentPage.drawText(prodTag, {
+          x: textLeft,
+          y: y - 23,
+          size: 6,
+          font: fontRegular,
+          color: cMuted,
+        });
+
+        // 4. QUANTITY
+        const qtyStr = String(item.quantity || 1);
+        const qtyW = fontBold.widthOfTextAtSize(qtyStr, 7.5);
+        currentPage.drawText(qtyStr, {
+          x: MARGIN + 300 + (26 - qtyW) / 2,
+          y: y - 19,
+          size: 7.5,
+          font: fontBold,
+          color: cIndigo,
+        });
+
+        // 5. STAFF
+        currentPage.drawText(fitText(fontRegular, item.staffName || 'Staff', 7.2, 56), {
+          x: MARGIN + 328,
+          y: y - 19,
+          size: 7.2,
+          font: fontRegular,
+          color: cDark,
+        });
+
+        // 6. STATUS PILL (Pending, Called, No Deal, Sold)
+        const badgeW = 48;
+        const badgeH = 14;
+        const badgeX = MARGIN + 390 + (56 - badgeW) / 2;
+        const badgeY = y - 23;
+
+        let badgeBg = rgb(0.92, 0.98, 0.94);
+        let badgeBorder = rgb(0.65, 0.92, 0.75);
+        let badgeColor = rgb(0.04, 0.47, 0.28);
+        let badgeLabel = 'SOLD';
+
+        if (item.status === 'pending') {
+          badgeBg = rgb(1.0, 0.97, 0.90);
+          badgeBorder = rgb(0.99, 0.85, 0.55);
+          badgeColor = rgb(0.70, 0.35, 0.05);
+          badgeLabel = 'PENDING';
+        } else if (item.status === 'called') {
+          badgeBg = rgb(0.93, 0.96, 1.0);
+          badgeBorder = rgb(0.70, 0.84, 0.98);
+          badgeColor = rgb(0.08, 0.40, 0.75);
+          badgeLabel = 'CALLED';
+        } else if (item.status === 'no deal') {
+          badgeBg = rgb(1.0, 0.93, 0.94);
+          badgeBorder = rgb(0.98, 0.75, 0.78);
+          badgeColor = rgb(0.75, 0.15, 0.22);
+          badgeLabel = 'NO DEAL';
+        }
+
+        currentPage.drawRectangle({
+          x: badgeX,
+          y: badgeY,
+          width: badgeW,
+          height: badgeH,
+          color: badgeBg,
+          borderColor: badgeBorder,
+          borderWidth: 0.5,
+        });
+
+        const labelW = fontBold.widthOfTextAtSize(badgeLabel, 6);
+        currentPage.drawText(badgeLabel, {
+          x: badgeX + (badgeW - labelW) / 2,
+          y: badgeY + 4,
+          size: 6,
+          font: fontBold,
+          color: badgeColor,
+        });
+
+        // 7. AMOUNT
+        drawRupeePrice(currentPage, MARGIN + 517, y - 19, item.amount, 7.5, fontBold, cDark, true);
+
+        y -= rowH;
       });
+    }
 
-      currentPage.drawText(String(item.quantity || 1), {
-        x: MARGIN + 265,
-        y: y - 12,
-        size: 7.5,
-        font: fontBold,
-        color: cIndigo,
-      });
-
-      const custLabel = item.customerWhatsapp.startsWith('Direct') ? item.customerWhatsapp : `+91 ${item.customerWhatsapp}`;
-      currentPage.drawText(fitText(fontRegular, custLabel, 7, 105), {
-        x: MARGIN + 295,
-        y: y - 12,
-        size: 7,
-        font: fontRegular,
-        color: cDark,
-      });
-
-      currentPage.drawText(fitText(fontRegular, item.staffName.split(' ')[0], 7.5, 50), {
-        x: MARGIN + 410,
-        y: y - 12,
-        size: 7.5,
-        font: fontRegular,
-        color: cMuted,
-      });
-
-      drawRupeePrice(currentPage, MARGIN + 515, y - 12, item.price, 7.5, fontBold, cDark, true);
-
-      y -= 18;
-    });
-  }
-
-  y -= 16;
+    y -= 18;
+  };
 
   // =========================================================================
-  // SECTION 4: ALL QUOTATIONS IN PERIOD
+  // SECTION 3: SOLD FURNITURE PIECES TABLE
   // =========================================================================
-  checkPageBreak(90);
-
-  currentPage.drawText(`QUOTATIONS AUDIT LOG (${payload.quotes.length} Quotes)`, {
-    x: MARGIN,
-    y,
-    size: 9.5,
-    font: fontBold,
-    color: cDark,
-  });
-  y -= 14;
-
-  const quoteTableH = 18;
-  currentPage.drawRectangle({
-    x: MARGIN,
-    y: y - quoteTableH,
-    width: CONTENT_W,
-    height: quoteTableH,
-    color: rgb(0.12, 0.16, 0.24),
-  });
-
-  const quoteCols = [
-    { title: 'DATE', x: MARGIN + 8, w: 65 },
-    { title: 'CUSTOMER NAME', x: MARGIN + 75, w: 100 },
-    { title: 'ITEMS QUOTED', x: MARGIN + 180, w: 150 },
-    { title: 'STATUS', x: MARGIN + 335, w: 50 },
-    { title: 'STAFF', x: MARGIN + 390, w: 55 },
-    { title: 'FINAL VALUE', x: MARGIN + 450, w: 65, alignRight: true },
-  ];
-
-  quoteCols.forEach((col) => {
-    currentPage.drawText(col.title, {
-      x: col.alignRight ? col.x + col.w - fontBold.widthOfTextAtSize(col.title, 6.5) : col.x,
-      y: y - 12,
-      size: 6.5,
-      font: fontBold,
-      color: cWhite,
-    });
-  });
-
-  y -= quoteTableH;
-
-  const quotesList = payload.quotes || [];
-  if (quotesList.length === 0) {
-    currentPage.drawRectangle({
-      x: MARGIN,
-      y: y - 20,
-      width: CONTENT_W,
-      height: 20,
-      color: cWhite,
-      borderColor: cBorder,
-      borderWidth: 0.5,
-    });
-    currentPage.drawText('No quotes generated within this selected timeframe.', {
-      x: MARGIN + 12,
-      y: y - 14,
-      size: 8,
-      font: fontRegular,
-      color: cMuted,
-    });
-    y -= 20;
-  } else {
-    quotesList.forEach((q, i) => {
-      checkPageBreak(19);
-      const rowBg = i % 2 === 0 ? cWhite : rgb(0.98, 0.98, 0.99);
-      currentPage.drawRectangle({
-        x: MARGIN,
-        y: y - 18,
-        width: CONTENT_W,
-        height: 18,
-        color: rowBg,
-        borderColor: cBorder,
-        borderWidth: 0.5,
-      });
-
-      currentPage.drawText(fitText(fontRegular, q.dateFormatted, 7, 60), {
-        x: MARGIN + 8,
-        y: y - 12,
-        size: 7,
-        font: fontRegular,
-        color: cMuted,
-      });
-
-      currentPage.drawText(fitText(fontBold, q.customerName || 'Customer', 7.5, 95), {
-        x: MARGIN + 75,
-        y: y - 12,
-        size: 7.5,
-        font: fontBold,
-        color: cDark,
-      });
-
-      currentPage.drawText(fitText(fontRegular, q.itemsSummary, 7, 145), {
-        x: MARGIN + 180,
-        y: y - 12,
-        size: 7,
-        font: fontRegular,
-        color: cDark,
-      });
-
-      const isWon = q.status === 'closed';
-      const statusText = isWon ? 'CLOSED' : 'PENDING';
-      const statusColor = isWon ? cEmerald : rgb(0.85, 0.50, 0.05);
-      currentPage.drawText(statusText, {
-        x: MARGIN + 335,
-        y: y - 12,
-        size: 7,
-        font: fontBold,
-        color: statusColor,
-      });
-
-      currentPage.drawText(fitText(fontRegular, q.staffName.split(' ')[0], 7.5, 50), {
-        x: MARGIN + 390,
-        y: y - 12,
-        size: 7.5,
-        font: fontRegular,
-        color: cMuted,
-      });
-
-      drawRupeePrice(currentPage, MARGIN + 515, y - 12, q.finalPrice, 7.5, fontBold, cDark, true);
-
-      y -= 18;
-    });
-  }
-
-  y -= 16;
+  drawUnifiedTable(
+    `SOLD FURNITURE PIECES (${normalizedSold.length} Items Closed)`,
+    normalizedSold,
+    'No sold inventory items recorded in this selected timeframe.'
+  );
 
   // =========================================================================
-  // SECTION 5: COMPLIANCE FOOTER ON ALL PAGES
+  // SECTION 4: QUOTATIONS AUDIT LOG TABLE
   // =========================================================================
-  const allPages = pdfDoc.getPages();
-  const totalPages = allPages.length;
+  drawUnifiedTable(
+    `QUOTATIONS AUDIT LOG (${normalizedQuotes.length} Quotes Audited)`,
+    normalizedQuotes,
+    'No quotes generated within this selected timeframe.'
+  );
 
-  allPages.forEach((pg, pageIdx) => {
-    pg.drawLine({
-      start: { x: MARGIN, y: MARGIN + 16 },
-      end: { x: PAGE_W - MARGIN, y: MARGIN + 16 },
+  // =========================================================================
+  // FOOTER & PAGE NUMBERING ACROSS ALL PAGES
+  // =========================================================================
+  const totalPages = pdfDoc.getPageCount();
+  pdfDoc.getPages().forEach((p, idx) => {
+    p.drawLine({
+      start: { x: MARGIN, y: MARGIN + 14 },
+      end: { x: PAGE_W - MARGIN, y: MARGIN + 14 },
       thickness: 0.5,
       color: cBorder,
     });
 
-    const leftFoot = 'CONFIDENTIAL • ALISHAN FURNITURES RETAIL MANAGEMENT OS • HALAL COMMERCE AUDIT';
-    pg.drawText(leftFoot, {
+    p.drawText('Alishan Furnitures Showroom Management System • Strictly Confidential & Proprietary', {
       x: MARGIN,
-      y: MARGIN + 6,
+      y: MARGIN + 4,
       size: 6.5,
       font: fontRegular,
       color: cMuted,
     });
 
-    const pageFoot = `Page ${pageIdx + 1} of ${totalPages}`;
-    const pfW = fontRegular.widthOfTextAtSize(pageFoot, 6.5);
-    pg.drawText(pageFoot, {
-      x: PAGE_W - MARGIN - pfW,
-      y: MARGIN + 6,
+    const pageStr = `Page ${idx + 1} of ${totalPages}`;
+    const pageW = fontRegular.widthOfTextAtSize(pageStr, 6.5);
+    p.drawText(pageStr, {
+      x: PAGE_W - MARGIN - pageW,
+      y: MARGIN + 4,
       size: 6.5,
       font: fontRegular,
       color: cMuted,
