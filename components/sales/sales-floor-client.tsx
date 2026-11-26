@@ -23,6 +23,7 @@ export function SalesFloorClient({
 }: SalesFloorClientProps) {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [activeStaff, setActiveStaff] = useState<StaffSession | null>(null);
+  const [isClientMounted, setIsClientMounted] = useState(false);
   const isLocked = activeStaff === null;
 
   const [activeTab, setActiveTab] = useState<'catalog' | 'followups'>('catalog');
@@ -43,16 +44,33 @@ export function SalesFloorClient({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAddingPending, startAddTransition] = useTransition();
 
-  // Show "Back to Admin" button ONLY if viewer is Showroom Owner/Admin
+  // Show "Back to Admin" button and auto-login if viewer is Showroom Owner/Admin
   const [isAdmin, setIsAdmin] = useState(false);
 
   React.useEffect(() => {
+    setIsClientMounted(true);
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const hasAdminParam = params.get('from') === 'admin';
-      const hasAdminSession = Boolean(sessionStorage.getItem('atelier_admin_session'));
-      if (hasAdminParam || hasAdminSession) {
+      const rawAdminSession = sessionStorage.getItem('atelier_admin_session');
+      let adminObj: StaffSession | null = null;
+      if (rawAdminSession) {
+        try {
+          adminObj = JSON.parse(rawAdminSession);
+        } catch (e) {
+          console.warn('Failed to parse admin session:', e);
+        }
+      }
+
+      if (hasAdminParam || adminObj) {
         setIsAdmin(true);
+        // Direct auto-login for Owner without any PIN prompt when opened from admin
+        const ownerSession: StaffSession = adminObj || {
+          id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+          name: 'Vikram Mehta (Owner)',
+          role: 'admin',
+        };
+        setActiveStaff(ownerSession);
       }
     }
   }, []);
@@ -252,7 +270,8 @@ export function SalesFloorClient({
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans pb-24 lg:pb-12 text-slate-900">
       {/* 1. Terminal PIN Pad Modal */}
       <PinPadModal
-        isOpen={isLocked}
+        isOpen={isClientMounted && isLocked}
+        isAdminUser={isAdmin}
         onSuccess={(staff) => {
           setActiveStaff(staff);
         }}
@@ -295,10 +314,19 @@ export function SalesFloorClient({
             {activeStaff ? (
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-800">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      activeStaff.role === 'admin' ? 'bg-indigo-600' : 'bg-emerald-500'
+                    } animate-pulse shrink-0`}
+                  />
                   <span className="truncate max-w-[75px] sm:max-w-[120px] md:max-w-none">
                     {activeStaff.name.split(' ')[0]}
                   </span>
+                  {activeStaff.role === 'admin' && (
+                    <span className="ml-0.5 px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 text-[10px] font-bold">
+                      Owner
+                    </span>
+                  )}
                 </div>
 
                 <button

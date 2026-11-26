@@ -1,16 +1,18 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { StaffSession } from '@/lib/types/database';
 import { verifyPin } from '@/app/(sales)/sales/actions';
-import { Delete, Lock, ShieldCheck } from 'lucide-react';
+import { Delete, Lock, ShieldCheck, ArrowLeft } from 'lucide-react';
 
 interface PinPadModalProps {
   isOpen: boolean;
+  isAdminUser?: boolean;
   onSuccess: (staff: StaffSession) => void;
 }
 
-export function PinPadModal({ isOpen, onSuccess }: PinPadModalProps) {
+export function PinPadModal({ isOpen, isAdminUser, onSuccess }: PinPadModalProps) {
   const [pin, setPin] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -149,11 +151,22 @@ export function PinPadModal({ isOpen, onSuccess }: PinPadModalProps) {
         </div>
 
         {/* Security Footnote */}
-        <div className="w-full pt-4 border-t border-slate-100 text-center">
+        <div className="w-full pt-4 border-t border-slate-100 text-center space-y-2">
           <p className="text-[11px] text-slate-400 font-medium flex items-center justify-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
             <span>Authorized Showroom Sales Staff Only</span>
           </p>
+          {isAdminUser && (
+            <div>
+              <Link
+                href="/admin"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition py-1 px-3 rounded-xl hover:bg-indigo-50 border border-transparent hover:border-indigo-100"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Admin Dashboard</span>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

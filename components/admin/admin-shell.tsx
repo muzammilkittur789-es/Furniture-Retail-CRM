@@ -187,6 +187,15 @@ export function AdminShell({ children }: AdminShellProps) {
         <div className="p-6 border-t border-slate-800 space-y-4">
           <Link
             href="/sales?from=admin"
+            onClick={() => {
+              if (adminSession) {
+                try {
+                  sessionStorage.setItem('atelier_admin_session', JSON.stringify(adminSession));
+                } catch (e) {
+                  console.warn(e);
+                }
+              }
+            }}
             className="flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-700/80 bg-slate-800/40 hover:bg-slate-800 text-xs font-semibold text-slate-300 transition"
           >
             <div className="flex items-center gap-2.5">

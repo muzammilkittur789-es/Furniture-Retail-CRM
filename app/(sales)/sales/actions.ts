@@ -40,12 +40,6 @@ export async function verifyPin(
     // Check staff store (includes admin-created / updated salesmen)
     const storeVerification = verifyStaffPin(pin);
     if (storeVerification.success && storeVerification.staff) {
-      if (storeVerification.staff.role === 'admin') {
-        return {
-          success: false,
-          error: 'Admin credentials cannot be used on the sales floor. Please access the Owner Admin Dashboard or use your dedicated Sales Staff PIN.',
-        };
-      }
       resetRateLimit('sales_terminal');
       return storeVerification;
     }
