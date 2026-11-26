@@ -182,10 +182,10 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
             <button
               type="button"
               onClick={() => setIsExportModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50/50 text-xs font-bold transition shadow-2xs active:scale-95 shrink-0"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-xs shadow-red-600/25 active:scale-95 shrink-0"
               title="Download Custom Date Range PDF Report"
             >
-              <FileDown className="w-3.5 h-3.5 text-indigo-600" />
+              <FileDown className="w-3.5 h-3.5 text-white" />
               <span>Download PDF</span>
             </button>
             <LiveClock variant="button" showSeconds={false} className="self-start sm:self-auto" />

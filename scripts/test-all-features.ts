@@ -507,7 +507,7 @@ async function main() {
           productName: 'Verona Carrara Marble Dining Table',
           quantity: 1,
           staffName: 'Sneha Kapoor',
-          status: 'called',
+          status: 'pending',
           amount: 245000,
         },
         {

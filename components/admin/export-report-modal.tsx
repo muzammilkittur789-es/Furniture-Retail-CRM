@@ -187,9 +187,12 @@ export function ExportReportModal({
       })
     );
 
-    // Quotations Audit Log list (pending, called, no deal, sold)
+    // Quotations Audit Log list:
+    // Only non-sold quotes (Pending or No Deal). If sold, they appear in Sold Furniture Pieces table.
     const reportQuotes: ExecutiveReportTableItem[] = [];
-    inRangeQuotes.forEach((q) => {
+    const nonSoldQuotes = inRangeQuotes.filter((q) => q.status !== 'closed');
+
+    nonSoldQuotes.forEach((q) => {
       const dateFormatted = new Date(q.created_at).toLocaleDateString('en-IN', {
         day: '2-digit',
         month: 'short',
@@ -200,21 +203,9 @@ export function ExportReportModal({
       const staffName = q.staffName || 'Showroom Staff';
 
       const rawStatus = (q.status || 'pending').toLowerCase();
-      let quoteStatus: 'pending' | 'called' | 'no deal' | 'sold' = 'pending';
-      if (rawStatus === 'closed' || rawStatus === 'sold' || rawStatus === 'deal_closed') {
-        quoteStatus = 'sold';
-      } else if (
-        rawStatus === 'contacted' ||
-        rawStatus === 'called' ||
-        rawStatus === 'called_interested' ||
-        rawStatus === 'called_no_answer'
-      ) {
-        quoteStatus = 'called';
-      } else if (rawStatus === 'no_deal' || rawStatus === 'lost') {
-        quoteStatus = 'no deal';
-      } else {
-        quoteStatus = 'pending';
-      }
+      // Strictly either 'pending' or 'no deal'
+      const quoteStatus: 'pending' | 'no deal' =
+        rawStatus === 'no_deal' || rawStatus === 'lost' ? 'no deal' : 'pending';
 
       if (q.quote_items && q.quote_items.length > 0) {
         q.quote_items.forEach((item: any) => {
@@ -495,7 +486,7 @@ export function ExportReportModal({
             type="button"
             disabled={isGenerating || !fromDate || !toDate}
             onClick={handleDownloadPdf}
-            className="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold sm:font-bold text-xs sm:text-sm shadow-sm hover:shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-50"
+            className="flex-1 py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold sm:font-bold text-xs sm:text-sm shadow-sm hover:shadow-md shadow-red-600/20 active:scale-95 transition flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-50"
           >
             {isGenerating ? (
               <>
