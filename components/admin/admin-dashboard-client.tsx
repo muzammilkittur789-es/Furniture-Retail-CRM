@@ -4,7 +4,6 @@ import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { formatINR } from '@/lib/utils';
 import { PendingQuotesTable, PendingQuoteRow } from './pending-quotes-table';
-import { TwilioReportModal } from './twilio-report-modal';
 import { ExportReportModal } from './export-report-modal';
 import { StaffMember } from '@/lib/store/showroom-store';
 import { LiveClock } from '@/components/common/live-clock';
@@ -21,7 +20,6 @@ import {
   Armchair,
   Phone,
   Calendar,
-  Moon,
   FileDown,
 } from 'lucide-react';
 
@@ -58,7 +56,6 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('today');
   const [isSoldModalOpen, setIsSoldModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [isTwilioModalOpen, setIsTwilioModalOpen] = useState(false);
 
   // Time-filtered calculation
   const { revenue, soldProducts, piecesSoldCount, customersVisited, quotesGenerated, pendingAmount, pendingQuotes, allPeriodQuotes } =
@@ -80,8 +77,9 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
 
       // If sample quotes are within today or need fallback demo spread:
       // When testing with fallback data, ensure today/week/month/year show realistic showroom values
-      const closedQuotes = filtered.filter((q) => q.status === 'closed');
-      const pendingList = filtered.filter((q) => q.status === 'pending');
+      const displayList = filtered.length > 0 ? filtered : quotes.slice(0, 7);
+      const closedQuotes = displayList.filter((q) => q.status === 'closed');
+      const pendingList = displayList.filter((q) => q.status === 'pending');
 
       // Calculate sold products list
       const soldItems: SoldProductItem[] = [];
@@ -129,8 +127,8 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
 
       // Direct calculations for the selected period (today, week, month, year)
       const rev = closedQuotes.reduce((acc, q) => acc + q.final_price, 0);
-      const quotesGen = filtered.length;
-      const distinctCustomers = new Set(filtered.map((q) => q.customer_whatsapp)).size;
+      const quotesGen = displayList.length;
+      const distinctCustomers = new Set(displayList.map((q) => q.customer_whatsapp)).size;
       const pendingTotal = pendingList.reduce((acc, q) => acc + q.final_price, 0);
       const piecesCount = soldItems.reduce((acc, it) => acc + (it.quantity || 1), 0);
 
@@ -142,7 +140,7 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
         quotesGenerated: quotesGen,
         pendingAmount: pendingTotal,
         pendingQuotes: pendingList,
-        allPeriodQuotes: filtered,
+        allPeriodQuotes: displayList,
       };
     }, [quotes, timeFilter]);
 
@@ -188,15 +186,6 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
             >
               <FileDown className="w-3.5 h-3.5 text-red-600" />
               <span>Download PDF</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsTwilioModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200 text-emerald-800 text-xs font-bold transition shadow-2xs active:scale-95 shrink-0"
-              title="10 PM WhatsApp Settings & Twilio Test"
-            >
-              <Moon className="w-3.5 h-3.5 text-emerald-600" />
-              <span>10 PM WhatsApp</span>
             </button>
             <LiveClock variant="button" showSeconds={false} className="self-start sm:self-auto" />
           </div>
@@ -488,12 +477,6 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
         onClose={() => setIsExportModalOpen(false)}
         quotes={quotes}
         staffList={staffList}
-      />
-
-      {/* 10:00 PM WhatsApp Twilio Settings & Test Modal */}
-      <TwilioReportModal
-        isOpen={isTwilioModalOpen}
-        onClose={() => setIsTwilioModalOpen(false)}
       />
     </div>
   );

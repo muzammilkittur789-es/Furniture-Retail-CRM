@@ -288,15 +288,61 @@ export const DEFAULT_FOLLOWUPS: FollowUpLead[] = [
   },
 ];
 
+/**
+ * Dynamic Relative Showroom Date Generator
+ * Generates ISO strings anchored directly to today's local date so sample showroom
+ * data is always populated with rich activity (closed sales, revenue, pieces sold, walk-ins)
+ * whenever a showroom owner or salesperson evaluates the system.
+ */
+export function getRelativeShowroomDate(dayOffset: number, hours: number, minutes: number): string {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOffset, hours, minutes, 0, 0);
+  return d.toISOString();
+}
+
+export const SEED_QUOTE_OFFSETS: Record<string, { daysAgo: number; hours: number; minutes: number }> = {
+  // TODAY'S ACTIVITY (Day 0) - Distributed throughout the day
+  'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55': { daysAgo: 0, hours: 11, minutes: 30 }, // Rohit Oberoi (Closed ₹2,45,000)
+  'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44': { daysAgo: 0, hours: 14, minutes: 15 }, // Kavita Singhania (Closed ₹2,05,000)
+  'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66': { daysAgo: 0, hours: 16, minutes: 30 }, // Ananya Deshmukh (Closed ₹1,45,000)
+  'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11': { daysAgo: 0, hours: 17, minutes: 15 }, // Rajesh Khanna (Pending ₹5,67,000)
+  'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22': { daysAgo: 0, hours: 18, minutes: 0 },  // Priya Sharma (Pending ₹2,20,500)
+  'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33': { daysAgo: 0, hours: 19, minutes: 20 }, // Amit Patel (Pending ₹3,64,500)
+  'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a77': { daysAgo: 0, hours: 20, minutes: 45 }, // Zoya Akhtar (Pending ₹3,20,000)
+
+  // THIS WEEK (1 to 5 days ago)
+  'quote-w-1': { daysAgo: 1, hours: 15, minutes: 30 },
+  'quote-w-2': { daysAgo: 2, hours: 16, minutes: 15 },
+  'quote-w-3': { daysAgo: 3, hours: 14, minutes: 0 },
+  'quote-w-4': { daysAgo: 4, hours: 17, minutes: 45 },
+  'quote-w-5': { daysAgo: 5, hours: 13, minutes: 20 },
+
+  // THIS MONTH (8 to 23 days ago)
+  'quote-m-1': { daysAgo: 8, hours: 12, minutes: 0 },
+  'quote-m-2': { daysAgo: 11, hours: 15, minutes: 30 },
+  'quote-m-3': { daysAgo: 14, hours: 16, minutes: 45 },
+  'quote-m-4': { daysAgo: 17, hours: 11, minutes: 15 },
+  'quote-m-5': { daysAgo: 20, hours: 14, minutes: 30 },
+  'quote-m-6': { daysAgo: 23, hours: 18, minutes: 0 },
+
+  // THIS YEAR (35 to 160 days ago)
+  'quote-y-1': { daysAgo: 35, hours: 15, minutes: 0 },
+  'quote-y-2': { daysAgo: 65, hours: 14, minutes: 30 },
+  'quote-y-3': { daysAgo: 95, hours: 16, minutes: 0 },
+  'quote-y-4': { daysAgo: 125, hours: 11, minutes: 45 },
+  'quote-y-5': { daysAgo: 160, hours: 17, minutes: 15 },
+};
+
 export const DEFAULT_QUOTES: StoredQuote[] = [
   {
     id: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-    created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+    created_at: getRelativeShowroomDate(0, 17, 15),
     customer_name: 'Rajesh Khanna',
     customer_whatsapp: '9876543210',
     subtotal: 630000,
     final_price: 567000,
     status: 'pending',
+    advance_deposit: 100000,
     staffName: 'Arjun Verma',
     itemsSummary: 'The Florence Bouclé Sectional + 1 more',
     itemsCount: 2,
@@ -356,11 +402,12 @@ export const DEFAULT_QUOTES: StoredQuote[] = [
   },
   {
     id: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
-    created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+    created_at: getRelativeShowroomDate(0, 18, 0),
     customer_name: 'Priya Sharma',
     customer_whatsapp: '9123456789',
     subtotal: 245000,
     final_price: 220500,
+    advance_deposit: 35000,
     status: 'pending',
     staffName: 'Sneha Kapoor',
     itemsSummary: 'Verona Carrara Marble Dining Table',
@@ -399,11 +446,12 @@ export const DEFAULT_QUOTES: StoredQuote[] = [
   },
   {
     id: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
-    created_at: new Date(Date.now() - 1000 * 60 * 360).toISOString(),
+    created_at: getRelativeShowroomDate(0, 19, 20),
     customer_name: 'Amit Patel',
     customer_whatsapp: '9845012345',
     subtotal: 405000,
     final_price: 364500,
+    advance_deposit: 50000,
     status: 'pending',
     staffName: 'Arjun Verma',
     itemsSummary: 'Aurelia Cognac Leather Lounge Chair + 1 more',
@@ -464,7 +512,7 @@ export const DEFAULT_QUOTES: StoredQuote[] = [
   },
   {
     id: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
-    created_at: new Date(Date.now() - 1000 * 60 * 600).toISOString(),
+    created_at: getRelativeShowroomDate(0, 14, 15),
     customer_name: 'Kavita Singhania',
     customer_whatsapp: '9988776655',
     subtotal: 213000,
@@ -507,7 +555,7 @@ export const DEFAULT_QUOTES: StoredQuote[] = [
   },
   {
     id: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
-    created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+    created_at: getRelativeShowroomDate(0, 11, 30),
     customer_name: 'Rohit Oberoi',
     customer_whatsapp: '9820556677',
     subtotal: 245000,
@@ -544,6 +592,93 @@ export const DEFAULT_QUOTES: StoredQuote[] = [
           name: 'Verona Carrara Marble Dining Table',
           image_url:
             'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
+    created_at: getRelativeShowroomDate(0, 16, 30),
+    customer_name: 'Ananya Deshmukh',
+    customer_whatsapp: '9820123456',
+    subtotal: 145000,
+    final_price: 145000,
+    status: 'closed',
+    staffName: 'Rahul Sharma',
+    itemsSummary: 'Sorrento Velvet Accent Chaise',
+    itemsCount: 1,
+    staff: {
+      id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+      name: 'Rahul Sharma',
+      role: 'sales',
+    },
+    items: [
+      {
+        id: 'item-9',
+        price_at_time: 145000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380baa',
+          name: 'Sorrento Velvet Accent Chaise',
+          material: 'Deep Emerald Velvet & Brushed Gold Steel',
+          dimensions: '175cm x 85cm x 80cm',
+          more_info: 'Luxury Reading Lounge Chaise',
+          image_url:
+            'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-9',
+        price_at_time: 145000,
+        product: {
+          name: 'Sorrento Velvet Accent Chaise',
+          image_url:
+            'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a77',
+    created_at: getRelativeShowroomDate(0, 20, 45),
+    customer_name: 'Zoya Akhtar',
+    customer_whatsapp: '9811223344',
+    subtotal: 320000,
+    final_price: 320000,
+    advance_deposit: 60000,
+    status: 'pending',
+    staffName: 'Rahul Sharma',
+    itemsSummary: 'Royal Teak Master Wardrobe',
+    itemsCount: 1,
+    staff: {
+      id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+      name: 'Rahul Sharma',
+      role: 'sales',
+    },
+    items: [
+      {
+        id: 'item-10',
+        price_at_time: 320000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380cbb',
+          name: 'Royal Teak Master Wardrobe',
+          material: 'Grade-A Burma Teak & Hand-Finished Hardware',
+          dimensions: '220cm x 65cm x 210cm',
+          more_info: '3-Bay Handcrafted Master Closet',
+          image_url:
+            'https://images.unsplash.com/photo-1558997519-83ea9252def8?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-10',
+        price_at_time: 320000,
+        product: {
+          name: 'Royal Teak Master Wardrobe',
+          image_url:
+            'https://images.unsplash.com/photo-1558997519-83ea9252def8?auto=format&fit=crop&w=400&q=80',
         },
       },
     ],
@@ -1786,6 +1921,23 @@ export function getAllQuotes(): StoredQuote[] {
   if (!global.__ALISHAN_QUOTES_STORE__ || global.__ALISHAN_QUOTES_STORE__.length < DEFAULT_QUOTES.length) {
     global.__ALISHAN_QUOTES_STORE__ = [...DEFAULT_QUOTES];
   }
+
+  // Ensure seed demo quotes stay fresh and anchored to current calendar day for presentations
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const sampleTodayQuote = global.__ALISHAN_QUOTES_STORE__.find(
+    (q) => q.id === 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55'
+  );
+
+  if (!sampleTodayQuote || new Date(sampleTodayQuote.created_at).getTime() < startOfToday) {
+    for (const q of global.__ALISHAN_QUOTES_STORE__) {
+      const cfg = SEED_QUOTE_OFFSETS[q.id];
+      if (cfg) {
+        q.created_at = getRelativeShowroomDate(cfg.daysAgo, cfg.hours, cfg.minutes);
+      }
+    }
+  }
+
   return global.__ALISHAN_QUOTES_STORE__;
 }
 
