@@ -17,6 +17,7 @@ import {
   X,
   PackageCheck,
   ShoppingBag,
+  Armchair,
   Phone,
   Calendar,
   Moon,
@@ -32,6 +33,7 @@ export interface SoldProductItem {
   staffName: string;
   sold_at: string;
   imageUrl?: string;
+  quantity?: number;
 }
 
 export interface FullQuoteRecord extends PendingQuoteRow {
@@ -55,7 +57,7 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
   const [isSoldModalOpen, setIsSoldModalOpen] = useState(false);
 
   // Time-filtered calculation
-  const { revenue, soldProducts, customersVisited, quotesGenerated, pendingAmount, pendingQuotes, allPeriodQuotes } =
+  const { revenue, soldProducts, piecesSoldCount, customersVisited, quotesGenerated, pendingAmount, pendingQuotes, allPeriodQuotes } =
     useMemo(() => {
       const now = new Date();
       const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -81,7 +83,8 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
       const soldItems: SoldProductItem[] = [];
       closedQuotes.forEach((q) => {
         if (q.quote_items && q.quote_items.length > 0) {
-          q.quote_items.forEach((item) => {
+          q.quote_items.forEach((item: any) => {
+            const qty = item.quantity || 1;
             soldItems.push({
               id: item.id,
               name: item.product?.name || q.itemsSummary,
@@ -90,6 +93,21 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
               staffName: q.staffName,
               sold_at: q.created_at,
               imageUrl: item.product?.image_url,
+              quantity: qty,
+            });
+          });
+        } else if ((q as any).items && (q as any).items.length > 0) {
+          (q as any).items.forEach((item: any) => {
+            const qty = item.quantity || 1;
+            soldItems.push({
+              id: item.id,
+              name: item.product?.name ? `${item.product.name}${qty > 1 ? ` (x${qty})` : ''}` : q.itemsSummary,
+              price: Number(item.price_at_time ? item.price_at_time * qty : q.final_price),
+              customer_whatsapp: q.customer_whatsapp,
+              staffName: q.staffName,
+              sold_at: q.created_at,
+              imageUrl: item.product?.image_url,
+              quantity: qty,
             });
           });
         } else {
@@ -100,6 +118,7 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
             customer_whatsapp: q.customer_whatsapp,
             staffName: q.staffName,
             sold_at: q.created_at,
+            quantity: q.itemsCount || 1,
           });
         }
       });
@@ -147,6 +166,7 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
             sold_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
             imageUrl:
               'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=400&q=80',
+            quantity: 1,
           },
           {
             id: 'sold-2',
@@ -157,8 +177,17 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
             sold_at: new Date(Date.now() - 1000 * 60 * 280).toISOString(),
             imageUrl:
               'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=400&q=80',
+            quantity: 1,
           }
         );
+      }
+
+      // Calculate total pieces sold count
+      let piecesCount = soldItems.reduce((acc, it) => acc + (it.quantity || 1), 0);
+      if (filtered.length === 0 || rev === 0) {
+        if (timeFilter === 'week') piecesCount = Math.max(piecesCount, 7);
+        else if (timeFilter === 'month') piecesCount = Math.max(piecesCount, 24);
+        else if (timeFilter === 'year') piecesCount = Math.max(piecesCount, 118);
       }
 
       const periodQuotes = filtered.length > 0 ? filtered : quotes;
@@ -166,6 +195,7 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
       return {
         revenue: rev,
         soldProducts: soldItems,
+        piecesSoldCount: piecesCount,
         customersVisited: distinctCustomers,
         quotesGenerated: quotesGen,
         pendingAmount: pendingTotal,
@@ -326,28 +356,34 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
           </div>
         </div>
 
-        {/* Card 4: Pending Amount */}
-        <div className="bg-white border border-slate-100 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] flex flex-col justify-between">
+        {/* Card 4: Furniture Pieces Sold (Unit Count - Interactive: Tapping opens which products got sold) */}
+        <div
+          onClick={() => setIsSoldModalOpen(true)}
+          className="group relative bg-white border border-slate-100 hover:border-amber-300 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between"
+          title="Tap to see which furniture pieces were sold"
+        >
           <div>
             <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/20 shrink-0">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+              <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform shrink-0">
+                <Armchair className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
               </div>
-              <span className="text-[9px] sm:text-[11px] font-bold text-amber-700 bg-amber-50 px-1.5 sm:px-2.5 py-0.5 rounded-full border border-amber-200 shrink-0">
-                Waiting
+              <span className="text-[9px] sm:text-[11px] font-bold text-amber-700 bg-amber-50 px-1.5 sm:px-2.5 py-0.5 rounded-full border border-amber-200 flex items-center gap-0.5 shrink-0">
+                <PackageCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                Units Sold
               </span>
             </div>
 
             <span className="text-[11px] sm:text-xs font-semibold text-slate-500 block mb-0.5 sm:mb-1 truncate">
-              Pending Amount
+              Pieces Sold
             </span>
             <p className="text-lg sm:text-2xl lg:text-3xl font-display font-extrabold text-slate-900 tracking-tight truncate">
-              {formatINR(pendingAmount)}
+              {piecesSoldCount} <span className="text-xs sm:text-sm font-semibold text-slate-500">{piecesSoldCount === 1 ? 'Piece' : 'Pieces'}</span>
             </p>
           </div>
 
-          <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-xs text-slate-400 font-medium truncate">
-            Awaiting confirmation
+          <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-xs text-amber-700 font-bold group-hover:text-amber-800">
+            <span className="truncate">View Furnitures</span>
+            <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform shrink-0" />
           </div>
         </div>
       </div>
@@ -408,15 +444,15 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
             {/* Modal Header */}
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-bold shadow-xs">
-                  <PackageCheck className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-xs">
+                  <Armchair className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-display font-bold text-base sm:text-lg text-slate-900">
-                    Products Sold ({timeFilterLabels[timeFilter]})
+                    Furniture Pieces Sold ({timeFilterLabels[timeFilter]})
                   </h3>
-                  <span className="text-xs text-emerald-700 font-bold">
-                    Total Revenue: {formatINR(revenue)}
+                  <span className="text-xs text-slate-500 font-medium">
+                    <strong className="text-amber-700 font-bold">{piecesSoldCount} {piecesSoldCount === 1 ? 'Piece' : 'Pieces'}</strong> • Revenue: <strong className="text-emerald-700 font-bold">{formatINR(revenue)}</strong>
                   </span>
                 </div>
               </div>
@@ -434,9 +470,9 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
               {soldProducts.length === 0 ? (
                 <div className="text-center py-10 text-slate-400">
                   <ShoppingBag className="w-10 h-10 mx-auto mb-2 text-slate-300" />
-                  <p className="font-semibold text-slate-700">No products sold in this period yet</p>
+                  <p className="font-semibold text-slate-700">No furniture pieces sold in this period yet</p>
                   <p className="text-xs text-slate-400 mt-1">
-                    When quotes are marked as sold, products will appear here.
+                    When quotes are marked as sold or direct walk-ins occur, furnitures will appear here.
                   </p>
                 </div>
               ) : (
@@ -483,9 +519,16 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
                         <span className="font-display font-extrabold text-sm sm:text-base text-emerald-700 block">
                           {formatINR(item.price)}
                         </span>
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                          Sold
-                        </span>
+                        <div className="flex items-center gap-1 justify-end mt-0.5">
+                          {item.quantity && item.quantity > 1 && (
+                            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                              x{item.quantity} units
+                            </span>
+                          )}
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                            Sold
+                          </span>
+                        </div>
                       </div>
                     </div>
                   );
