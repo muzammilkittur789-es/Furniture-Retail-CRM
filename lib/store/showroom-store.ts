@@ -471,9 +471,715 @@ export const DEFAULT_QUOTES: StoredQuote[] = [
       },
     ],
   },
+  // Earlier This Week Quotes (2 to 6 days ago)
+  {
+    id: 'quote-w-1',
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Vikram Malhotra',
+    customer_whatsapp: '9820123456',
+    subtotal: 385000,
+    final_price: 350000,
+    status: 'closed',
+    staffName: 'Arjun Verma',
+    itemsSummary: 'The Florence Bouclé Sectional',
+    itemsCount: 1,
+    staff: { id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', name: 'Arjun Verma', role: 'sales' },
+    items: [
+      {
+        id: 'item-w1',
+        price_at_time: 350000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+          name: 'The Florence Bouclé Sectional',
+          material: 'Italian Bouclé & Smoked Oak Plinth',
+          dimensions: '340cm x 180cm x 78cm',
+          image_url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-w1',
+        price_at_time: 350000,
+        product: {
+          name: 'The Florence Bouclé Sectional',
+          image_url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'quote-w-2',
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Sunita Rao',
+    customer_whatsapp: '9811223344',
+    subtotal: 245000,
+    final_price: 220500,
+    status: 'pending',
+    staffName: 'Sneha Kapoor',
+    itemsSummary: 'Verona Carrara Marble Dining Table',
+    itemsCount: 1,
+    staff: { id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', name: 'Sneha Kapoor', role: 'sales' },
+    items: [
+      {
+        id: 'item-w2',
+        price_at_time: 220500,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
+          name: 'Verona Carrara Marble Dining Table',
+          material: 'Honed Carrara Marble & Brushed Brass Trestle',
+          dimensions: '240cm x 110cm x 76cm',
+          image_url: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-w2',
+        price_at_time: 220500,
+        product: {
+          name: 'Verona Carrara Marble Dining Table',
+          image_url: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'quote-w-3',
+    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Rahul Deshmukh',
+    customer_whatsapp: '9766554433',
+    subtotal: 580000,
+    final_price: 520000,
+    status: 'closed',
+    staffName: 'Arjun Verma',
+    itemsSummary: 'Verona Dining Table + Kyoto Bedstead',
+    itemsCount: 2,
+    staff: { id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', name: 'Arjun Verma', role: 'sales' },
+    items: [
+      {
+        id: 'item-w3-1',
+        price_at_time: 245000,
+        quantity: 1,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
+          name: 'Verona Carrara Marble Dining Table',
+          material: 'Honed Carrara Marble',
+          dimensions: '240cm x 110cm x 76cm',
+          image_url: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+      {
+        id: 'item-w3-2',
+        price_at_time: 275000,
+        quantity: 1,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a77',
+          name: 'Kyoto Low-Profile King Bedstead',
+          material: 'Solid White American Ash',
+          dimensions: '215cm x 205cm x 95cm',
+          image_url: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-w3-1',
+        price_at_time: 245000,
+        product: {
+          name: 'Verona Carrara Marble Dining Table',
+          image_url: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+      {
+        id: 'item-w3-2',
+        price_at_time: 275000,
+        product: {
+          name: 'Kyoto Low-Profile King Bedstead',
+          image_url: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'quote-w-4',
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Ananya Roy',
+    customer_whatsapp: '9833445566',
+    subtotal: 265000,
+    final_price: 240000,
+    status: 'closed',
+    staffName: 'Sneha Kapoor',
+    itemsSummary: 'Aurelia Cognac Leather Lounge Chair (x2)',
+    itemsCount: 2,
+    staff: { id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', name: 'Sneha Kapoor', role: 'sales' },
+    items: [
+      {
+        id: 'item-w4',
+        price_at_time: 120000,
+        quantity: 2,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
+          name: 'Aurelia Cognac Leather Lounge Chair',
+          material: 'Full-Grain Tuscan Leather',
+          dimensions: '88cm x 92cm x 82cm',
+          image_url: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-w4',
+        price_at_time: 120000,
+        product: {
+          name: 'Aurelia Cognac Leather Lounge Chair',
+          image_url: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'quote-w-5',
+    created_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Farhan Merchant',
+    customer_whatsapp: '9899887766',
+    subtotal: 290000,
+    final_price: 275000,
+    status: 'pending',
+    staffName: 'Arjun Verma',
+    itemsSummary: 'Kyoto Low-Profile King Bedstead',
+    itemsCount: 1,
+    staff: { id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', name: 'Arjun Verma', role: 'sales' },
+    items: [
+      {
+        id: 'item-w5',
+        price_at_time: 275000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a77',
+          name: 'Kyoto Low-Profile King Bedstead',
+          material: 'Solid White American Ash',
+          dimensions: '215cm x 205cm x 95cm',
+          image_url: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-w5',
+        price_at_time: 275000,
+        product: {
+          name: 'Kyoto Low-Profile King Bedstead',
+          image_url: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  // Earlier This Month Quotes (10 to 24 days ago)
+  {
+    id: 'quote-m-1',
+    created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Deepak Mehra',
+    customer_whatsapp: '9822334455',
+    subtotal: 420000,
+    final_price: 385000,
+    status: 'closed',
+    staffName: 'Sneha Kapoor',
+    itemsSummary: 'The Florence Bouclé Sectional',
+    itemsCount: 1,
+    staff: { id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', name: 'Sneha Kapoor', role: 'sales' },
+    items: [
+      {
+        id: 'item-m1',
+        price_at_time: 385000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+          name: 'The Florence Bouclé Sectional',
+          material: 'Italian Bouclé & Smoked Oak',
+          dimensions: '340cm x 180cm x 78cm',
+          image_url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-m1',
+        price_at_time: 385000,
+        product: {
+          name: 'The Florence Bouclé Sectional',
+          image_url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'quote-m-2',
+    created_at: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Shalini Kapoor',
+    customer_whatsapp: '9844556677',
+    subtotal: 245000,
+    final_price: 245000,
+    status: 'closed',
+    staffName: 'Arjun Verma',
+    itemsSummary: 'Verona Carrara Marble Dining Table',
+    itemsCount: 1,
+    staff: { id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', name: 'Arjun Verma', role: 'sales' },
+    items: [
+      {
+        id: 'item-m2',
+        price_at_time: 245000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
+          name: 'Verona Carrara Marble Dining Table',
+          material: 'Honed Carrara Marble',
+          dimensions: '240cm x 110cm x 76cm',
+          image_url: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-m2',
+        price_at_time: 245000,
+        product: {
+          name: 'Verona Carrara Marble Dining Table',
+          image_url: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'quote-m-3',
+    created_at: new Date(Date.now() - 16 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Gaurav Bansal',
+    customer_whatsapp: '9819876543',
+    subtotal: 580000,
+    final_price: 520000,
+    status: 'closed',
+    staffName: 'Sneha Kapoor',
+    itemsSummary: 'Kyoto Bedstead + 2 Aurelia Chairs',
+    itemsCount: 3,
+    staff: { id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', name: 'Sneha Kapoor', role: 'sales' },
+    items: [
+      {
+        id: 'item-m3-1',
+        price_at_time: 280000,
+        quantity: 1,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a77',
+          name: 'Kyoto Low-Profile King Bedstead',
+          material: 'Solid White American Ash',
+          dimensions: '215cm x 205cm x 95cm',
+          image_url: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+      {
+        id: 'item-m3-2',
+        price_at_time: 120000,
+        quantity: 2,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
+          name: 'Aurelia Cognac Leather Lounge Chair',
+          material: 'Full-Grain Tuscan Leather',
+          dimensions: '88cm x 92cm x 82cm',
+          image_url: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-m3-1',
+        price_at_time: 280000,
+        product: {
+          name: 'Kyoto Low-Profile King Bedstead',
+          image_url: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+      {
+        id: 'item-m3-2',
+        price_at_time: 120000,
+        product: {
+          name: 'Aurelia Cognac Leather Lounge Chair',
+          image_url: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'quote-m-4',
+    created_at: new Date(Date.now() - 19 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Meera Nair',
+    customer_whatsapp: '9871234567',
+    subtotal: 385000,
+    final_price: 350000,
+    status: 'pending',
+    staffName: 'Arjun Verma',
+    itemsSummary: 'The Florence Bouclé Sectional',
+    itemsCount: 1,
+    staff: { id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', name: 'Arjun Verma', role: 'sales' },
+    items: [
+      {
+        id: 'item-m4',
+        price_at_time: 350000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+          name: 'The Florence Bouclé Sectional',
+          material: 'Italian Bouclé & Smoked Oak',
+          dimensions: '340cm x 180cm x 78cm',
+          image_url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-m4',
+        price_at_time: 350000,
+        product: {
+          name: 'The Florence Bouclé Sectional',
+          image_url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'quote-m-5',
+    created_at: new Date(Date.now() - 22 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Sanjay Singhal',
+    customer_whatsapp: '9823456789',
+    subtotal: 480000,
+    final_price: 440000,
+    status: 'closed',
+    staffName: 'Sneha Kapoor',
+    itemsSummary: 'Verona Dining Table + Tivoli Table',
+    itemsCount: 2,
+    staff: { id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', name: 'Sneha Kapoor', role: 'sales' },
+    items: [
+      {
+        id: 'item-m5-1',
+        price_at_time: 245000,
+        quantity: 1,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
+          name: 'Verona Carrara Marble Dining Table',
+          material: 'Honed Carrara Marble',
+          dimensions: '240cm x 110cm x 76cm',
+          image_url: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+      {
+        id: 'item-m5-2',
+        price_at_time: 195000,
+        quantity: 1,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a88',
+          name: 'Tivoli Roman Travertine Coffee Table',
+          material: 'Italian Travertine Stone',
+          dimensions: '130cm x 70cm x 38cm',
+          image_url: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-m5-1',
+        price_at_time: 245000,
+        product: {
+          name: 'Verona Carrara Marble Dining Table',
+          image_url: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+      {
+        id: 'item-m5-2',
+        price_at_time: 195000,
+        product: {
+          name: 'Tivoli Roman Travertine Coffee Table',
+          image_url: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'quote-m-6',
+    created_at: new Date(Date.now() - 24 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Aditya Chopra',
+    customer_whatsapp: '9833221100',
+    subtotal: 290000,
+    final_price: 260000,
+    status: 'closed',
+    staffName: 'Arjun Verma',
+    itemsSummary: 'Kyoto Low-Profile King Bedstead',
+    itemsCount: 1,
+    staff: { id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', name: 'Arjun Verma', role: 'sales' },
+    items: [
+      {
+        id: 'item-m6',
+        price_at_time: 260000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a77',
+          name: 'Kyoto Low-Profile King Bedstead',
+          material: 'Solid White American Ash',
+          dimensions: '215cm x 205cm x 95cm',
+          image_url: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-m6',
+        price_at_time: 260000,
+        product: {
+          name: 'Kyoto Low-Profile King Bedstead',
+          image_url: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  // Earlier This Year Quotes (35 to 160 days ago)
+  {
+    id: 'quote-y-1',
+    created_at: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Tarun Batra',
+    customer_whatsapp: '9810101010',
+    subtotal: 580000,
+    final_price: 520000,
+    status: 'closed',
+    staffName: 'Arjun Verma',
+    itemsSummary: 'Kyoto Bedstead + Aurelia Chair',
+    itemsCount: 2,
+    staff: { id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', name: 'Arjun Verma', role: 'sales' },
+    items: [
+      {
+        id: 'item-y1-1',
+        price_at_time: 280000,
+        quantity: 1,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a77',
+          name: 'Kyoto Low-Profile King Bedstead',
+          material: 'Solid White American Ash',
+          dimensions: '215cm x 205cm x 95cm',
+          image_url: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+      {
+        id: 'item-y1-2',
+        price_at_time: 240000,
+        quantity: 1,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
+          name: 'Aurelia Cognac Leather Lounge Chair',
+          material: 'Full-Grain Tuscan Leather',
+          dimensions: '88cm x 92cm x 82cm',
+          image_url: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-y1-1',
+        price_at_time: 280000,
+        product: {
+          name: 'Kyoto Low-Profile King Bedstead',
+          image_url: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+      {
+        id: 'item-y1-2',
+        price_at_time: 240000,
+        product: {
+          name: 'Aurelia Cognac Leather Lounge Chair',
+          image_url: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'quote-y-2',
+    created_at: new Date(Date.now() - 65 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Ritu Agarwal',
+    customer_whatsapp: '9812312312',
+    subtotal: 385000,
+    final_price: 365000,
+    status: 'closed',
+    staffName: 'Sneha Kapoor',
+    itemsSummary: 'The Florence Bouclé Sectional',
+    itemsCount: 1,
+    staff: { id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', name: 'Sneha Kapoor', role: 'sales' },
+    items: [
+      {
+        id: 'item-y2',
+        price_at_time: 365000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+          name: 'The Florence Bouclé Sectional',
+          material: 'Italian Bouclé & Smoked Oak',
+          dimensions: '340cm x 180cm x 78cm',
+          image_url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-y2',
+        price_at_time: 365000,
+        product: {
+          name: 'The Florence Bouclé Sectional',
+          image_url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'quote-y-3',
+    created_at: new Date(Date.now() - 95 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Manish Joshi',
+    customer_whatsapp: '9898989898',
+    subtotal: 490000,
+    final_price: 450000,
+    status: 'closed',
+    staffName: 'Arjun Verma',
+    itemsSummary: 'Verona Dining Table + Tivoli Table',
+    itemsCount: 2,
+    staff: { id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', name: 'Arjun Verma', role: 'sales' },
+    items: [
+      {
+        id: 'item-y3-1',
+        price_at_time: 245000,
+        quantity: 1,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
+          name: 'Verona Carrara Marble Dining Table',
+          material: 'Honed Carrara Marble',
+          dimensions: '240cm x 110cm x 76cm',
+          image_url: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+      {
+        id: 'item-y3-2',
+        price_at_time: 205000,
+        quantity: 1,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a88',
+          name: 'Tivoli Roman Travertine Coffee Table',
+          material: 'Italian Travertine Stone',
+          dimensions: '130cm x 70cm x 38cm',
+          image_url: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-y3-1',
+        price_at_time: 245000,
+        product: {
+          name: 'Verona Carrara Marble Dining Table',
+          image_url: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+      {
+        id: 'item-y3-2',
+        price_at_time: 205000,
+        product: {
+          name: 'Tivoli Roman Travertine Coffee Table',
+          image_url: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'quote-y-4',
+    created_at: new Date(Date.now() - 130 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Neha Chawla',
+    customer_whatsapp: '9876501234',
+    subtotal: 620000,
+    final_price: 580000,
+    status: 'closed',
+    staffName: 'Sneha Kapoor',
+    itemsSummary: 'The Florence Bouclé Sectional + 2 Chairs',
+    itemsCount: 3,
+    staff: { id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', name: 'Sneha Kapoor', role: 'sales' },
+    items: [
+      {
+        id: 'item-y4-1',
+        price_at_time: 350000,
+        quantity: 1,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+          name: 'The Florence Bouclé Sectional',
+          material: 'Italian Bouclé & Smoked Oak',
+          dimensions: '340cm x 180cm x 78cm',
+          image_url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+      {
+        id: 'item-y4-2',
+        price_at_time: 115000,
+        quantity: 2,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
+          name: 'Aurelia Cognac Leather Lounge Chair',
+          material: 'Full-Grain Tuscan Leather',
+          dimensions: '88cm x 92cm x 82cm',
+          image_url: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-y4-1',
+        price_at_time: 350000,
+        product: {
+          name: 'The Florence Bouclé Sectional',
+          image_url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+      {
+        id: 'item-y4-2',
+        price_at_time: 115000,
+        product: {
+          name: 'Aurelia Cognac Leather Lounge Chair',
+          image_url: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
+  {
+    id: 'quote-y-5',
+    created_at: new Date(Date.now() - 160 * 24 * 60 * 60 * 1000).toISOString(),
+    customer_name: 'Karthik Raman',
+    customer_whatsapp: '9845112233',
+    subtotal: 385000,
+    final_price: 350000,
+    status: 'closed',
+    staffName: 'Arjun Verma',
+    itemsSummary: 'The Florence Bouclé Sectional',
+    itemsCount: 1,
+    staff: { id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', name: 'Arjun Verma', role: 'sales' },
+    items: [
+      {
+        id: 'item-y5',
+        price_at_time: 350000,
+        product: {
+          id: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+          name: 'The Florence Bouclé Sectional',
+          material: 'Italian Bouclé & Smoked Oak',
+          dimensions: '340cm x 180cm x 78cm',
+          image_url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80',
+        },
+      },
+    ],
+    quote_items: [
+      {
+        id: 'item-y5',
+        price_at_time: 350000,
+        product: {
+          name: 'The Florence Bouclé Sectional',
+          image_url: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80',
+        },
+      },
+    ],
+  },
 ];
 
-// Initialize global stores if not already present
+// Initialize global stores if not already present or if store has fewer than full dataset
 if (!global.__ALISHAN_STAFF_STORE__) {
   global.__ALISHAN_STAFF_STORE__ = [...DEFAULT_STAFF];
 }
@@ -486,7 +1192,7 @@ if (!global.__ALISHAN_FOLLOWUPS_STORE__) {
   global.__ALISHAN_FOLLOWUPS_STORE__ = [...DEFAULT_FOLLOWUPS];
 }
 
-if (!global.__ALISHAN_QUOTES_STORE__) {
+if (!global.__ALISHAN_QUOTES_STORE__ || global.__ALISHAN_QUOTES_STORE__.length < DEFAULT_QUOTES.length) {
   global.__ALISHAN_QUOTES_STORE__ = [...DEFAULT_QUOTES];
 }
 
@@ -957,7 +1663,7 @@ export function markFollowUpContacted(leadId: string): boolean {
  * ===================================================================== */
 
 export function getAllQuotes(): StoredQuote[] {
-  if (!global.__ALISHAN_QUOTES_STORE__) {
+  if (!global.__ALISHAN_QUOTES_STORE__ || global.__ALISHAN_QUOTES_STORE__.length < DEFAULT_QUOTES.length) {
     global.__ALISHAN_QUOTES_STORE__ = [...DEFAULT_QUOTES];
   }
   return global.__ALISHAN_QUOTES_STORE__;

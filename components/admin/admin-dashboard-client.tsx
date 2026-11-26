@@ -123,74 +123,12 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
         }
       });
 
-      // Default baseline values if filter has few database items so the owner always sees rich analytics
-      let rev = closedQuotes.reduce((acc, q) => acc + q.final_price, 0);
-      let quotesGen = filtered.length;
-      let distinctCustomers = new Set(filtered.map((q) => q.customer_whatsapp)).size;
-      let pendingTotal = pendingList.reduce((acc, q) => acc + q.final_price, 0);
-
-      // Graceful fallback multipliers for demo timeframes if only 3 fallback items exist
-      if (filtered.length === 0 || rev === 0) {
-        if (timeFilter === 'today') {
-          rev = rev || 450000;
-          quotesGen = quotesGen || 5;
-          distinctCustomers = distinctCustomers || 5;
-          pendingTotal = pendingTotal || 787500;
-        } else if (timeFilter === 'week') {
-          rev = 1680000;
-          quotesGen = 18;
-          distinctCustomers = 16;
-          pendingTotal = 1152000;
-        } else if (timeFilter === 'month') {
-          rev = 4850000;
-          quotesGen = 46;
-          distinctCustomers = 42;
-          pendingTotal = 1820000;
-        } else if (timeFilter === 'year') {
-          rev = 24600000;
-          quotesGen = 210;
-          distinctCustomers = 195;
-          pendingTotal = 2300000;
-        }
-      }
-
-      // Add default sold items if none exist
-      if (soldItems.length === 0) {
-        soldItems.push(
-          {
-            id: 'sold-1',
-            name: 'Verona Carrara Marble Dining Table',
-            price: 245000,
-            customer_whatsapp: '9876543210',
-            staffName: 'Arjun Verma',
-            sold_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-            imageUrl:
-              'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=400&q=80',
-            quantity: 1,
-          },
-          {
-            id: 'sold-2',
-            name: 'Aurelia Cognac Leather Lounge Chair',
-            price: 205000,
-            customer_whatsapp: '9123456789',
-            staffName: 'Sneha Kapoor',
-            sold_at: new Date(Date.now() - 1000 * 60 * 280).toISOString(),
-            imageUrl:
-              'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=400&q=80',
-            quantity: 1,
-          }
-        );
-      }
-
-      // Calculate total pieces sold count
-      let piecesCount = soldItems.reduce((acc, it) => acc + (it.quantity || 1), 0);
-      if (filtered.length === 0 || rev === 0) {
-        if (timeFilter === 'week') piecesCount = Math.max(piecesCount, 7);
-        else if (timeFilter === 'month') piecesCount = Math.max(piecesCount, 24);
-        else if (timeFilter === 'year') piecesCount = Math.max(piecesCount, 118);
-      }
-
-      const periodQuotes = filtered.length > 0 ? filtered : quotes;
+      // Direct calculations for the selected period (today, week, month, year)
+      const rev = closedQuotes.reduce((acc, q) => acc + q.final_price, 0);
+      const quotesGen = filtered.length;
+      const distinctCustomers = new Set(filtered.map((q) => q.customer_whatsapp)).size;
+      const pendingTotal = pendingList.reduce((acc, q) => acc + q.final_price, 0);
+      const piecesCount = soldItems.reduce((acc, it) => acc + (it.quantity || 1), 0);
 
       return {
         revenue: rev,
@@ -199,8 +137,8 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
         customersVisited: distinctCustomers,
         quotesGenerated: quotesGen,
         pendingAmount: pendingTotal,
-        pendingQuotes: pendingList.length > 0 ? pendingList : quotes.filter((q) => q.status === 'pending'),
-        allPeriodQuotes: periodQuotes,
+        pendingQuotes: pendingList,
+        allPeriodQuotes: filtered,
       };
     }, [quotes, timeFilter]);
 
@@ -295,7 +233,7 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
           </div>
 
           <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-xs text-emerald-700 font-bold group-hover:text-emerald-800">
-            <span className="truncate">View Sold</span>
+            <span className="truncate">View Sold ({timeFilterLabels[timeFilter]})</span>
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform shrink-0" />
           </div>
         </div>
@@ -321,7 +259,7 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
           </div>
 
           <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-xs text-slate-400 font-medium truncate">
-            Showroom inquiries
+            Walk-ins ({timeFilterLabels[timeFilter].toLowerCase()})
           </div>
         </div>
 
@@ -351,7 +289,7 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
           </div>
 
           <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-xs text-indigo-600 font-bold group-hover:text-indigo-800">
-            <span className="truncate">View Quotes</span>
+            <span className="truncate">View Quotes ({timeFilterLabels[timeFilter].toLowerCase()})</span>
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform shrink-0" />
           </div>
         </div>
@@ -382,7 +320,7 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
           </div>
 
           <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-xs text-amber-700 font-bold group-hover:text-amber-800">
-            <span className="truncate">View Furnitures</span>
+            <span className="truncate">View Furnitures ({timeFilterLabels[timeFilter].toLowerCase()})</span>
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform shrink-0" />
           </div>
         </div>
