@@ -222,7 +222,16 @@ export async function addProductStockAction(productData: {
       return { success: false, error: 'Please fill in all furniture details (Name, Price, Material, Dimensions).' };
     }
 
-    const newProd = addNewProduct(productData);
+    const cleanName = productData.name.trim().slice(0, 100);
+    const cleanPrice = Math.max(0, Number(productData.price) || 0);
+    const cleanStock = Math.max(1, Math.min(999, parseInt(String(productData.stock_quantity || 1)) || 1));
+
+    const newProd = addNewProduct({
+      ...productData,
+      name: cleanName,
+      price: cleanPrice,
+      stock_quantity: cleanStock,
+    });
 
     if (isSupabaseConfigured()) {
       try {
@@ -348,7 +357,8 @@ export async function restockProductStockAction(
       return { success: false, error: 'Invalid product or restock quantity.' };
     }
 
-    const res = restockProduct(productId, quantityToAdd);
+    const cleanQty = Math.max(1, Math.min(500, Math.floor(quantityToAdd) || 1));
+    const res = restockProduct(productId, cleanQty);
     revalidatePath('/admin/products');
     revalidatePath('/sales');
     revalidatePath('/');
@@ -489,7 +499,15 @@ export async function createStaffAction(
       return { success: false, error: 'PIN must be exactly 4 digits (e.g. 1111).' };
     }
 
-    const newStaff = addStaffMember(name, cleanPin, role);
+    const existingStaff = getAllStaffMembers().find((s) => s.pin === cleanPin && s.is_active);
+    if (existingStaff) {
+      return {
+        success: false,
+        error: `PIN ${cleanPin} is already assigned to "${existingStaff.name}". Every staff member must have a unique PIN.`,
+      };
+    }
+
+    const newStaff = addStaffMember(name.trim().slice(0, 80), cleanPin, role);
 
     revalidatePath('/admin/staff');
     revalidatePath('/sales');
@@ -509,6 +527,14 @@ export async function updateStaffPinAction(
     const cleanPin = newPin.trim();
     if (!cleanPin || cleanPin.length !== 4 || !/^\d{4}$/.test(cleanPin)) {
       return { success: false, error: 'PIN must be exactly 4 digits.' };
+    }
+
+    const existingStaff = getAllStaffMembers().find((s) => s.pin === cleanPin && s.is_active && s.id !== id);
+    if (existingStaff) {
+      return {
+        success: false,
+        error: `PIN ${cleanPin} is already in use by "${existingStaff.name}". Every staff member must have a unique PIN.`,
+      };
     }
 
     const ok = updateStaffPin(id, cleanPin);
@@ -531,6 +557,11 @@ export async function toggleStaffStatusAction(
   isActive: boolean
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const target = getAllStaffMembers().find((s) => s.id === id);
+    if (target && target.role === 'admin' && !isActive) {
+      return { success: false, error: 'The primary Showroom Owner account cannot be deactivated.' };
+    }
+
     const ok = toggleStaffActiveStatus(id, isActive);
     if (!ok) {
       return { success: false, error: 'Staff member not found.' };
@@ -550,6 +581,11 @@ export async function deleteStaffAction(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const target = getAllStaffMembers().find((s) => s.id === id);
+    if (target && target.role === 'admin') {
+      return { success: false, error: 'The primary Showroom Owner account cannot be deleted.' };
+    }
+
     const ok = deleteStaffMember(id);
     if (!ok) {
       return { success: false, error: 'Staff member not found or cannot be deleted.' };

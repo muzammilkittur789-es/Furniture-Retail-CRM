@@ -578,6 +578,82 @@ async function main() {
     assert.strictEqual(headerMap.get('Referrer-Policy'), 'strict-origin-when-cross-origin');
   });
 
+  // -------------------------------------------------------------
+  // MODULE 9: COMMERCIAL INTEGRITY & TAMPER-RESISTANCE AUDIT
+  // -------------------------------------------------------------
+  console.log('\n📦 MODULE 9: COMMERCIAL INTEGRITY & TAMPER-RESISTANCE AUDIT');
+  const adminActions = await import('../app/(admin)/admin/actions');
+  const salesActions = await import('../app/(sales)/sales/actions');
+
+  await runAsyncTest('Primary Showroom Owner account cannot be deleted or deactivated', async () => {
+    const owner = store.getAllStaffMembers().find((s) => s.role === 'admin');
+    assert.ok(owner);
+
+    const deleteRes = await adminActions.deleteStaffAction(owner.id);
+    assert.strictEqual(deleteRes.success, false);
+    assert.match(deleteRes.error || '', /cannot be deleted/i);
+
+    const deactRes = await adminActions.toggleStaffStatusAction(owner.id, false);
+    assert.strictEqual(deactRes.success, false);
+    assert.match(deactRes.error || '', /cannot be deactivated/i);
+  });
+
+  await runAsyncTest('Duplicate active PIN assignment is strictly rejected', async () => {
+    const dupRes = await adminActions.createStaffAction('Imposter Staff', '1111', 'sales');
+    assert.strictEqual(dupRes.success, false);
+    assert.match(dupRes.error || '', /already assigned/i);
+
+    const ownerPinRes = await adminActions.createStaffAction('Imposter Owner', '1234', 'sales');
+    assert.strictEqual(ownerPinRes.success, false);
+    assert.match(ownerPinRes.error || '', /already assigned/i);
+  });
+
+  await runAsyncTest('Sales terminal allows Owner PIN 1234 verification with full admin privileges', async () => {
+    const verifyRes = await salesActions.verifyPin('1234');
+    assert.strictEqual(verifyRes.success, true);
+    assert.strictEqual(verifyRes.staff?.role, 'admin');
+    assert.match(verifyRes.staff?.name || '', /Vikram Mehta/);
+  });
+
+  await runAsyncTest('Staff isolation: Salesperson only sees assigned leads, Owner sees all showroom leads', async () => {
+    const arjunLeads = store.getFollowUpsForStaff('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22');
+    for (const lead of arjunLeads) {
+      assert.strictEqual(lead.assignedStaffId, 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22');
+    }
+
+    const allLeads = store.getAllFollowUps();
+    assert.ok(allLeads.length >= arjunLeads.length);
+  });
+
+  await runAsyncTest('Server financial math clamps advance deposit and prevents negative values', async () => {
+    const res = await salesActions.createQuote({
+      staffId: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+      customerName: 'Test Integrity Customer',
+      customerWhatsapp: '9988776655',
+      subtotal: 100000,
+      discountType: 'percentage',
+      discountValue: 10,
+      finalPrice: 90000,
+      advanceDeposit: 500000,
+      items: [
+        {
+          productId: 'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+          name: 'The Florence Bouclé Sectional',
+          priceAtTime: 100000,
+          quantity: 1,
+        },
+      ],
+    });
+
+    assert.strictEqual(res.success, true);
+    assert.ok(res.quoteId);
+
+    const saved = store.getQuoteById(res.quoteId);
+    assert.ok(saved);
+    assert.strictEqual(saved.final_price, 90000);
+    assert.strictEqual(saved.advance_deposit, 90000);
+  });
+
   console.log('\n===============================================================');
   console.log(`🎉 ALL ${passedTests} OF ${totalTests} COMPREHENSIVE TESTS PASSED WITH 100% SUCCESS!`);
   console.log('===============================================================\n');

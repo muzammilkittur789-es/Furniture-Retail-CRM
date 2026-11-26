@@ -16,6 +16,14 @@ import {
 } from '@/lib/store/showroom-store';
 import { revalidatePath } from 'next/cache';
 
+function safeRevalidate(path: string) {
+  try {
+    revalidatePath(path);
+  } catch {
+    // Non-fatal when called outside Next.js request context (e.g. tests)
+  }
+}
+
 import { checkRateLimit, recordFailedAttempt, resetRateLimit } from '@/lib/security/rate-limit';
 
 /**
@@ -54,12 +62,6 @@ export async function verifyPin(
       if (dbStaff && dbStaff.length > 0) {
         const found = dbStaff.find((s: any) => s.pin === pin || s.pin_hash === pin);
         if (found) {
-          if (found.role === 'admin') {
-            return {
-              success: false,
-              error: 'Admin credentials cannot be used on the sales floor. Please access the Owner Admin Dashboard or use your dedicated Sales Staff PIN.',
-            };
-          }
           resetRateLimit('sales_terminal');
           return {
             success: true,
@@ -117,6 +119,9 @@ export async function createQuote(
       return { success: false, error: "Please enter the customer's full name." };
     }
 
+    const sanitizedCustomerName = customerName.trim().slice(0, 80);
+    const sanitizedOrderNotes = payload.orderNotes?.trim() ? payload.orderNotes.trim().slice(0, 500) : undefined;
+
     let cleanWhatsapp = customerWhatsapp.replace(/\D/g, '');
     if (cleanWhatsapp.startsWith('91') && cleanWhatsapp.length === 12) {
       cleanWhatsapp = cleanWhatsapp.slice(2);
@@ -130,6 +135,21 @@ export async function createQuote(
     if (!items || items.length === 0) {
       return { success: false, error: 'Please select pieces for the quote.' };
     }
+
+    // Server-Side Financial Math Verification (Defense-in-depth against client tampering)
+    const verifiedSubtotal = Math.max(0, Number(subtotal) || 0);
+    const verifiedDiscountValue = Math.max(0, Number(discountValue) || 0);
+    let verifiedDiscountAmount = 0;
+    if (discountType === 'percentage') {
+      const clampedPct = Math.min(100, verifiedDiscountValue);
+      verifiedDiscountAmount = Math.round(verifiedSubtotal * (clampedPct / 100));
+    } else {
+      verifiedDiscountAmount = Math.min(verifiedSubtotal, verifiedDiscountValue);
+    }
+    const verifiedFinalPrice = Math.max(0, verifiedSubtotal - verifiedDiscountAmount);
+    const verifiedAdvance = payload.advanceDeposit
+      ? Math.min(verifiedFinalPrice, Math.max(0, Number(payload.advanceDeposit) || 0))
+      : 0;
 
     // 1. Sold Out Stock Check
     const allProducts = getAllProducts();
@@ -163,24 +183,24 @@ export async function createQuote(
         dynamicStaffName,
         cleanWhatsapp,
         itemsSummary,
-        finalPrice,
-        customerName?.trim() || 'Customer',
-        payload.orderNotes?.trim(),
-        payload.advanceDeposit
+        verifiedFinalPrice,
+        sanitizedCustomerName,
+        sanitizedOrderNotes,
+        verifiedAdvance > 0 ? verifiedAdvance : undefined
       );
 
       // Save into in-memory quotes store
       saveNewQuote({
         id: mockQuoteId,
         created_at: new Date().toISOString(),
-        customer_name: customerName?.trim() || undefined,
+        customer_name: sanitizedCustomerName,
         customer_whatsapp: cleanWhatsapp,
-        subtotal,
+        subtotal: verifiedSubtotal,
         discount_type: discountType,
-        discount_value: discountValue,
-        final_price: finalPrice,
-        advance_deposit: payload.advanceDeposit,
-        order_notes: payload.orderNotes?.trim() || undefined,
+        discount_value: verifiedDiscountValue,
+        final_price: verifiedFinalPrice,
+        advance_deposit: verifiedAdvance > 0 ? verifiedAdvance : undefined,
+        order_notes: sanitizedOrderNotes,
         status: 'pending',
         staffName: dynamicStaffName,
         itemsSummary,
@@ -215,8 +235,8 @@ export async function createQuote(
         }),
       });
 
-      revalidatePath('/sales');
-      revalidatePath('/admin');
+      safeRevalidate('/sales');
+      safeRevalidate('/admin');
 
       return {
         success: true,
@@ -230,14 +250,14 @@ export async function createQuote(
       .from('quotes')
       .insert({
         staff_id: staffId,
-        customer_name: customerName?.trim() || null,
+        customer_name: sanitizedCustomerName,
         customer_whatsapp: cleanWhatsapp,
-        subtotal: Number(subtotal.toFixed(2)),
+        subtotal: Number(verifiedSubtotal.toFixed(2)),
         discount_type: discountType,
-        discount_value: Number(discountValue.toFixed(2)),
-        final_price: Number(finalPrice.toFixed(2)),
-        advance_deposit: payload.advanceDeposit ? Number(payload.advanceDeposit.toFixed(2)) : 0,
-        order_notes: payload.orderNotes?.trim() || null,
+        discount_value: Number(verifiedDiscountValue.toFixed(2)),
+        final_price: Number(verifiedFinalPrice.toFixed(2)),
+        advance_deposit: Number(verifiedAdvance.toFixed(2)),
+        order_notes: sanitizedOrderNotes || null,
         status: 'pending',
       })
       .select('id')
@@ -271,8 +291,8 @@ export async function createQuote(
       payload.advanceDeposit
     );
 
-    revalidatePath('/sales');
-    revalidatePath('/admin');
+    safeRevalidate('/sales');
+    safeRevalidate('/admin');
 
     return {
       success: true,
@@ -295,7 +315,7 @@ export async function markFollowUpContactedAction(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const ok = markFollowUpContacted(leadId);
-    revalidatePath('/sales');
+    safeRevalidate('/sales');
     return { success: ok };
   } catch (err) {
     console.error('Error in markFollowUpContactedAction:', err);
@@ -317,10 +337,10 @@ export async function markQuoteSoldAction(
   try {
     if (!quoteId) return { success: false, error: 'Quote reference missing.' };
     const res = closeQuoteAndDeductInventory(quoteId);
-    revalidatePath('/sales');
-    revalidatePath('/admin');
-    revalidatePath('/admin/products');
-    revalidatePath('/');
+    safeRevalidate('/sales');
+    safeRevalidate('/admin');
+    safeRevalidate('/admin/products');
+    safeRevalidate('/');
     return res;
   } catch (err: any) {
     console.error('Error in markQuoteSoldAction:', err);
@@ -362,15 +382,16 @@ export async function directMarkProductSoldAction(
   try {
     if (!productId) return { success: false, error: 'Product ID is required.' };
 
+    const cleanQty = Math.max(1, Math.min(50, Math.floor(quantityToDeduct) || 1));
     const product = getAllProducts().find((p) => p.id === productId);
-    const res = decrementProductStock(productId, quantityToDeduct);
+    const res = decrementProductStock(productId, cleanQty);
     if (!res.success) {
       return { success: false, error: 'Product not found or already sold out.' };
     }
 
     // Log this transaction as a completed direct walk-in sale so it reflects in daily revenue & reports
     if (product) {
-      const saleAmount = Number(product.price) * quantityToDeduct;
+      const saleAmount = Number(product.price) * cleanQty;
       const walkInQuoteId = `walkin-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       const activeStaffId = staffId || 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
       const activeStaffName = staffName || 'Arjun Verma';
@@ -461,10 +482,10 @@ export async function directMarkProductSoldAction(
       }
     }
 
-    revalidatePath('/sales');
-    revalidatePath('/admin');
-    revalidatePath('/admin/products');
-    revalidatePath('/');
+    safeRevalidate('/sales');
+    safeRevalidate('/admin');
+    safeRevalidate('/admin/products');
+    safeRevalidate('/');
 
     return {
       success: true,
