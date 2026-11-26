@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import * as store from '../lib/store/showroom-store';
 import * as pdfModule from '../lib/pdf/quote-pdf';
 import * as cronModule from '../app/api/cron/nightly-report/route';
+import * as executivePdfModule from '../lib/pdf/executive-report-pdf';
 
 console.log('===============================================================');
 console.log('🧪 STARTING COMPREHENSIVE ALISHAN FURNITURES SYSTEM TEST SUITE');
@@ -454,6 +455,68 @@ async function main() {
     assert.ok(pdfBlob.size > 1000, `PDF size ${pdfBlob.size} should be > 1000 bytes`);
 
     // Verify PDF header %PDF-
+    const arrayBuffer = await pdfBlob.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    const headerStr = Buffer.from(bytes.slice(0, 5)).toString('utf-8');
+    assert.strictEqual(headerStr, '%PDF-');
+  });
+
+  await runAsyncTest('Executive Report PDF generator creates valid multi-page PDF for custom date range', async () => {
+    const pdfBlob = await executivePdfModule.generateExecutiveReportPdfBlob({
+      fromDateFormatted: '01 Nov 2026',
+      toDateFormatted: '26 Nov 2026',
+      generatedAtFormatted: '26 Nov 2026, 06:30 PM',
+      ownerName: 'Vikram Mehta (Owner)',
+      totalRevenue: 450000,
+      totalVisitors: 8,
+      quotesCount: 6,
+      closedDealsCount: 3,
+      piecesSoldCount: 5,
+      pendingAmount: 120000,
+      staffPerformance: [
+        {
+          staffName: 'Arjun Verma',
+          quotesCount: 4,
+          closedDealsCount: 2,
+          revenue: 300000,
+        },
+        {
+          staffName: 'Sneha Kapoor',
+          quotesCount: 2,
+          closedDealsCount: 1,
+          revenue: 150000,
+        },
+      ],
+      quotes: [
+        {
+          id: 'quote-test-1',
+          dateFormatted: '15 Nov 2026',
+          customerName: 'Rohit Sharma',
+          customerWhatsapp: '+91 9876543210',
+          itemsSummary: 'The Florence Bouclé Sectional (x1)',
+          staffName: 'Arjun Verma',
+          status: 'closed',
+          finalPrice: 195000,
+          advanceDeposit: 50000,
+        },
+      ],
+      soldItems: [
+        {
+          id: 'sold-test-1',
+          name: 'The Florence Bouclé Sectional',
+          price: 195000,
+          quantity: 1,
+          customerWhatsapp: '+91 9876543210',
+          staffName: 'Arjun Verma',
+          soldAtFormatted: '15 Nov',
+        },
+      ],
+    });
+
+    assert.ok(pdfBlob);
+    assert.strictEqual(pdfBlob.type, 'application/pdf');
+    assert.ok(pdfBlob.size > 1000, `Executive PDF size ${pdfBlob.size} should be > 1000 bytes`);
+
     const arrayBuffer = await pdfBlob.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
     const headerStr = Buffer.from(bytes.slice(0, 5)).toString('utf-8');

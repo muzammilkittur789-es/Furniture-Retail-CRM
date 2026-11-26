@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { formatINR } from '@/lib/utils';
 import { PendingQuotesTable, PendingQuoteRow } from './pending-quotes-table';
 import { Daily10pmReportModal } from './daily-10pm-report-modal';
+import { ExportReportModal } from './export-report-modal';
 import { StaffMember } from '@/lib/store/showroom-store';
 import { LiveClock } from '@/components/common/live-clock';
 import {
@@ -21,6 +22,7 @@ import {
   Phone,
   Calendar,
   Moon,
+  FileDown,
 } from 'lucide-react';
 
 export type TimeFilter = 'today' | 'week' | 'month' | 'year';
@@ -55,6 +57,7 @@ interface AdminDashboardClientProps {
 export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardClientProps) {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('today');
   const [isSoldModalOpen, setIsSoldModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   // Time-filtered calculation
   const { revenue, soldProducts, piecesSoldCount, customersVisited, quotesGenerated, pendingAmount, pendingQuotes, allPeriodQuotes } =
@@ -173,9 +176,20 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
           </p>
         </div>
 
-        {/* Time Filter Segmented Tabs & Live Clock (Button-like Background) */}
+        {/* Time Filter Segmented Tabs, Download PDF Button & Live Clock */}
         <div className="flex flex-col sm:items-end gap-2.5">
-          <LiveClock variant="button" showSeconds={false} className="self-start sm:self-auto" />
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            <button
+              type="button"
+              onClick={() => setIsExportModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50/50 text-xs font-bold transition shadow-2xs active:scale-95 shrink-0"
+              title="Download Custom Date Range PDF Report"
+            >
+              <FileDown className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Download PDF</span>
+            </button>
+            <LiveClock variant="button" showSeconds={false} className="self-start sm:self-auto" />
+          </div>
           <div className="w-full sm:w-auto grid grid-cols-4 sm:flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs max-w-full">
           {(['today', 'week', 'month', 'year'] as TimeFilter[]).map((tab) => {
             const isActive = timeFilter === tab;
@@ -487,6 +501,14 @@ export function AdminDashboardClient({ quotes, staffList = [] }: AdminDashboardC
           </div>
         </div>
       )}
+
+      {/* Custom Date Range Export PDF Modal */}
+      <ExportReportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        quotes={quotes}
+        staffList={staffList}
+      />
     </div>
   );
 }
