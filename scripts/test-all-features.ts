@@ -114,6 +114,20 @@ async function main() {
     store.deleteStaffMember(tariq.id);
   });
 
+  runTest('Admin can edit salesperson name and credentials simultaneously', () => {
+    const newStaff = store.addStaffMember('Temp Staff', '7777', 'sales');
+    const editRes = store.updateStaffMember(newStaff.id, 'Zayd Khan', '7788');
+    assert.strictEqual(editRes.success, true);
+    assert.strictEqual(editRes.staff?.name, 'Zayd Khan');
+    assert.strictEqual(editRes.staff?.pin, '7788');
+
+    const verifyLogin = store.verifyStaffPin('7788');
+    assert.strictEqual(verifyLogin.success, true);
+    assert.strictEqual(verifyLogin.staff?.name, 'Zayd Khan');
+
+    store.deleteStaffMember(newStaff.id);
+  });
+
   // -------------------------------------------------------------
   // MODULE 2: PRODUCT INVENTORY & STOCK CONTROLS
   // -------------------------------------------------------------

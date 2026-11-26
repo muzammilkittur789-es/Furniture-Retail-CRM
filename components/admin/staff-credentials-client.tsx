@@ -5,6 +5,7 @@ import { StaffMember } from '@/lib/store/showroom-store';
 import {
   createStaffAction,
   updateStaffPinAction,
+  updateStaffDetailsAction,
   toggleStaffStatusAction,
   deleteStaffAction,
 } from '@/app/(admin)/admin/actions';
@@ -37,6 +38,11 @@ export function StaffCredentialsClient({ initialStaff }: StaffCredentialsClientP
   const [editingPinId, setEditingPinId] = useState<string | null>(null);
   const [newPinValue, setNewPinValue] = useState<string>('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingStaffMember, setEditingStaffMember] = useState<StaffMember | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editPin, setEditPin] = useState('');
+  const [editShowPin, setEditShowPin] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const [deactivateConfirmStaff, setDeactivateConfirmStaff] = useState<StaffMember | null>(null);
   const [newName, setNewName] = useState('');
   const [newPin, setNewPin] = useState('');
@@ -71,6 +77,47 @@ export function StaffCredentialsClient({ initialStaff }: StaffCredentialsClientP
         setTimeout(() => setSuccessMessage(null), 3000);
       } else {
         setErrorMessage(res.error || 'Failed to update PIN.');
+      }
+    });
+  };
+
+  const handleOpenEditModal = (staff: StaffMember) => {
+    setEditingStaffMember(staff);
+    setEditName(staff.name);
+    setEditPin(staff.pin);
+    setEditShowPin(false);
+    setEditError(null);
+  };
+
+  const handleSaveEditStaffSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStaffMember) return;
+    setEditError(null);
+
+    const cleanName = editName.trim();
+    const cleanPin = editPin.trim();
+
+    if (!cleanName) {
+      setEditError('Staff name cannot be empty.');
+      return;
+    }
+
+    if (!cleanPin || cleanPin.length !== 4 || !/^\d{4}$/.test(cleanPin)) {
+      setEditError('PIN must be exactly 4 digits.');
+      return;
+    }
+
+    startTransition(async () => {
+      const res = await updateStaffDetailsAction(editingStaffMember.id, cleanName, cleanPin);
+      if (res.success && res.staff) {
+        setStaffList((prev) =>
+          prev.map((s) => (s.id === editingStaffMember.id ? res.staff! : s))
+        );
+        setEditingStaffMember(null);
+        setSuccessMessage(`Credentials for "${cleanName}" updated successfully!`);
+        setTimeout(() => setSuccessMessage(null), 3500);
+      } else {
+        setEditError(res.error || 'Failed to update staff credentials.');
       }
     });
   };
@@ -247,13 +294,26 @@ export function StaffCredentialsClient({ initialStaff }: StaffCredentialsClientP
                   </span>
                 </div>
 
-                {/* Staff Name */}
-                <h3 className="text-lg font-display font-bold text-slate-900 leading-snug">
-                  {staff.name}
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  ID: #{staff.id.slice(-6)}
-                </p>
+                {/* Staff Name & Edit Button */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-display font-bold text-slate-900 leading-snug truncate">
+                      {staff.name}
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      ID: #{staff.id.slice(-6)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenEditModal(staff)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 hover:border-indigo-300 bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 text-xs font-semibold shadow-2xs transition active:scale-95 shrink-0"
+                    title="Edit Name & PIN Credentials"
+                  >
+                    <Edit2 className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Edit</span>
+                  </button>
+                </div>
 
                 {/* PIN Control Box */}
                 <div className="mt-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
@@ -361,6 +421,105 @@ export function StaffCredentialsClient({ initialStaff }: StaffCredentialsClientP
           );
         })}
       </div>
+
+      {/* MODAL 1: EDIT STAFF MEMBER & CREDENTIALS */}
+      {editingStaffMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-200">
+            <button
+              type="button"
+              onClick={() => setEditingStaffMember(null)}
+              className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center font-bold">
+                <Edit2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-display font-extrabold text-lg text-slate-900">
+                  Edit Staff Credentials
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Update name and 4-digit floor login PIN.
+                </p>
+              </div>
+            </div>
+
+            {editError && (
+              <div className="mb-4 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{editError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveEditStaffSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="e.g. Arjun Verma"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-sans text-sm text-slate-900 placeholder:text-slate-400"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    4-Digit Login PIN
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setEditShowPin(!editShowPin)}
+                    className="text-xs text-indigo-600 hover:underline font-semibold flex items-center gap-1"
+                  >
+                    {editShowPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    <span>{editShowPin ? 'Hide' : 'Show'}</span>
+                  </button>
+                </div>
+                <input
+                  type={editShowPin ? 'text' : 'password'}
+                  maxLength={4}
+                  required
+                  value={editPin}
+                  onChange={(e) => setEditPin(e.target.value.replace(/\D/g, ''))}
+                  placeholder="e.g. 1111"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-center text-lg font-bold text-slate-900 tracking-widest placeholder:text-slate-300"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Used by the salesperson to unlock their floor terminal.
+                </p>
+              </div>
+
+              <div className="pt-3 flex gap-2.5 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingStaffMember(null)}
+                  className="flex-1 py-2.5 px-3.5 sm:px-4 rounded-xl border border-slate-200 text-slate-700 font-semibold text-xs sm:text-sm hover:bg-slate-50 transition whitespace-nowrap text-center"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className="flex-1 py-2.5 px-3.5 sm:px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold sm:font-bold text-xs sm:text-sm shadow-sm hover:shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center justify-center gap-1.5 whitespace-nowrap disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4 shrink-0" />
+                  <span className="whitespace-nowrap">{isPending ? 'Saving...' : 'Save Changes'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Add New Staff Modal */}
       {isAddModalOpen && (

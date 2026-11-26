@@ -1242,6 +1242,49 @@ export function updateStaffPin(id: string, newPin: string): boolean {
   return true;
 }
 
+export function updateStaffMember(
+  id: string,
+  name: string,
+  pin: string
+): { success: boolean; staff?: StaffMember; error?: string } {
+  if (!global.__ALISHAN_STAFF_STORE__) {
+    return { success: false, error: 'Staff store not initialized.' };
+  }
+  const index = global.__ALISHAN_STAFF_STORE__.findIndex((s) => s.id === id);
+  if (index === -1) {
+    return { success: false, error: 'Staff member not found.' };
+  }
+
+  const cleanName = name.trim();
+  const cleanPin = pin.trim();
+
+  if (!cleanName) {
+    return { success: false, error: 'Staff name cannot be empty.' };
+  }
+  if (!cleanPin || cleanPin.length !== 4 || !/^\d{4}$/.test(cleanPin)) {
+    return { success: false, error: 'PIN must be exactly 4 digits.' };
+  }
+
+  // Ensure unique PIN among active staff
+  const duplicate = global.__ALISHAN_STAFF_STORE__.find(
+    (s) => s.id !== id && s.pin === cleanPin && s.is_active
+  );
+  if (duplicate) {
+    return {
+      success: false,
+      error: `PIN ${cleanPin} is already assigned to ${duplicate.name}. Each staff member must have a unique PIN.`,
+    };
+  }
+
+  global.__ALISHAN_STAFF_STORE__[index].name = cleanName;
+  global.__ALISHAN_STAFF_STORE__[index].pin = cleanPin;
+
+  return {
+    success: true,
+    staff: { ...global.__ALISHAN_STAFF_STORE__[index] },
+  };
+}
+
 export function toggleStaffActiveStatus(id: string, isActive: boolean): boolean {
   if (!global.__ALISHAN_STAFF_STORE__) return false;
   const index = global.__ALISHAN_STAFF_STORE__.findIndex((s) => s.id === id);

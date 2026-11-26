@@ -7,6 +7,7 @@ import {
   getAllStaffMembers,
   addStaffMember,
   updateStaffPin,
+  updateStaffMember,
   toggleStaffActiveStatus,
   deleteStaffMember,
   StaffMember,
@@ -549,6 +550,27 @@ export async function updateStaffPinAction(
   } catch (err) {
     console.error('Error updating staff PIN:', err);
     return { success: false, error: 'Failed to update staff PIN.' };
+  }
+}
+
+export async function updateStaffDetailsAction(
+  id: string,
+  name: string,
+  pin: string
+): Promise<{ success: boolean; staff?: StaffMember; error?: string }> {
+  try {
+    const res = updateStaffMember(id, name, pin);
+    if (!res.success) {
+      return res;
+    }
+
+    revalidatePath('/admin/staff');
+    revalidatePath('/sales');
+
+    return res;
+  } catch (err: any) {
+    console.error('Error updating staff details:', err);
+    return { success: false, error: err.message || 'Failed to update staff details.' };
   }
 }
 
