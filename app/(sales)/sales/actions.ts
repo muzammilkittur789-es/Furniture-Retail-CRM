@@ -328,15 +328,16 @@ export async function markFollowUpContactedAction(
  * Deducts stock_quantity. If stock reaches 0, marks product sold out.
  */
 export async function markQuoteSoldAction(
-  quoteId: string
+  quoteId: string,
+  leadId?: string
 ): Promise<{
   success: boolean;
   error?: string;
   affectedProducts?: { id: string; name: string; remainingStock: number; isSoldOut: boolean }[];
 }> {
   try {
-    if (!quoteId) return { success: false, error: 'Quote reference missing.' };
-    const res = closeQuoteAndDeductInventory(quoteId);
+    if (!quoteId && !leadId) return { success: false, error: 'Quote or lead reference missing.' };
+    const res = closeQuoteAndDeductInventory(quoteId, leadId);
     safeRevalidate('/sales');
     safeRevalidate('/admin');
     safeRevalidate('/admin/products');

@@ -35,7 +35,7 @@ export function SalesmanFollowupsView({
     setClosingLeadId(lead.id);
     setConfirmLead(null);
     startTransition(async () => {
-      const res = await markQuoteSoldAction(lead.quoteId);
+      const res = await markQuoteSoldAction(lead.quoteId, lead.id);
       setClosingLeadId(null);
       if (res.success) {
         const closedTimestamp = new Date().toISOString();

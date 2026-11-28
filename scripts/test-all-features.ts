@@ -478,6 +478,18 @@ async function main() {
     assert.strictEqual(activeTomorrow, false);
   });
 
+  runTest('Mark active follow-up lead closed (Priya Sharma) succeeds and deducts inventory', () => {
+    const leads = store.getAllFollowUps();
+    const priyaLead = leads.find((l) => l.customerName === 'Priya Sharma');
+    assert.ok(priyaLead);
+
+    const res = store.closeQuoteAndDeductInventory(priyaLead.quoteId, priyaLead.id);
+    assert.strictEqual(res.success, true);
+
+    const updated = store.getAllFollowUps().find((l) => l.id === priyaLead.id);
+    assert.strictEqual(updated?.status, 'deal_closed');
+  });
+
   // -------------------------------------------------------------
   // MODULE 6: PDF GENERATION ENGINE
   // -------------------------------------------------------------

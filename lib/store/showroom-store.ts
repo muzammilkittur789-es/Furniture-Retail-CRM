@@ -228,9 +228,10 @@ export const DEFAULT_FOLLOWUPS: FollowUpLead[] = [
     customerWhatsapp: '9876543210',
     assignedStaffId: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', // Arjun Verma
     assignedStaffName: 'Arjun Verma',
-    quoteId: 'quote-101',
-    itemsSummary: 'The Florence Bouclé Sectional',
-    quotedAmount: 385000,
+    quoteId: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    itemsSummary: 'The Florence Bouclé Sectional + 1 more',
+    quotedAmount: 567000,
+    advanceDeposit: 100000,
     status: 'pending',
     priority: 'high',
     managerNote:
@@ -244,9 +245,10 @@ export const DEFAULT_FOLLOWUPS: FollowUpLead[] = [
     customerWhatsapp: '9123456789',
     assignedStaffId: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', // Arjun Verma
     assignedStaffName: 'Arjun Verma',
-    quoteId: 'quote-102',
+    quoteId: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
     itemsSummary: 'Verona Carrara Marble Dining Table',
-    quotedAmount: 245000,
+    quotedAmount: 220500,
+    advanceDeposit: 35000,
     status: 'pending',
     priority: 'high',
     managerNote:
@@ -258,11 +260,12 @@ export const DEFAULT_FOLLOWUPS: FollowUpLead[] = [
     id: 'lead-3',
     customerName: 'Amit Patel',
     customerWhatsapp: '9845012345',
-    assignedStaffId: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', // Sneha Kapoor
-    assignedStaffName: 'Sneha Kapoor',
-    quoteId: 'quote-103',
-    itemsSummary: 'Kyoto Low-Profile King Bedstead',
-    quotedAmount: 290000,
+    assignedStaffId: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', // Arjun Verma
+    assignedStaffName: 'Arjun Verma',
+    quoteId: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
+    itemsSummary: 'Aurelia Cognac Leather Lounge Chair + 1 more',
+    quotedAmount: 364500,
+    advanceDeposit: 50000,
     status: 'pending',
     priority: 'medium',
     managerNote:
@@ -276,9 +279,10 @@ export const DEFAULT_FOLLOWUPS: FollowUpLead[] = [
     customerWhatsapp: '9988776655',
     assignedStaffId: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', // Sneha Kapoor
     assignedStaffName: 'Sneha Kapoor',
-    quoteId: 'quote-104',
-    itemsSummary: 'Aurelia Cognac Lounge Chair + Tivoli Table',
-    quotedAmount: 213000,
+    quoteId: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+    itemsSummary: 'Aurelia Cognac Leather Lounge Chair',
+    quotedAmount: 205000,
+    advanceDeposit: 40000,
     status: 'called_interested',
     priority: 'high',
     managerNote:
@@ -1827,7 +1831,22 @@ export function isLeadActiveForMorningShift(
 }
 
 export function getAllFollowUps(): FollowUpLead[] {
-  return global.__ALISHAN_FOLLOWUPS_STORE__ || DEFAULT_FOLLOWUPS;
+  if (!global.__ALISHAN_FOLLOWUPS_STORE__) {
+    global.__ALISHAN_FOLLOWUPS_STORE__ = [...DEFAULT_FOLLOWUPS];
+  }
+  // Safeguard: Ensure mock legacy IDs are healed to valid quotes
+  const legacyQuoteMap: Record<string, string> = {
+    'quote-101': 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    'quote-102': 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+    'quote-103': 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
+    'quote-104': 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+  };
+  for (const lead of global.__ALISHAN_FOLLOWUPS_STORE__) {
+    if (legacyQuoteMap[lead.quoteId]) {
+      lead.quoteId = legacyQuoteMap[lead.quoteId];
+    }
+  }
+  return global.__ALISHAN_FOLLOWUPS_STORE__;
 }
 
 export function getFollowUpsForStaff(staffId: string): FollowUpLead[] {
@@ -2003,19 +2022,61 @@ export function updateQuoteStatusInStore(quoteId: string, newStatus: QuoteStatus
   return true;
 }
 
-export function closeQuoteAndDeductInventory(quoteId: string): {
+export function closeQuoteAndDeductInventory(
+  quoteId: string,
+  leadId?: string
+): {
   success: boolean;
   affectedProducts: { id: string; name: string; remainingStock: number; isSoldOut: boolean }[];
 } {
-  const quote = getQuoteById(quoteId);
-  if (!quote) return { success: false, affectedProducts: [] };
+  const legacyQuoteMap: Record<string, string> = {
+    'quote-101': 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    'quote-102': 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+    'quote-103': 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
+    'quote-104': 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
+  };
 
-  // 1. Mark quote status as closed
-  updateQuoteStatusInStore(quoteId, 'closed');
+  const resolvedQuoteId = legacyQuoteMap[quoteId] || quoteId;
+  let quote = getQuoteById(resolvedQuoteId);
+
+  // If quote not found directly, look up target lead in followups store
+  let targetLead: FollowUpLead | null = null;
+  const followUps = getAllFollowUps();
+  targetLead =
+    followUps.find(
+      (f) =>
+        (leadId && f.id === leadId) ||
+        f.quoteId === quoteId ||
+        f.quoteId === resolvedQuoteId ||
+        f.id === quoteId
+    ) || null;
+
+  if (!quote && targetLead) {
+    quote =
+      getQuoteById(targetLead.quoteId) ||
+      getAllQuotes().find(
+        (q) =>
+          q.customer_whatsapp === targetLead?.customerWhatsapp ||
+          (q.customer_name && targetLead?.customerName && q.customer_name.toLowerCase() === targetLead.customerName.toLowerCase())
+      ) ||
+      null;
+  }
+
+  // 1. Mark quote status as closed if quote found
+  if (quote) {
+    updateQuoteStatusInStore(quote.id, 'closed');
+  }
 
   // 2. Mark any related follow up as deal_closed
   if (global.__ALISHAN_FOLLOWUPS_STORE__) {
-    const fIdx = global.__ALISHAN_FOLLOWUPS_STORE__.findIndex((f) => f.quoteId === quoteId);
+    const fIdx = global.__ALISHAN_FOLLOWUPS_STORE__.findIndex(
+      (f) =>
+        (leadId && f.id === leadId) ||
+        f.quoteId === quoteId ||
+        f.quoteId === resolvedQuoteId ||
+        f.id === quoteId ||
+        (quote && (f.quoteId === quote.id || f.customerWhatsapp === quote.customer_whatsapp))
+    );
     if (fIdx !== -1) {
       global.__ALISHAN_FOLLOWUPS_STORE__[fIdx].status = 'deal_closed';
       global.__ALISHAN_FOLLOWUPS_STORE__[fIdx].lastUpdated = new Date().toISOString();
@@ -2024,19 +2085,39 @@ export function closeQuoteAndDeductInventory(quoteId: string): {
 
   // 3. Deduct stock for each item in the quote
   const affected: { id: string; name: string; remainingStock: number; isSoldOut: boolean }[] = [];
-  const items = quote.items || [];
-  for (const it of items) {
-    const pId = it.product?.id || it.id;
-    const qty = it.quantity && it.quantity > 0 ? it.quantity : 1;
-    if (pId) {
-      const decRes = decrementProductStock(pId, qty);
-      if (decRes.success && decRes.product) {
-        affected.push({
-          id: decRes.product.id,
-          name: decRes.product.name,
-          remainingStock: decRes.remainingStock,
-          isSoldOut: decRes.isSoldOut,
-        });
+  const items = quote?.items || [];
+  if (items.length > 0) {
+    for (const it of items) {
+      const pId = it.product?.id || it.id;
+      const qty = it.quantity && it.quantity > 0 ? it.quantity : 1;
+      if (pId) {
+        const decRes = decrementProductStock(pId, qty);
+        if (decRes.success && decRes.product) {
+          affected.push({
+            id: decRes.product.id,
+            name: decRes.product.name,
+            remainingStock: decRes.remainingStock,
+            isSoldOut: decRes.isSoldOut,
+          });
+        }
+      }
+    }
+  } else if (targetLead) {
+    // Fallback if quote record is missing: Deduct product by matching product name from follow-up lead itemsSummary
+    const allProds = getAllProducts();
+    const summaryLower = targetLead.itemsSummary.toLowerCase();
+    for (const prod of allProds) {
+      if (summaryLower.includes(prod.name.toLowerCase()) || prod.name.toLowerCase().includes(summaryLower)) {
+        const decRes = decrementProductStock(prod.id, 1);
+        if (decRes.success && decRes.product) {
+          affected.push({
+            id: decRes.product.id,
+            name: decRes.product.name,
+            remainingStock: decRes.remainingStock,
+            isSoldOut: decRes.isSoldOut,
+          });
+        }
+        break;
       }
     }
   }
