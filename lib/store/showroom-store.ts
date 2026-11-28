@@ -1787,17 +1787,56 @@ export function toggleProductActive(productId: string, isActive: boolean): boole
  * 4. PENDING FOLLOW-UPS STORE (LEADS ASSIGNED TO SALESMEN)
  * ===================================================================== */
 
+/**
+ * Computes the timestamp for the most recent 6:00 AM morning boundary.
+ * If current time is 11:30 AM on Nov 28, the cutoff is Nov 28 at 6:00 AM.
+ * If current time is 04:15 AM on Nov 28, the cutoff is Nov 27 at 6:00 AM.
+ */
+export function getShowroomMorning6amCutoff(referenceDate: Date = new Date()): number {
+  const cutoff = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate(),
+    6,
+    0,
+    0,
+    0
+  );
+  if (referenceDate.getTime() < cutoff.getTime()) {
+    cutoff.setDate(cutoff.getDate() - 1);
+  }
+  return cutoff.getTime();
+}
+
+/**
+ * Determines whether a lead should appear on the morning follow-up screen.
+ * Once a deal is closed, it disappears automatically at 6:00 AM the following morning,
+ * leaving only fresh action cards for the sales team.
+ */
+export function isLeadActiveForMorningShift(
+  lead: FollowUpLead,
+  referenceDate: Date = new Date()
+): boolean {
+  if (lead.status === 'deal_closed') {
+    const cutoff = getShowroomMorning6amCutoff(referenceDate);
+    const closedAt = lead.lastUpdated ? new Date(lead.lastUpdated).getTime() : 0;
+    // Closed before today's 6:00 AM cutoff -> Disappears completely
+    return closedAt >= cutoff;
+  }
+  return true;
+}
+
 export function getAllFollowUps(): FollowUpLead[] {
   return global.__ALISHAN_FOLLOWUPS_STORE__ || DEFAULT_FOLLOWUPS;
 }
 
 export function getFollowUpsForStaff(staffId: string): FollowUpLead[] {
   const all = getAllFollowUps();
-  // If admin/owner, show all follow ups, otherwise show staff's assigned leads
   const isOwner = staffId === 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
-  if (isOwner) return all;
+  const staffLeads = isOwner ? all : all.filter((lead) => lead.assignedStaffId === staffId);
 
-  return all.filter((lead) => lead.assignedStaffId === staffId);
+  // Auto-clear deals closed prior to 6:00 AM from morning follow-up view
+  return staffLeads.filter((lead) => isLeadActiveForMorningShift(lead));
 }
 
 export function updateFollowUpStatus(

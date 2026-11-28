@@ -9,7 +9,7 @@ import { ProductGrid } from '@/components/sales/product-grid';
 import { QuoteCart } from '@/components/sales/quote-cart';
 import { SalesmanFollowupsView } from '@/components/sales/salesman-followups-view';
 import { addProductStockAction, directMarkProductSoldAction } from '@/app/(sales)/sales/actions';
-import { formatINR } from '@/lib/utils';
+import { formatINR, isLeadActiveForMorningShift } from '@/lib/utils';
 import { Lock, ShoppingBag, ChevronUp, Armchair, PhoneCall, Plus, Camera, X, ArrowLeft, Check } from 'lucide-react';
 
 interface SalesFloorClientProps {
@@ -139,11 +139,13 @@ export function SalesFloorClient({
   };
 
   const staffFollowUps = useMemo(() => {
-    if (!activeStaff) return initialFollowUps;
+    // Only leads active for current morning shift (deals closed before 6:00 AM automatically clear)
+    const morningLeads = initialFollowUps.filter((l) => isLeadActiveForMorningShift(l));
+    if (!activeStaff) return morningLeads;
     const isOwner = activeStaff.role === 'admin';
     return isOwner
-      ? initialFollowUps
-      : initialFollowUps.filter((l) => l.assignedStaffId === activeStaff.id);
+      ? morningLeads
+      : morningLeads.filter((l) => l.assignedStaffId === activeStaff.id);
   }, [activeStaff, initialFollowUps]);
 
   const pendingCallsCount = staffFollowUps.filter(

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { FollowUpLead, StaffSession } from '@/lib/types/database';
-import { formatINR } from '@/lib/utils';
+import { formatINR, isLeadActiveForMorningShift } from '@/lib/utils';
 import { Phone, MessageSquare, CheckCircle2, Check, Search, ShoppingBag } from 'lucide-react';
 import { markFollowUpContactedAction, markQuoteSoldAction } from '@/app/(sales)/sales/actions';
 
@@ -17,11 +17,19 @@ export function SalesmanFollowupsView({
   initialLeads,
   onDealClosed,
 }: SalesmanFollowupsViewProps) {
-  const [leads, setLeads] = useState<FollowUpLead[]>(initialLeads);
+  // Only leads active for the current morning shift (deals closed prior to 6:00 AM automatically clear)
+  const [leads, setLeads] = useState<FollowUpLead[]>(() =>
+    initialLeads.filter((l) => isLeadActiveForMorningShift(l))
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [closingLeadId, setClosingLeadId] = useState<string | null>(null);
   const [confirmLead, setConfirmLead] = useState<FollowUpLead | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  // Keep leads in sync if parent initialLeads updates (e.g., staff switch or new quotes created)
+  useEffect(() => {
+    setLeads(initialLeads.filter((l) => isLeadActiveForMorningShift(l)));
+  }, [initialLeads]);
 
   const handleExecuteCloseDeal = (lead: FollowUpLead) => {
     setClosingLeadId(lead.id);
@@ -30,14 +38,21 @@ export function SalesmanFollowupsView({
       const res = await markQuoteSoldAction(lead.quoteId);
       setClosingLeadId(null);
       if (res.success) {
+        const closedTimestamp = new Date().toISOString();
         setLeads((prev) =>
-          prev.map((l) => (l.id === lead.id ? { ...l, status: 'deal_closed' } : l))
+          prev.map((l) =>
+            l.id === lead.id ? { ...l, status: 'deal_closed', lastUpdated: closedTimestamp } : l
+          )
         );
         onDealClosed?.(res.affectedProducts);
       } else {
         alert(res.error || 'Failed to close deal.');
       }
     });
+  };
+
+  const handleDismissClosedLead = (leadId: string) => {
+    setLeads((prev) => prev.filter((l) => l.id !== leadId));
   };
 
   const handleToggleCalled = (leadId: string) => {
@@ -55,8 +70,10 @@ export function SalesmanFollowupsView({
     });
   };
 
-  const pendingCount = leads.filter((l) => l.status !== 'called_interested').length;
-  const calledCount = leads.length - pendingCount;
+  // Only count actionable leads in queue (exclude closed deals from pending call queues)
+  const pendingCount = leads.filter((l) => l.status === 'pending').length;
+  const calledCount = leads.filter((l) => l.status === 'called_interested').length;
+  const closedTodayCount = leads.filter((l) => l.status === 'deal_closed').length;
 
   const filteredLeads = leads.filter((l) => {
     if (!searchQuery.trim()) return true;
@@ -76,18 +93,23 @@ export function SalesmanFollowupsView({
             Morning Follow-Up Calls
           </h2>
           <p className="text-xs sm:text-sm text-slate-500">
-            Customers to call today for quotes:
+            Customers to call today for quotes (clears daily at 6:00 AM):
           </p>
         </div>
 
         {leads.length > 0 && (
-          <div className="flex items-center gap-2 text-xs font-semibold">
+          <div className="flex items-center gap-2 text-xs font-semibold flex-wrap">
             <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
               ⏳ {pendingCount} To Call
             </span>
             <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
               ✓ {calledCount} Called
             </span>
+            {closedTodayCount > 0 && (
+              <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                🎉 {closedTodayCount} Won Today
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -118,6 +140,7 @@ export function SalesmanFollowupsView({
         <div className="space-y-3">
           {filteredLeads.map((lead) => {
             const isCalled = lead.status === 'called_interested';
+            const isClosed = lead.status === 'deal_closed';
             const whatsappMsg = encodeURIComponent(
               `Hello ${lead.customerName}! This is ${staff.name.split(' ')[0]} from Alishan Furnitures.\n\nRegarding your quote for ${lead.itemsSummary} (${formatINR(lead.quotedAmount)}).\n\nPlease let us know if you need any help.\n\nThank you!`
             );
@@ -125,8 +148,12 @@ export function SalesmanFollowupsView({
             return (
               <div
                 key={lead.id}
-                className={`bg-white rounded-2xl border p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${
-                  isCalled ? 'border-emerald-200/80 bg-emerald-50/20' : 'border-slate-200'
+                className={`bg-white rounded-2xl border p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
+                  isClosed
+                    ? 'border-emerald-300 bg-emerald-50/40'
+                    : isCalled
+                    ? 'border-emerald-200/80 bg-emerald-50/20'
+                    : 'border-slate-200'
                 }`}
               >
                 {/* Customer & Item details */}
@@ -138,11 +165,15 @@ export function SalesmanFollowupsView({
                     <span className="font-mono text-xs sm:text-sm text-slate-600 font-semibold">
                       +91 {lead.customerWhatsapp}
                     </span>
-                    {isCalled && (
+                    {isClosed ? (
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-200 text-emerald-900 text-[10px] font-extrabold">
+                        Won & Closed
+                      </span>
+                    ) : isCalled ? (
                       <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
                         Called
                       </span>
-                    )}
+                    ) : null}
                   </div>
 
                   <p className="text-xs sm:text-sm text-slate-600 font-medium truncate">
@@ -163,9 +194,24 @@ export function SalesmanFollowupsView({
                 {/* Actions */}
                 <div className="flex flex-col gap-2 shrink-0 w-full sm:w-64">
                   {lead.status === 'deal_closed' ? (
-                    <div className="w-full py-2.5 px-3 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs select-none">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
-                      <span>Deal Won & Closed!</span>
+                    <div className="space-y-1.5 w-full">
+                      <div className="w-full py-2.5 px-3 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold text-xs flex items-center justify-between shadow-2xs select-none">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                          <span className="truncate">Deal Won & Closed!</span>
+                        </div>
+                        <span className="text-[10px] text-emerald-800 bg-emerald-200/80 px-2 py-0.5 rounded-md font-semibold shrink-0 ml-1">
+                          Clears at 6 AM
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDismissClosedLead(lead.id)}
+                        className="w-full text-center py-1 text-[11px] text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg border border-dashed border-slate-200 transition"
+                        title="Dismiss card now from morning view"
+                      >
+                        Clear card from screen
+                      </button>
                     </div>
                   ) : (
                     <>

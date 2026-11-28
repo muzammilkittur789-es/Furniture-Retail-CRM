@@ -432,6 +432,52 @@ async function main() {
     assert.strictEqual(closedQuote?.status, 'closed');
   });
 
+  runTest('6:00 AM Morning Cutoff: Deals closed before today 6:00 AM automatically disappear from morning follow-up screen', () => {
+    const now = new Date();
+    // Simulate a deal closed yesterday afternoon (before today's 6:00 AM cutoff)
+    const yesterdayAfternoon = new Date(now.getTime() - 20 * 60 * 60 * 1000).toISOString();
+    const staleClosedLead = store.assignFollowUpLead({
+      customerName: 'Stale Yesterday Customer',
+      customerWhatsapp: '9900112233',
+      assignedStaffId: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+      status: 'deal_closed',
+      quotedAmount: 180000,
+    });
+    staleClosedLead.status = 'deal_closed';
+    staleClosedLead.lastUpdated = yesterdayAfternoon;
+
+    // isLeadActiveForMorningShift should return false
+    const isActive = store.isLeadActiveForMorningShift(staleClosedLead, now);
+    assert.strictEqual(isActive, false);
+
+    // Salesman follow-up list must NOT include this stale deal
+    const staffLeads = store.getFollowUpsForStaff('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22');
+    const foundInMorningQueue = staffLeads.some((l) => l.id === staleClosedLead.id);
+    assert.strictEqual(foundInMorningQueue, false);
+  });
+
+  runTest('6:00 AM Morning Cutoff: Deals closed during today shift remain visible with Won status then disappear next morning at 6:00 AM', () => {
+    const now = new Date();
+    const todayClosedLead = store.assignFollowUpLead({
+      customerName: 'Today Active Closed Customer',
+      customerWhatsapp: '9900112244',
+      assignedStaffId: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+      status: 'deal_closed',
+      quotedAmount: 220000,
+    });
+    todayClosedLead.status = 'deal_closed';
+    todayClosedLead.lastUpdated = now.toISOString();
+
+    // During today's active shift: visible with won status
+    const activeToday = store.isLeadActiveForMorningShift(todayClosedLead, now);
+    assert.strictEqual(activeToday, true);
+
+    // Tomorrow at 6:01 AM: cutoff advances and today's deal automatically clears out
+    const tomorrowMorning601 = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 6, 1, 0, 0);
+    const activeTomorrow = store.isLeadActiveForMorningShift(todayClosedLead, tomorrowMorning601);
+    assert.strictEqual(activeTomorrow, false);
+  });
+
   // -------------------------------------------------------------
   // MODULE 6: PDF GENERATION ENGINE
   // -------------------------------------------------------------
