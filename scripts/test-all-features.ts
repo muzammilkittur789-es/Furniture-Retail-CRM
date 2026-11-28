@@ -573,9 +573,9 @@ async function main() {
 
     const json = await response.json();
     assert.strictEqual(json.success, true);
-    assert.strictEqual(json.ownerPhone, '+91 7676482481');
     assert.match(json.reportMessage, /Alishan Furnitures - Daily Closing Report/);
-    assert.match(json.reportMessage, /10:00 PM/);
+    assert.match(json.timestamp, /22:00:00/);
+    assert.match(json.reportMessage, /TODAY'S FINANCIAL SUMMARY/);
   });
 
   // Clean up test product

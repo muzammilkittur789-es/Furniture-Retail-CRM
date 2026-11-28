@@ -267,12 +267,10 @@ export function compileDaily10pmClosingReport(): {
   }
 
   const appBaseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    process.env.NEXT_PUBLIC_APP_URL || 'https://alishanfurnitures.vercel.app';
   const adminUrl = `${appBaseUrl}/admin`;
 
   const message = `🏛️ *Alishan Furnitures - Daily Closing Report*
-🌙 *Nightly Executive Briefing • 10:00 PM*
 📅 *${todayStr}*
 ━━━━━━━━━━━━━━━━━━━━━━
 
@@ -281,7 +279,6 @@ export function compileDaily10pmClosingReport(): {
 • 💳 *Advance Tokens Collected:* ${formatINR(advanceCollected)}
 • 🛋️ *Showroom Pieces Sold:* ${totalUnitsSold} ${totalUnitsSold === 1 ? 'Unit' : 'Units'}
 • 📋 *New Quotes Sent Today:* ${todayQuotes.length || activeQuotes.length} Quotes
-• ⏳ *Active Pending Pipeline:* ${formatINR(totalPendingPipeline)}
 
 ━━━━━━━━━━━━━━━━━━━━━━
 🛋️ *PIECES CLEARED OFF THE FLOOR TODAY*
