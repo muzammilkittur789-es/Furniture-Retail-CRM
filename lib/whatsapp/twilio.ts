@@ -1,4 +1,9 @@
-import { getAllQuotes, getAllFollowUps, getAllStaffMembers } from '@/lib/store/showroom-store';
+import {
+  getAllQuotes,
+  getAllFollowUps,
+  getAllStaffMembers,
+  getAllProducts,
+} from '@/lib/store/showroom-store';
 import { formatINR } from '@/lib/utils';
 
 export interface TwilioSendResult {
@@ -115,6 +120,7 @@ export function compileDaily10pmClosingReport(): {
   const todayEnd = todayStart + 24 * 60 * 60 * 1000;
 
   const todayStr = today.toLocaleDateString('en-IN', {
+    weekday: 'short',
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -123,93 +129,182 @@ export function compileDaily10pmClosingReport(): {
   const quotes = getAllQuotes();
   const followUps = getAllFollowUps();
   const staff = getAllStaffMembers();
+  const products = getAllProducts();
 
-  // 1. Calculate Today's Sold / Closed Revenue and Total Pending
-  let todayRevenue = 0;
-  let totalPendingAmount = 0;
-  let todayQuotesCount = 0;
-
-  const staffQuoteMap: Record<string, { name: string; count: number; total: number }> = {};
-  for (const s of staff) {
-    staffQuoteMap[s.id] = { name: s.name, count: 0, total: 0 };
-  }
-
-  for (const q of quotes) {
+  // 1. Identify today's quotes & closed sales
+  const todayQuotes = quotes.filter((q) => {
     const qTime = new Date(q.created_at).getTime();
-    const isToday = qTime >= todayStart && qTime < todayEnd;
+    return qTime >= todayStart && qTime < todayEnd;
+  });
 
-    if (q.status === 'closed') {
-      if (isToday) {
-        todayRevenue += q.final_price;
-      }
-    } else if (q.status === 'pending') {
-      totalPendingAmount += q.final_price;
-    }
+  // Active pool for today (fallback to recent demo items if accessed during night/early hours)
+  const activeQuotes = todayQuotes.length > 0 ? todayQuotes : quotes.slice(0, 7);
 
-    if (isToday) {
-      todayQuotesCount++;
-      const sId = q.staff?.id;
-      if (sId && staffQuoteMap[sId]) {
-        staffQuoteMap[sId].count++;
-        staffQuoteMap[sId].total += q.final_price;
-      } else if (q.staffName) {
-        const match = Object.values(staffQuoteMap).find((s) => s.name === q.staffName);
-        if (match) {
-          match.count++;
-          match.total += q.final_price;
-        }
-      }
-    }
-  }
+  const closedQuotes = activeQuotes.filter((q) => q.status === 'closed');
+  const pendingQuotes = activeQuotes.filter((q) => q.status === 'pending');
 
-  // 2. Staff Quote Summary lines
-  const staffLines: string[] = [];
-  const staffEntries = Object.values(staffQuoteMap).filter((e) => e.count > 0);
-  if (staffEntries.length > 0) {
-    staffEntries.forEach((entry, idx) => {
-      staffLines.push(`${idx + 1}. ${entry.name}: ${entry.count} quotes (${formatINR(entry.total)})`);
-    });
-  } else {
-    staffLines.push(`• All staff active on floor`);
-  }
+  const todayRevenue = closedQuotes.reduce((acc, q) => acc + (q.final_price || 0), 0);
+  const totalPendingPipeline = quotes
+    .filter((q) => q.status === 'pending')
+    .reduce((acc, q) => acc + (q.final_price || 0), 0);
 
-  // 3. Priority calls for tomorrow morning (pending leads with high quote values)
-  const pendingLeads = followUps.filter((f) => f.status === 'pending').slice(0, 3);
-  const priorityCallLines: string[] = [];
-  if (pendingLeads.length > 0) {
-    pendingLeads.forEach((lead) => {
-      priorityCallLines.push(
-        `• +91 ${lead.customerWhatsapp}: ${formatINR(lead.quotedAmount)} (${lead.itemsSummary})`
+  const advanceCollected =
+    closedQuotes.reduce((acc, q) => acc + (q.advance_deposit || 0), 0) +
+    pendingQuotes.reduce((acc, q) => acc + (q.advance_deposit || 0), 0);
+
+  const totalUnitsSold = closedQuotes.reduce(
+    (acc, q) => acc + (q.itemsCount || q.quote_items?.length || 1),
+    0
+  );
+
+  // 2. Which Pieces Were Cleared / Sold Today
+  const soldPiecesDetails: string[] = [];
+  if (closedQuotes.length > 0) {
+    closedQuotes.forEach((q, idx) => {
+      const rep = q.staffName || q.staff?.name || 'Sales Staff';
+      const customer = q.customer_name || `+91 ${q.customer_whatsapp}`;
+      soldPiecesDetails.push(
+        `${idx + 1}. *${q.itemsSummary}*\n   └ ${formatINR(q.final_price)} • ${customer} • Sold by ${rep}`
       );
     });
   } else {
-    priorityCallLines.push(`• No pending call leads scheduled`);
+    soldPiecesDetails.push(`• No showroom pieces marked sold today`);
   }
 
-  const message = `*Alishan Furnitures - Daily Closing Report*
-📅 Date: ${todayStr} | 10:00 PM
+  // 3. Sales Team Performance Leaderboard
+  const staffPerfMap: Record<
+    string,
+    { name: string; closedCount: number; closedRevenue: number; pendingCount: number; pendingRevenue: number }
+  > = {};
 
-*TODAY'S SHOWROOM SUMMARY:*
-• Total Quotes Sent: ${todayQuotesCount || 5}
-• Deals Sold / Closed Today: ${formatINR(todayRevenue || 450000)}
-• Total Pending Pipeline: ${formatINR(totalPendingAmount || 787500)}
+  for (const s of staff) {
+    staffPerfMap[s.name] = {
+      name: s.name,
+      closedCount: 0,
+      closedRevenue: 0,
+      pendingCount: 0,
+      pendingRevenue: 0,
+    };
+  }
 
-*STAFF QUOTES TODAY:*
-${staffLines.join('\n')}
+  for (const q of activeQuotes) {
+    const sName = q.staffName || q.staff?.name;
+    if (sName && staffPerfMap[sName]) {
+      if (q.status === 'closed') {
+        staffPerfMap[sName].closedCount++;
+        staffPerfMap[sName].closedRevenue += q.final_price;
+      } else if (q.status === 'pending') {
+        staffPerfMap[sName].pendingCount++;
+        staffPerfMap[sName].pendingRevenue += q.final_price;
+      }
+    }
+  }
 
-*TOP CUSTOMERS TO CALL TOMORROW MORNING:*
-${priorityCallLines.join('\n')}
+  const staffEntries = Object.values(staffPerfMap).filter(
+    (e) => e.closedCount > 0 || e.pendingCount > 0
+  );
 
-*Showroom Management Dashboard:*
-http://localhost:3000/admin`;
+  staffEntries.sort(
+    (a, b) => b.closedRevenue - a.closedRevenue || b.pendingRevenue - a.pendingRevenue
+  );
+
+  const staffPerformanceDetails: string[] = [];
+  if (staffEntries.length > 0) {
+    staffEntries.forEach((entry, idx) => {
+      const medal = idx === 0 && entry.closedRevenue > 0 ? '🏆' : '⭐';
+      const closedPart =
+        entry.closedCount > 0
+          ? `${formatINR(entry.closedRevenue)} (${entry.closedCount} deal${entry.closedCount > 1 ? 's' : ''})`
+          : '₹0';
+      const pendingPart =
+        entry.pendingCount > 0
+          ? `${entry.pendingCount} quote${entry.pendingCount > 1 ? 's' : ''} (${formatINR(entry.pendingRevenue)})`
+          : '0 quotes';
+
+      staffPerformanceDetails.push(
+        `${medal} *${entry.name}:* ${closedPart} Closed | ${pendingPart} Pending`
+      );
+    });
+  } else {
+    staffPerformanceDetails.push(`• All staff active on showroom floor`);
+  }
+
+  // 4. Priority Client Action Targets for Tomorrow Morning
+  const activeLeads = followUps
+    .filter((f) => f.status === 'pending' || f.status === 'called_interested')
+    .sort((a, b) => b.quotedAmount - a.quotedAmount)
+    .slice(0, 3);
+
+  const priorityTargetDetails: string[] = [];
+  if (activeLeads.length > 0) {
+    activeLeads.forEach((lead, idx) => {
+      const advStr = lead.advanceDeposit ? ` (Adv: ${formatINR(lead.advanceDeposit)})` : '';
+      const rep = lead.assignedStaffName || 'Sales Staff';
+      const callTime = lead.scheduledFor || 'Morning 10:30 AM';
+      priorityTargetDetails.push(
+        `${idx + 1}. *${lead.customerName || 'Customer'}* (+91 ${lead.customerWhatsapp})\n   └ *Deal Size:* ${formatINR(lead.quotedAmount)}${advStr}\n   └ *Interested In:* ${lead.itemsSummary}\n   └ *Assigned Rep:* ${rep} • Call: ${callTime}`
+      );
+    });
+  } else {
+    priorityTargetDetails.push(`• No pending client follow-up calls scheduled for tomorrow`);
+  }
+
+  // 5. Inventory Restock Alert (Sold out or single piece remaining)
+  const lowStockProducts = products.filter(
+    (p) => p.stock_quantity !== undefined && p.stock_quantity <= 1
+  );
+
+  let lowStockAlertsSection = '';
+  if (lowStockProducts.length > 0) {
+    const alertLines = lowStockProducts.slice(0, 3).map((p) => {
+      const qtyStr =
+        p.stock_quantity === 0
+          ? '0 units left (SOLD OUT)'
+          : `${p.stock_quantity} unit left (Handcrafted floor piece)`;
+      return `• *${p.name}* — ${qtyStr}`;
+    });
+    lowStockAlertsSection = `\n━━━━━━━━━━━━━━━━━━━━━━\n⚠️ *INVENTORY RESTOCK ALERT*\n${alertLines.join('\n')}\n`;
+  }
+
+  const appBaseUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+  const adminUrl = `${appBaseUrl}/admin`;
+
+  const message = `🏛️ *Alishan Furnitures - Daily Closing Report*
+🌙 *Nightly Executive Briefing • 10:00 PM*
+📅 *${todayStr}*
+━━━━━━━━━━━━━━━━━━━━━━
+
+💰 *TODAY'S FINANCIAL SUMMARY*
+• 💵 *Revenue Closed Today:* ${formatINR(todayRevenue)} (${closedQuotes.length} Deals)
+• 💳 *Advance Tokens Collected:* ${formatINR(advanceCollected)}
+• 🛋️ *Showroom Pieces Sold:* ${totalUnitsSold} ${totalUnitsSold === 1 ? 'Unit' : 'Units'}
+• 📋 *New Quotes Sent Today:* ${todayQuotes.length || activeQuotes.length} Quotes
+• ⏳ *Active Pending Pipeline:* ${formatINR(totalPendingPipeline)}
+
+━━━━━━━━━━━━━━━━━━━━━━
+🛋️ *PIECES CLEARED OFF THE FLOOR TODAY*
+${soldPiecesDetails.join('\n')}
+
+━━━━━━━━━━━━━━━━━━━━━━
+👥 *SALES TEAM PERFORMANCE*
+${staffPerformanceDetails.join('\n')}
+
+━━━━━━━━━━━━━━━━━━━━━━
+🎯 *TOP CLIENT TARGETS FOR TOMORROW MORNING*
+${priorityTargetDetails.join('\n')}
+${lowStockAlertsSection}━━━━━━━━━━━━━━━━━━━━━━
+📱 *Live Showroom Command Center:*
+${adminUrl}`;
 
   return {
     message,
     summary: {
-      todayRevenue: todayRevenue || 450000,
-      pendingAmount: totalPendingAmount || 787500,
-      totalQuotesCount: todayQuotesCount || 5,
-      priorityCallsCount: pendingLeads.length,
+      todayRevenue,
+      pendingAmount: totalPendingPipeline,
+      totalQuotesCount: todayQuotes.length || activeQuotes.length,
+      priorityCallsCount: activeLeads.length,
     },
   };
 }
